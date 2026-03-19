@@ -1,0 +1,232 @@
+<Window x:Class="EnvironmentalMonitoring.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Environmental Monitoring"
+        Width="1280"
+        Height="820"
+        Background="#F4F1E8"
+        FontFamily="Bahnschrift">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="24" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="22"
+                Background="#123047"
+                CornerRadius="18">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Foreground="#DDE8F0"
+                               FontSize="15"
+                               Text="Windows / WPF / Modbus TCP baseline" />
+                    <TextBlock Margin="0,8,0,0"
+                               Foreground="White"
+                               FontSize="34"
+                               FontWeight="SemiBold"
+                               Text="Environmental Monitoring Console" />
+                    <TextBlock Margin="0,10,0,0"
+                               Foreground="#C8D7E2"
+                               FontSize="15"
+                               Text="8 temperature channels, 1 humidity channel, 1 barometric pressure channel" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            HorizontalAlignment="Right">
+                    <Border Margin="0,0,0,8"
+                            Padding="12,6"
+                            Background="#E6B85C"
+                            CornerRadius="999">
+                        <TextBlock FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Text="Default: 1 minute sampling" />
+                    </Border>
+                    <Border Padding="12,6"
+                            Background="#DCE8C8"
+                            CornerRadius="999">
+                        <TextBlock FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Text="Target alarm: setpoint +/- 5 degC" />
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.05*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="1.45*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <Border Padding="18"
+                        Background="#FFFDFC"
+                        CornerRadius="18">
+                    <StackPanel>
+                        <TextBlock FontSize="22"
+                                   FontWeight="SemiBold"
+                                   Foreground="#163143"
+                                   Text="System Outline" />
+                        <TextBlock Margin="0,14,0,0"
+                                   FontSize="15"
+                                   Foreground="#4A5E6B"
+                                   Text="The starter layout separates acquisition from the desktop UI so restart recovery and daily persistence can be handled cleanly." />
+
+                        <UniformGrid Margin="0,18,0,0"
+                                     Columns="2">
+                            <Border Margin="0,0,10,10"
+                                    Padding="14"
+                                    Background="#EEF3F6"
+                                    CornerRadius="14">
+                                <StackPanel>
+                                    <TextBlock Foreground="#6B7A84" Text="Devices" />
+                                    <TextBlock FontSize="28"
+                                               FontWeight="SemiBold"
+                                               Foreground="#153348"
+                                               Text="{Binding DeviceCount}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Margin="0,0,0,10"
+                                    Padding="14"
+                                    Background="#EEF3F6"
+                                    CornerRadius="14">
+                                <StackPanel>
+                                    <TextBlock Foreground="#6B7A84" Text="Channels" />
+                                    <TextBlock FontSize="28"
+                                               FontWeight="SemiBold"
+                                               Foreground="#153348"
+                                               Text="{Binding ChannelCount}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Margin="0,0,10,0"
+                                    Padding="14"
+                                    Background="#EEF3F6"
+                                    CornerRadius="14">
+                                <StackPanel>
+                                    <TextBlock Foreground="#6B7A84" Text="Storage" />
+                                    <TextBlock FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="#153348"
+                                               Text="SQLite + daily CSV" />
+                                </StackPanel>
+                            </Border>
+                            <Border Padding="14"
+                                    Background="#EEF3F6"
+                                    CornerRadius="14">
+                                <StackPanel>
+                                    <TextBlock Foreground="#6B7A84" Text="Comms" />
+                                    <TextBlock FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="#153348"
+                                               Text="Modbus TCP" />
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+
+                <Border Margin="0,20,0,0"
+                        Padding="18"
+                        Background="#FFFDFC"
+                        CornerRadius="18">
+                    <StackPanel>
+                        <TextBlock FontSize="22"
+                                   FontWeight="SemiBold"
+                                   Foreground="#163143"
+                                   Text="Device Map" />
+                        <ItemsControl Margin="0,14,0,0"
+                                      ItemsSource="{Binding Blueprint.Devices}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,10"
+                                            Padding="14"
+                                            Background="#F4F8FA"
+                                            CornerRadius="14">
+                                        <StackPanel>
+                                            <TextBlock FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#17374A"
+                                                       Text="{Binding DisplayName}" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Foreground="#60717D"
+                                                       Text="{Binding Notes}" />
+                                            <TextBlock Margin="0,8,0,0"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#27536D"
+                                                       Text="{Binding Protocol}" />
+                                            <TextBlock Foreground="#60717D"
+                                                       Text="{Binding IpAddress}" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <Border Grid.Column="2"
+                    Padding="18"
+                    Background="#FFFDFC"
+                    CornerRadius="18">
+                <StackPanel>
+                    <TextBlock FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="#163143"
+                               Text="Configured Channels" />
+                    <TextBlock Margin="0,10,0,0"
+                               FontSize="15"
+                               Foreground="#4A5E6B"
+                               Text="The first implementation step after this skeleton is live polling, persistence, and chart binding." />
+
+                    <ItemsControl Margin="0,18,0,0"
+                                  ItemsSource="{Binding Blueprint.Channels}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="220"
+                                        Margin="0,0,12,12"
+                                        Padding="14"
+                                        Background="#F7F4EE"
+                                        CornerRadius="16">
+                                    <StackPanel>
+                                        <TextBlock Foreground="#86694A"
+                                                   Text="{Binding Kind}" />
+                                        <TextBlock Margin="0,4,0,0"
+                                                   FontSize="22"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#1D3445"
+                                                   Text="{Binding Name}" />
+                                        <TextBlock Margin="0,8,0,0"
+                                                   Foreground="#546773"
+                                                   Text="{Binding DeviceKey}" />
+                                        <TextBlock Foreground="#546773"
+                                                   Text="{Binding Unit}" />
+                                        <TextBlock Margin="0,10,0,0"
+                                                   Foreground="#1F5A4B"
+                                                   FontWeight="SemiBold"
+                                                   Text="{Binding DefaultDeviationThreshold, StringFormat=Alarm +/- {0} degC}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
