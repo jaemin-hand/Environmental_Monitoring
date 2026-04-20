@@ -3,229 +3,366 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EnvironmentalMonitoring.App"
         mc:Ignorable="d"
         Title="Environmental Monitoring"
-        Width="1280"
-        Height="820"
-        Background="#F4F1E8"
-        FontFamily="Bahnschrift">
-    <Grid Margin="24">
+        Width="1820"
+        Height="1120"
+        MinWidth="1440"
+        MinHeight="900"
+        Background="{x:Static local:DashboardPalette.WindowBackground}"
+        FontFamily="Malgun Gothic">
+    <Window.Resources>
+        <Style x:Key="PanelCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{x:Static local:DashboardPalette.Surface}" />
+            <Setter Property="CornerRadius" Value="26" />
+        </Style>
+
+        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{x:Static local:DashboardPalette.TextPrimary}" />
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{x:Static local:DashboardPalette.TextPrimary}" />
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="24" />
+            <RowDefinition Height="22" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="22" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Padding="22"
-                Background="#123047"
-                CornerRadius="18">
+        <Border Grid.Row="0"
+                Padding="20,16"
+                Style="{StaticResource PanelCardStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel>
-                    <TextBlock Foreground="#DDE8F0"
-                               FontSize="15"
-                               Text="Windows / WPF / Modbus TCP baseline" />
-                    <TextBlock Margin="0,8,0,0"
-                               Foreground="White"
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Margin="0,0,14,0"
                                FontSize="34"
-                               FontWeight="SemiBold"
-                               Text="Environmental Monitoring Console" />
-                    <TextBlock Margin="0,10,0,0"
-                               Foreground="#C8D7E2"
-                               FontSize="15"
-                               Text="8 temperature channels, 1 humidity channel, 1 barometric pressure channel" />
+                               Text="⌂" />
+                    <TextBlock VerticalAlignment="Center"
+                               Style="{StaticResource HeaderTextStyle}"
+                               Text="{Binding WindowTitle}" />
                 </StackPanel>
 
-                <StackPanel Grid.Column="1"
-                            HorizontalAlignment="Right">
-                    <Border Margin="0,0,0,8"
-                            Padding="12,6"
-                            Background="#E6B85C"
-                            CornerRadius="999">
-                        <TextBlock FontSize="14"
-                                   FontWeight="SemiBold"
-                                   Text="Default: 1 minute sampling" />
-                    </Border>
-                    <Border Padding="12,6"
-                            Background="#DCE8C8"
-                            CornerRadius="999">
-                        <TextBlock FontSize="14"
-                                   FontWeight="SemiBold"
-                                   Text="Target alarm: setpoint +/- 5 degC" />
-                    </Border>
-                </StackPanel>
+                <Border Grid.Column="1"
+                        Padding="18,10"
+                        Background="#B5D99E"
+                        CornerRadius="22">
+                    <TextBlock FontSize="22"
+                               FontWeight="SemiBold"
+                               Text="{Binding CurrentTimeText}" />
+                </Border>
             </Grid>
         </Border>
 
-        <Grid Grid.Row="2">
+        <ItemsControl Grid.Row="2"
+                      ItemsSource="{Binding StatusCards}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="3" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="0,0,18,0"
+                            Padding="22,16"
+                            Background="{Binding Background}"
+                            CornerRadius="22">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock FontSize="16"
+                                           Foreground="#3C3A38"
+                                           Text="{Binding Title}" />
+                                <TextBlock Margin="0,4,0,0"
+                                           FontSize="24"
+                                           FontWeight="SemiBold"
+                                           Text="{Binding Summary}" />
+                                <TextBlock Margin="0,4,0,0"
+                                           FontSize="13"
+                                           Foreground="#403D3B"
+                                           Text="{Binding Detail}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="1"
+                                       VerticalAlignment="Center"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       Text="{Binding IconText}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.05*" />
-                <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="1.45*" />
+                <ColumnDefinition Width="390" />
+                <ColumnDefinition Width="28" />
+                <ColumnDefinition Width="590" />
+                <ColumnDefinition Width="28" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0">
-                <Border Padding="18"
-                        Background="#FFFDFC"
-                        CornerRadius="18">
-                    <StackPanel>
-                        <TextBlock FontSize="22"
-                                   FontWeight="SemiBold"
-                                   Foreground="#163143"
-                                   Text="System Outline" />
-                        <TextBlock Margin="0,14,0,0"
-                                   FontSize="15"
-                                   Foreground="#4A5E6B"
-                                   Text="The starter layout separates acquisition from the desktop UI so restart recovery and daily persistence can be handled cleanly." />
-
-                        <UniformGrid Margin="0,18,0,0"
-                                     Columns="2">
-                            <Border Margin="0,0,10,10"
-                                    Padding="14"
-                                    Background="#EEF3F6"
-                                    CornerRadius="14">
-                                <StackPanel>
-                                    <TextBlock Foreground="#6B7A84" Text="Devices" />
-                                    <TextBlock FontSize="28"
-                                               FontWeight="SemiBold"
-                                               Foreground="#153348"
-                                               Text="{Binding DeviceCount}" />
-                                </StackPanel>
-                            </Border>
-                            <Border Margin="0,0,0,10"
-                                    Padding="14"
-                                    Background="#EEF3F6"
-                                    CornerRadius="14">
-                                <StackPanel>
-                                    <TextBlock Foreground="#6B7A84" Text="Channels" />
-                                    <TextBlock FontSize="28"
-                                               FontWeight="SemiBold"
-                                               Foreground="#153348"
-                                               Text="{Binding ChannelCount}" />
-                                </StackPanel>
-                            </Border>
-                            <Border Margin="0,0,10,0"
-                                    Padding="14"
-                                    Background="#EEF3F6"
-                                    CornerRadius="14">
-                                <StackPanel>
-                                    <TextBlock Foreground="#6B7A84" Text="Storage" />
-                                    <TextBlock FontSize="16"
-                                               FontWeight="SemiBold"
-                                               Foreground="#153348"
-                                               Text="SQLite + daily CSV" />
-                                </StackPanel>
-                            </Border>
-                            <Border Padding="14"
-                                    Background="#EEF3F6"
-                                    CornerRadius="14">
-                                <StackPanel>
-                                    <TextBlock Foreground="#6B7A84" Text="Comms" />
-                                    <TextBlock FontSize="16"
-                                               FontWeight="SemiBold"
-                                               Foreground="#153348"
-                                               Text="Modbus TCP" />
-                                </StackPanel>
-                            </Border>
-                        </UniformGrid>
+            <Border Grid.Column="0"
+                    Padding="0,18,0,18"
+                    Style="{StaticResource PanelCardStyle}">
+                <DockPanel LastChildFill="True">
+                    <StackPanel DockPanel.Dock="Bottom"
+                                Margin="28,16,28,0">
+                        <Border Height="1"
+                                Background="#A9A9A9" />
+                        <StackPanel Margin="0,20,0,0"
+                                    Orientation="Horizontal">
+                            <TextBlock Margin="0,0,14,0"
+                                       VerticalAlignment="Center"
+                                       FontSize="28"
+                                       Text="⚙" />
+                            <TextBlock VerticalAlignment="Center"
+                                       FontSize="24"
+                                       Text="설정" />
+                        </StackPanel>
                     </StackPanel>
-                </Border>
 
-                <Border Margin="0,20,0,0"
-                        Padding="18"
-                        Background="#FFFDFC"
-                        CornerRadius="18">
-                    <StackPanel>
-                        <TextBlock FontSize="22"
-                                   FontWeight="SemiBold"
-                                   Foreground="#163143"
-                                   Text="Device Map" />
-                        <ItemsControl Margin="0,14,0,0"
-                                      ItemsSource="{Binding Blueprint.Devices}">
+                    <StackPanel Margin="0,30,0,0">
+                        <ItemsControl ItemsSource="{Binding MenuItems}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Margin="0,0,0,10"
-                                            Padding="14"
-                                            Background="#F4F8FA"
-                                            CornerRadius="14">
-                                        <StackPanel>
-                                            <TextBlock FontSize="16"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="#17374A"
-                                                       Text="{Binding DisplayName}" />
-                                            <TextBlock Margin="0,4,0,0"
-                                                       Foreground="#60717D"
-                                                       Text="{Binding Notes}" />
-                                            <TextBlock Margin="0,8,0,0"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="#27536D"
-                                                       Text="{Binding Protocol}" />
-                                            <TextBlock Foreground="#60717D"
-                                                       Text="{Binding IpAddress}" />
+                                    <Border Margin="0,0,0,14"
+                                            Padding="28,24"
+                                            Background="{Binding Background}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Margin="0,0,18,0"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="20"
+                                                       Text="□" />
+                                            <TextBlock VerticalAlignment="Center"
+                                                       FontSize="24"
+                                                       Text="{Binding Title}" />
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
-                </Border>
-            </StackPanel>
+                </DockPanel>
+            </Border>
 
             <Border Grid.Column="2"
-                    Padding="18"
-                    Background="#FFFDFC"
-                    CornerRadius="18">
+                    Padding="26,22"
+                    Style="{StaticResource PanelCardStyle}">
                 <StackPanel>
-                    <TextBlock FontSize="22"
-                               FontWeight="SemiBold"
-                               Foreground="#163143"
-                               Text="Configured Channels" />
-                    <TextBlock Margin="0,10,0,0"
-                               FontSize="15"
-                               Foreground="#4A5E6B"
-                               Text="The first implementation step after this skeleton is live polling, persistence, and chart binding." />
+                    <TextBlock Style="{StaticResource SectionTitleStyle}"
+                               Text="시험실 센서 배치도" />
 
                     <ItemsControl Margin="0,18,0,0"
-                                  ItemsSource="{Binding Blueprint.Channels}">
+                                  ItemsSource="{Binding SensorTiles}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <WrapPanel />
+                                <WrapPanel Orientation="Horizontal"
+                                           ItemWidth="245"
+                                           ItemHeight="150" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="220"
-                                        Margin="0,0,12,12"
-                                        Padding="14"
-                                        Background="#F7F4EE"
-                                        CornerRadius="16">
-                                    <StackPanel>
-                                        <TextBlock Foreground="#86694A"
-                                                   Text="{Binding Kind}" />
-                                        <TextBlock Margin="0,4,0,0"
-                                                   FontSize="22"
+                                <Border Margin="0,0,22,18"
+                                        Padding="18"
+                                        Background="{Binding Background}"
+                                        CornerRadius="24">
+                                    <Grid>
+                                        <TextBlock VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   FontSize="26"
                                                    FontWeight="SemiBold"
-                                                   Foreground="#1D3445"
-                                                   Text="{Binding Name}" />
-                                        <TextBlock Margin="0,8,0,0"
-                                                   Foreground="#546773"
-                                                   Text="{Binding DeviceKey}" />
-                                        <TextBlock Foreground="#546773"
-                                                   Text="{Binding Unit}" />
-                                        <TextBlock Margin="0,10,0,0"
-                                                   Foreground="#1F5A4B"
-                                                   FontWeight="SemiBold"
-                                                   Text="{Binding DefaultDeviationThreshold, StringFormat=Alarm +/- {0} degC}" />
-                                    </StackPanel>
+                                                   Text="{Binding DisplayText}" />
+                                    </Grid>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
+            </Border>
+
+            <Border Grid.Column="4"
+                    Padding="0"
+                    Style="{StaticResource PanelCardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="250" />
+                    </Grid.RowDefinitions>
+
+                    <Border Padding="26,20,26,16"
+                            Background="{x:Static local:DashboardPalette.SurfaceMuted}"
+                            CornerRadius="26,26,0,0">
+                        <TextBlock Style="{StaticResource SectionTitleStyle}"
+                                   Text="평균 온도 / 습도 추이" />
+                    </Border>
+
+                    <Grid Grid.Row="1"
+                          Margin="28,18,28,12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Right">
+                            <StackPanel Margin="0,0,18,0"
+                                        Orientation="Horizontal">
+                                <Border Width="28"
+                                        Height="4"
+                                        Margin="0,0,8,0"
+                                        VerticalAlignment="Center"
+                                        Background="{x:Static local:DashboardPalette.TempLine}"
+                                        CornerRadius="99" />
+                                <TextBlock FontSize="16"
+                                           Text="Average Temp (°C)" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="28"
+                                        Height="4"
+                                        Margin="0,0,8,0"
+                                        VerticalAlignment="Center"
+                                        Background="{x:Static local:DashboardPalette.HumidityLine}"
+                                        CornerRadius="99" />
+                                <TextBlock FontSize="16"
+                                           Text="Humidity (%RH)" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Grid Grid.Row="1"
+                              Margin="0,18,0,0">
+                            <Border BorderBrush="#D2CEC3"
+                                    BorderThickness="0,0,1,1" />
+
+                            <UniformGrid Rows="6">
+                                <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
+                                <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
+                                <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
+                                <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
+                                <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
+                                <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
+                            </UniformGrid>
+
+                            <Canvas Margin="42,20,40,36"
+                                    ClipToBounds="True">
+                                <Polyline Points="{Binding TemperatureTrendPoints}"
+                                          Stroke="{x:Static local:DashboardPalette.TempLine}"
+                                          StrokeThickness="4"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round" />
+                                <Polyline Points="{Binding HumidityTrendPoints}"
+                                          Stroke="{x:Static local:DashboardPalette.HumidityLine}"
+                                          StrokeThickness="4"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round" />
+                                <Line X1="770"
+                                      Y1="0"
+                                      X2="770"
+                                      Y2="230"
+                                      Stroke="#2C2C2C"
+                                      StrokeThickness="2" />
+                                <TextBlock Canvas.Left="746"
+                                           Canvas.Top="-10"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Text="NOW" />
+                            </Canvas>
+                        </Grid>
+
+                        <UniformGrid Grid.Row="2"
+                                     Margin="42,8,40,0"
+                                     Columns="6">
+                            <TextBlock HorizontalAlignment="Left" Text="04:00" />
+                            <TextBlock HorizontalAlignment="Center" Text="06:00" />
+                            <TextBlock HorizontalAlignment="Center" Text="08:00" />
+                            <TextBlock HorizontalAlignment="Center" Text="10:00" />
+                            <TextBlock HorizontalAlignment="Center" Text="12:00" />
+                            <TextBlock HorizontalAlignment="Right" Text="16:00" />
+                        </UniformGrid>
+                    </Grid>
+
+                    <Border Grid.Row="2"
+                            Margin="20,0,20,20"
+                            Padding="20,16"
+                            Background="{x:Static local:DashboardPalette.DarkPanel}"
+                            CornerRadius="24">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <ItemsControl ItemsSource="{Binding RecentEvents}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="10" />
+                                                    <ColumnDefinition Width="12" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Grid.Column="0"
+                                                        Width="10"
+                                                        Height="10"
+                                                        CornerRadius="99"
+                                                        VerticalAlignment="Center"
+                                                        Background="{Binding Accent}" />
+                                                <TextBlock Grid.Column="2"
+                                                           FontSize="22"
+                                                           Foreground="White"
+                                                           Text="{Binding TimestampText}" />
+                                                <TextBlock Grid.Column="3"
+                                                           Margin="12,0,0,0"
+                                                           FontSize="22"
+                                                           Foreground="White"
+                                                           Text="{Binding Message}" />
+                                            </Grid>
+                                            <Border Height="1"
+                                                    Margin="0,0,0,14"
+                                                    Background="{x:Static local:DashboardPalette.EventBorder}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Grid.Row="1"
+                                       HorizontalAlignment="Right"
+                                       FontSize="24"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       Text="최근 알람 및 이벤트" />
+                        </Grid>
+                    </Border>
+                </Grid>
             </Border>
         </Grid>
     </Grid>

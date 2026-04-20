@@ -6,11 +6,13 @@ namespace EnvironmentalMonitoring.Worker;
 public sealed class Worker(
     ILogger<Worker> logger,
     MonitoringBlueprint blueprint,
-    MonitoringStorageLayout storageLayout) : BackgroundService
+    MonitoringStorageLayout storageLayout,
+    SqliteMonitoringStorageService storageService,
+    IMonitoringAcquisitionGateway acquisitionGateway) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        storageLayout.EnsureCreated();
+        await storageService.InitializeAsync(stoppingToken);
 
         logger.LogInformation(
             "Monitoring worker started with {DeviceCount} devices and {ChannelCount} channels. Default mode: {SamplingMode}",
@@ -24,9 +26,15 @@ public sealed class Worker(
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            var sampledAt = DateTimeOffset.Now;
+            var snapshot = await acquisitionGateway.CaptureAsync(sampledAt, stoppingToken);
+            var storageStatus = await storageService.SaveSnapshotAsync(snapshot, stoppingToken);
+
             logger.LogInformation(
-                "Acquisition placeholder cycle at {Timestamp}. Next step: Modbus TCP polling and SQLite persistence.",
-                DateTimeOffset.Now);
+                "Placeholder acquisition stored at {Timestamp}. Storage status: {Summary} ({Detail})",
+                sampledAt,
+                storageStatus.Summary,
+                storageStatus.Detail);
 
             await Task.Delay(delay, stoppingToken);
         }
