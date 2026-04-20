@@ -4,6 +4,8 @@ public sealed class MonitoringStorageLayout(string rootDirectory)
 {
     public string RootDirectory { get; } = rootDirectory;
 
+    public string ConfigDirectory => Path.Combine(RootDirectory, "config");
+
     public string DataDirectory => Path.Combine(RootDirectory, "data");
 
     public string ReportDirectory => Path.Combine(RootDirectory, "reports");
@@ -12,11 +14,14 @@ public sealed class MonitoringStorageLayout(string rootDirectory)
 
     public string DatabaseFilePath => Path.Combine(DataDirectory, "environment-monitoring.db");
 
+    public string RuntimeSettingsFilePath => Path.Combine(ConfigDirectory, "monitoring-settings.json");
+
     public string GetDailyCsvPath(DateOnly date) => Path.Combine(ReportDirectory, $"{date:yyyy-MM-dd}.csv");
 
     public void EnsureCreated()
     {
         Directory.CreateDirectory(RootDirectory);
+        Directory.CreateDirectory(ConfigDirectory);
         Directory.CreateDirectory(DataDirectory);
         Directory.CreateDirectory(ReportDirectory);
         Directory.CreateDirectory(LogDirectory);

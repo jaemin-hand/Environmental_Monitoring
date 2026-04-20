@@ -1,5 +1,6 @@
 using EnvironmentalMonitoring.Domain;
 using Microsoft.Data.Sqlite;
+using System.Globalization;
 
 namespace EnvironmentalMonitoring.Infrastructure;
 
@@ -7,7 +8,11 @@ public sealed class MonitoringDashboardQueryService(
     MonitoringStorageLayout storageLayout,
     MonitoringBlueprint blueprint)
 {
-    private readonly string _connectionString = $"Data Source={storageLayout.DatabaseFilePath}";
+    private readonly string _connectionString = new SqliteConnectionStringBuilder
+    {
+        DataSource = storageLayout.DatabaseFilePath,
+        Mode = SqliteOpenMode.ReadOnly,
+    }.ToString();
 
     public async Task<MonitoringDashboardSnapshot> GetSnapshotAsync(CancellationToken cancellationToken)
     {
@@ -51,7 +56,7 @@ public sealed class MonitoringDashboardQueryService(
                 StorageHealth.Delayed,
                 null,
                 0,
-                "대기 중",
+                "대기",
                 "저장된 데이터가 아직 없습니다."),
             0,
             MonitoringEventSeverity.Info,
@@ -65,16 +70,16 @@ public sealed class MonitoringDashboardQueryService(
             ]);
     }
 
-    private static async Task<(DateTimeOffset SampledAt, SamplingMode SamplingMode, AcquisitionBatchStatus Status)?>
+    private static async Task<(DateTimeOffset SampledAt, DateTimeOffset PersistedAt, SamplingMode SamplingMode, AcquisitionBatchStatus Status)?>
         GetLatestBatchAsync(
             SqliteConnection connection,
             CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT sampled_at, sampling_mode, status
+            SELECT sampled_at, created_at, sampling_mode, status
             FROM acquisition_batches
-            ORDER BY sampled_at DESC, id DESC
+            ORDER BY id DESC
             LIMIT 1;
             """;
 
@@ -86,9 +91,10 @@ public sealed class MonitoringDashboardQueryService(
         }
 
         return (
-            DateTimeOffset.Parse(reader.GetString(0)),
-            Enum.Parse<SamplingMode>(reader.GetString(1)),
-            Enum.Parse<AcquisitionBatchStatus>(reader.GetString(2)));
+            DateTimeOffset.Parse(reader.GetString(0), CultureInfo.InvariantCulture),
+            ParseSqliteUtcTimestamp(reader.GetString(1)),
+            Enum.Parse<SamplingMode>(reader.GetString(2)),
+            Enum.Parse<AcquisitionBatchStatus>(reader.GetString(3)));
     }
 
     private static async Task<(int Count, MonitoringEventSeverity HighestSeverity)> GetActiveAlarmSummaryAsync(
@@ -143,7 +149,7 @@ public sealed class MonitoringDashboardQueryService(
             WHERE b.id = (
                 SELECT id
                 FROM acquisition_batches
-                ORDER BY sampled_at DESC, id DESC
+                ORDER BY id DESC
                 LIMIT 1
             )
             ORDER BY c.code;
@@ -160,7 +166,7 @@ public sealed class MonitoringDashboardQueryService(
                 reader.GetString(2),
                 reader.IsDBNull(3) ? null : reader.GetDouble(3),
                 Enum.Parse<SampleQualityStatus>(reader.GetString(4)),
-                DateTimeOffset.Parse(reader.GetString(5)));
+                DateTimeOffset.Parse(reader.GetString(5), CultureInfo.InvariantCulture));
         }
 
         return blueprint.Channels
@@ -192,7 +198,7 @@ public sealed class MonitoringDashboardQueryService(
             JOIN samples s ON s.batch_id = b.id
             JOIN channels c ON c.id = s.channel_id
             GROUP BY b.id, b.sampled_at
-            ORDER BY b.sampled_at DESC, b.id DESC
+            ORDER BY b.id DESC
             LIMIT 24;
             """;
 
@@ -201,7 +207,7 @@ public sealed class MonitoringDashboardQueryService(
         while (await reader.ReadAsync(cancellationToken))
         {
             points.Add(new MonitoringTrendPoint(
-                DateTimeOffset.Parse(reader.GetString(0)),
+                DateTimeOffset.Parse(reader.GetString(0), CultureInfo.InvariantCulture),
                 reader.IsDBNull(1) ? 0.0 : reader.GetDouble(1),
                 reader.IsDBNull(2) ? null : reader.GetDouble(2)));
         }
@@ -212,7 +218,7 @@ public sealed class MonitoringDashboardQueryService(
 
     private static async Task<IReadOnlyList<MonitoringEventSnapshot>> GetRecentEventsAsync(
         SqliteConnection connection,
-        (DateTimeOffset SampledAt, SamplingMode SamplingMode, AcquisitionBatchStatus Status)? latestBatch,
+        (DateTimeOffset SampledAt, DateTimeOffset PersistedAt, SamplingMode SamplingMode, AcquisitionBatchStatus Status)? latestBatch,
         IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots,
         CancellationToken cancellationToken)
     {
@@ -232,7 +238,7 @@ public sealed class MonitoringDashboardQueryService(
             while (await reader.ReadAsync(cancellationToken))
             {
                 events.Add(new MonitoringEventSnapshot(
-                    DateTimeOffset.Parse(reader.GetString(0)),
+                    DateTimeOffset.Parse(reader.GetString(0), CultureInfo.InvariantCulture),
                     reader.GetString(1),
                     ParseEventSeverity(reader.GetString(2))));
             }
@@ -252,13 +258,13 @@ public sealed class MonitoringDashboardQueryService(
         if (events.Count == 0 && latestBatch is not null)
         {
             events.Add(new MonitoringEventSnapshot(
-                latestBatch.Value.SampledAt,
+                latestBatch.Value.PersistedAt.ToLocalTime(),
                 $"최근 저장 완료 / 배치 상태 {latestBatch.Value.Status}",
                 MonitoringEventSeverity.Info));
 
             events.Add(new MonitoringEventSnapshot(
-                latestBatch.Value.SampledAt,
-                "최신 샘플 10채널 조회 성공",
+                latestBatch.Value.SampledAt.ToLocalTime(),
+                "최신 샘플 조회 성공",
                 MonitoringEventSeverity.Info));
         }
 
@@ -278,7 +284,7 @@ public sealed class MonitoringDashboardQueryService(
         };
 
     private static StorageStatusSnapshot CreateStorageStatus(
-        (DateTimeOffset SampledAt, SamplingMode SamplingMode, AcquisitionBatchStatus Status)? latestBatch)
+        (DateTimeOffset SampledAt, DateTimeOffset PersistedAt, SamplingMode SamplingMode, AcquisitionBatchStatus Status)? latestBatch)
     {
         if (latestBatch is null)
         {
@@ -286,15 +292,15 @@ public sealed class MonitoringDashboardQueryService(
                 StorageHealth.Delayed,
                 null,
                 0,
-                "대기 중",
+                "대기",
                 "저장된 샘플이 없습니다.");
         }
 
         var now = DateTimeOffset.Now;
-        var lastSuccessfulWriteAt = latestBatch.Value.SampledAt;
+        var lastSuccessfulWriteAt = latestBatch.Value.PersistedAt.ToLocalTime();
         var samplingSeconds = (int)latestBatch.Value.SamplingMode;
-        var healthyThreshold = TimeSpan.FromSeconds(samplingSeconds * 2);
-        var errorThreshold = TimeSpan.FromSeconds(samplingSeconds * 5);
+        var healthyThreshold = TimeSpan.FromSeconds(Math.Max(1, samplingSeconds + 1));
+        var errorThreshold = TimeSpan.FromSeconds(Math.Max(3, samplingSeconds * 3));
         var age = now - lastSuccessfulWriteAt;
 
         if (age <= healthyThreshold)
@@ -304,7 +310,7 @@ public sealed class MonitoringDashboardQueryService(
                 lastSuccessfulWriteAt,
                 0,
                 "정상",
-                $"마지막 저장 성공 {lastSuccessfulWriteAt:HH:mm:ss}");
+                $"마지막 DB 저장 완료 {lastSuccessfulWriteAt:HH:mm:ss}");
         }
 
         if (age <= errorThreshold)
@@ -314,7 +320,7 @@ public sealed class MonitoringDashboardQueryService(
                 lastSuccessfulWriteAt,
                 0,
                 "지연",
-                $"마지막 저장 {lastSuccessfulWriteAt:HH:mm:ss}");
+                $"최근 저장은 {lastSuccessfulWriteAt:HH:mm:ss}, 새 저장 대기 중");
         }
 
         return new StorageStatusSnapshot(
@@ -322,6 +328,15 @@ public sealed class MonitoringDashboardQueryService(
             lastSuccessfulWriteAt,
             0,
             "정지",
-            $"마지막 저장 {lastSuccessfulWriteAt:HH:mm:ss}");
+            $"마지막 DB 저장 {lastSuccessfulWriteAt:HH:mm:ss}");
+    }
+
+    private static DateTimeOffset ParseSqliteUtcTimestamp(string value)
+    {
+        var parsed = DateTime.Parse(
+            value,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
+        return new DateTimeOffset(parsed);
     }
 }

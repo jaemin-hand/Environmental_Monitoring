@@ -9,4 +9,5 @@ public sealed record MeasurementChannel(
     int DeviceChannelIndex,
     bool SupportsDeviationAlarm,
     decimal? DefaultDeviationThreshold,
-    decimal? TargetValue);
+    decimal? TargetValue,
+    decimal CalibrationOffset);

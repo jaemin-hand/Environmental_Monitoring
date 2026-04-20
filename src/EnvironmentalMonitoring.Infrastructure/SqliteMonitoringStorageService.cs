@@ -1,5 +1,7 @@
 using EnvironmentalMonitoring.Domain;
 using Microsoft.Data.Sqlite;
+using System.Globalization;
+using System.Text;
 
 namespace EnvironmentalMonitoring.Infrastructure;
 
@@ -29,6 +31,7 @@ public sealed class SqliteMonitoringStorageService(
         CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref _pendingWriteCount);
+        var databaseCommitted = false;
 
         try
         {
@@ -51,13 +54,19 @@ public sealed class SqliteMonitoringStorageService(
                 cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
+            databaseCommitted = true;
 
-            _lastSuccessfulWriteAt = snapshot.SampledAt;
+            await AppendDailyCsvAsync(snapshot, cancellationToken);
+
+            _lastSuccessfulWriteAt = DateTimeOffset.Now;
+
             _lastFailureMessage = null;
         }
         catch (Exception ex)
         {
-            _lastFailureMessage = ex.Message;
+            _lastFailureMessage = databaseCommitted
+                ? $"DB save succeeded but daily CSV backup failed: {ex.Message}"
+                : ex.Message;
         }
         finally
         {
@@ -135,8 +144,8 @@ public sealed class SqliteMonitoringStorageService(
     private static async Task ApplyPragmasAsync(SqliteConnection connection, CancellationToken cancellationToken)
     {
         const string sql = """
-            PRAGMA journal_mode=DELETE;
-            PRAGMA synchronous=EXTRA;
+            PRAGMA journal_mode=WAL;
+            PRAGMA synchronous=FULL;
             PRAGMA foreign_keys=ON;
             PRAGMA temp_store=MEMORY;
             PRAGMA busy_timeout=5000;
@@ -218,8 +227,8 @@ public sealed class SqliteMonitoringStorageService(
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        await UpsertSettingAsync(connection, transaction, "storage_journal_mode", "DELETE", cancellationToken);
-        await UpsertSettingAsync(connection, transaction, "storage_synchronous", "EXTRA", cancellationToken);
+        await UpsertSettingAsync(connection, transaction, "storage_journal_mode", "WAL", cancellationToken);
+        await UpsertSettingAsync(connection, transaction, "storage_synchronous", "FULL", cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
     }
@@ -485,6 +494,72 @@ public sealed class SqliteMonitoringStorageService(
         command.Parameters.AddWithValue("@ResolvedAt", resolvedAt.ToString("O"));
         command.Parameters.AddWithValue("@AlarmId", alarmId);
         await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private async Task AppendDailyCsvAsync(
+        AcquisitionSnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        var csvPath = storageLayout.GetDailyCsvPath(
+            DateOnly.FromDateTime(snapshot.SampledAt.LocalDateTime));
+        var fileExists = File.Exists(csvPath);
+
+        await using var stream = new FileStream(
+            csvPath,
+            FileMode.Append,
+            FileAccess.Write,
+            FileShare.ReadWrite,
+            4096,
+            FileOptions.Asynchronous | FileOptions.WriteThrough);
+        await using var writer = new StreamWriter(stream, new UTF8Encoding(false));
+
+        if (!fileExists || stream.Length == 0)
+        {
+            await writer.WriteLineAsync(
+                "sampled_at,sampling_mode,batch_status,channel_code,kind,unit,raw_value,corrected_value,quality_status");
+        }
+
+        foreach (var measurement in snapshot.Measurements.OrderBy(item => item.Channel.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var row = string.Join(",",
+            [
+                EscapeCsv(snapshot.SampledAt.ToString("O")),
+                EscapeCsv(snapshot.SamplingMode.ToString()),
+                EscapeCsv(snapshot.Status.ToString()),
+                EscapeCsv(measurement.Channel.Name),
+                EscapeCsv(measurement.Channel.Kind.ToString()),
+                EscapeCsv(measurement.Channel.Unit),
+                EscapeCsv(FormatCsvValue(measurement.RawValue)),
+                EscapeCsv(FormatCsvValue(measurement.CorrectedValue)),
+                EscapeCsv(measurement.QualityStatus.ToString()),
+            ]);
+
+            await writer.WriteLineAsync(row);
+        }
+
+        await writer.FlushAsync();
+    }
+
+    private static string FormatCsvValue(double value) =>
+        double.IsNaN(value) || double.IsInfinity(value)
+            ? string.Empty
+            : value.ToString("0.###", CultureInfo.InvariantCulture);
+
+    private static string EscapeCsv(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        if (!value.Contains(',') && !value.Contains('"') && !value.Contains('\n') && !value.Contains('\r'))
+        {
+            return value;
+        }
+
+        return $"\"{value.Replace("\"", "\"\"")}\"";
     }
 
     private sealed record AlarmState(

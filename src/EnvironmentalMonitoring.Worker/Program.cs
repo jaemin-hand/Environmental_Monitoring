@@ -4,18 +4,25 @@ using EnvironmentalMonitoring.Worker;
 using Microsoft.Extensions.Options;
 
 var builder = Host.CreateApplicationBuilder(args);
-var runtimeOptions = builder.Configuration
+var bootstrapRuntimeOptions = builder.Configuration
     .GetSection("Monitoring")
     .Get<MonitoringRuntimeOptions>()
     ?? new MonitoringRuntimeOptions();
+var settingsLayout = new MonitoringStorageLayout(
+    MonitoringStoragePathResolver.ResolveRootDirectory("runtime"));
+var settingsStore = new MonitoringSettingsStore(settingsLayout);
+var settingsDocument = settingsStore.LoadOrCreateDefaults(
+    bootstrapRuntimeOptions,
+    MonitoringProjectDefaults.CreateBlueprint(bootstrapRuntimeOptions.DefaultSamplingMode));
+var runtimeOptions = MonitoringRuntimeOptionsResolver.Resolve(bootstrapRuntimeOptions, settingsDocument);
+var storageLayout = new MonitoringStorageLayout(
+    MonitoringStoragePathResolver.ResolveRootDirectory(runtimeOptions.DataRoot));
+var blueprint = MonitoringBlueprintComposer.Compose(runtimeOptions, settingsDocument);
 
-builder.Services.Configure<MonitoringRuntimeOptions>(
-    builder.Configuration.GetSection("Monitoring"));
-builder.Services.AddSingleton(
-    MonitoringProjectDefaults.CreateBlueprint(runtimeOptions.DefaultSamplingMode));
-builder.Services.AddSingleton(
-    new MonitoringStorageLayout(
-        MonitoringStoragePathResolver.ResolveRootDirectory(runtimeOptions.DataRoot)));
+builder.Services.AddSingleton(Options.Create(runtimeOptions));
+builder.Services.AddSingleton(blueprint);
+builder.Services.AddSingleton(storageLayout);
+builder.Services.AddSingleton(settingsStore);
 builder.Services.AddSingleton<SqliteMonitoringStorageService>();
 builder.Services.AddSingleton<PlaceholderMonitoringAcquisitionGateway>();
 builder.Services.AddSingleton<ModbusTcpMonitoringAcquisitionGateway>();

@@ -28,6 +28,7 @@ public sealed record DashboardStatusCard(
 }
 
 public sealed record NavigationItem(
+    string Key,
     string Title,
     bool IsSelected)
 {
@@ -70,6 +71,53 @@ public sealed record RecentEventItem(
         _ => DashboardPalette.Normal,
     };
 }
+
+public sealed class SettingsDeviceItem
+{
+    public string Key { get; set; } = string.Empty;
+
+    public string DisplayName { get; set; } = string.Empty;
+
+    public string IpAddress { get; set; } = string.Empty;
+
+    public int Port { get; set; }
+}
+
+public sealed class SettingsChannelItem
+{
+    public string Code { get; set; } = string.Empty;
+
+    public string DisplayName { get; set; } = string.Empty;
+
+    public decimal? TargetValue { get; set; }
+
+    public decimal? DeviationThreshold { get; set; }
+
+    public decimal Offset { get; set; }
+}
+
+public sealed record SampleHistoryItem(
+    string SampledAt,
+    string ChannelCode,
+    string Kind,
+    string RawValue,
+    string CorrectedValue,
+    string Quality);
+
+public sealed record AlarmHistoryItem(
+    string OccurredAt,
+    string ResolvedAt,
+    string ChannelCode,
+    string AlarmType,
+    string Severity,
+    string MeasuredValue,
+    string Message);
+
+public sealed record LiveChannelItem(
+    string ChannelCode,
+    string Value,
+    string Quality,
+    string SampledAt);
 
 internal static class DashboardPalette
 {

@@ -1,5 +1,6 @@
 using EnvironmentalMonitoring.Domain;
 using EnvironmentalMonitoring.Infrastructure;
+using System.Diagnostics;
 
 namespace EnvironmentalMonitoring.Worker;
 
@@ -22,21 +23,35 @@ public sealed class Worker(
 
         logger.LogInformation("Runtime database path: {DatabasePath}", storageLayout.DatabaseFilePath);
 
-        var delay = TimeSpan.FromSeconds((int)blueprint.DefaultSamplingMode);
+        var interval = TimeSpan.FromSeconds((int)blueprint.DefaultSamplingMode);
+        var nextScheduledAt = DateTimeOffset.Now;
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            var cycleStopwatch = Stopwatch.StartNew();
             var sampledAt = DateTimeOffset.Now;
             var snapshot = await acquisitionGateway.CaptureAsync(sampledAt, stoppingToken);
             var storageStatus = await storageService.SaveSnapshotAsync(snapshot, stoppingToken);
+            cycleStopwatch.Stop();
 
             logger.LogInformation(
-                "Acquisition stored at {Timestamp}. Storage status: {Summary} ({Detail})",
+                "Acquisition stored. Sampled at {Timestamp}. Cycle time {ElapsedMilliseconds} ms. Storage status: {Summary} ({Detail})",
                 sampledAt,
+                cycleStopwatch.ElapsedMilliseconds,
                 storageStatus.Summary,
                 storageStatus.Detail);
 
-            await Task.Delay(delay, stoppingToken);
+            nextScheduledAt += interval;
+            var remaining = nextScheduledAt - DateTimeOffset.Now;
+
+            if (remaining > TimeSpan.Zero)
+            {
+                await Task.Delay(remaining, stoppingToken);
+            }
+            else
+            {
+                nextScheduledAt = DateTimeOffset.Now;
+            }
         }
     }
 }

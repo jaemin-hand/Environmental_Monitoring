@@ -35,7 +35,7 @@ public sealed class PlaceholderMonitoringAcquisitionGateway(
         DateTimeOffset sampledAt)
     {
         var second = sampledAt.Second;
-        var baseValue = channel.Kind switch
+        var rawValue = channel.Kind switch
         {
             ChannelKind.Temperature => 23.0 + Math.Sin(second / 10.0 + channel.ChannelNumber) * 0.6,
             ChannelKind.Humidity => 45.0 + Math.Sin(second / 15.0) * 2.0,
@@ -44,18 +44,20 @@ public sealed class PlaceholderMonitoringAcquisitionGateway(
         };
 
         var qualityStatus = SampleQualityStatus.Normal;
-        var correctedValue = baseValue;
+        var simulatedValue = rawValue;
 
         if (_options.PlaceholderProfile.Equals("AlarmDemo", StringComparison.OrdinalIgnoreCase))
         {
-            ApplyAlarmDemoProfile(channel, sampledAt, ref correctedValue, ref qualityStatus);
+            ApplyAlarmDemoProfile(channel, sampledAt, ref simulatedValue, ref qualityStatus);
         }
+
+        var correctedValue = simulatedValue + (double)channel.CalibrationOffset;
 
         return new CapturedMeasurement(
             channel,
             RawValue: qualityStatus == SampleQualityStatus.CommunicationError
                 ? double.NaN
-                : Math.Round(correctedValue, 3),
+                : Math.Round(simulatedValue, 3),
             CorrectedValue: qualityStatus == SampleQualityStatus.CommunicationError
                 ? double.NaN
                 : Math.Round(correctedValue, 3),

@@ -32,16 +32,16 @@ public static class MonitoringProjectDefaults
 
         var channels = new[]
         {
-            new MeasurementChannel(1, "T01", ChannelKind.Temperature, "degC", "ADAM6015-A", 0, true, 5m, 23m),
-            new MeasurementChannel(2, "T02", ChannelKind.Temperature, "degC", "ADAM6015-A", 1, true, 5m, 23m),
-            new MeasurementChannel(3, "T03", ChannelKind.Temperature, "degC", "ADAM6015-A", 2, true, 5m, 23m),
-            new MeasurementChannel(4, "T04", ChannelKind.Temperature, "degC", "ADAM6015-A", 3, true, 5m, 23m),
-            new MeasurementChannel(5, "T05", ChannelKind.Temperature, "degC", "ADAM6015-A", 4, true, 5m, 23m),
-            new MeasurementChannel(6, "T06", ChannelKind.Temperature, "degC", "ADAM6015-A", 5, true, 5m, 23m),
-            new MeasurementChannel(7, "T07", ChannelKind.Temperature, "degC", "ADAM6015-A", 6, true, 5m, 23m),
-            new MeasurementChannel(8, "T08", ChannelKind.Temperature, "degC", "ADAM6015-B", 0, true, 5m, 23m),
-            new MeasurementChannel(9, "H01", ChannelKind.Humidity, "%RH", "INDIGO520", 0, false, null, null),
-            new MeasurementChannel(10, "P01", ChannelKind.Pressure, "kPa", "INDIGO520", 1, false, null, null),
+            new MeasurementChannel(1, "T01", ChannelKind.Temperature, "degC", "ADAM6015-A", 0, true, 5m, 23m, 0m),
+            new MeasurementChannel(2, "T02", ChannelKind.Temperature, "degC", "ADAM6015-A", 1, true, 5m, 23m, 0m),
+            new MeasurementChannel(3, "T03", ChannelKind.Temperature, "degC", "ADAM6015-A", 2, true, 5m, 23m, 0m),
+            new MeasurementChannel(4, "T04", ChannelKind.Temperature, "degC", "ADAM6015-A", 3, true, 5m, 23m, 0m),
+            new MeasurementChannel(5, "T05", ChannelKind.Temperature, "degC", "ADAM6015-A", 4, true, 5m, 23m, 0m),
+            new MeasurementChannel(6, "T06", ChannelKind.Temperature, "degC", "ADAM6015-A", 5, true, 5m, 23m, 0m),
+            new MeasurementChannel(7, "T07", ChannelKind.Temperature, "degC", "ADAM6015-A", 6, true, 5m, 23m, 0m),
+            new MeasurementChannel(8, "T08", ChannelKind.Temperature, "degC", "ADAM6015-B", 0, true, 5m, 23m, 0m),
+            new MeasurementChannel(9, "H01", ChannelKind.Humidity, "%RH", "INDIGO520", 0, false, null, null, 0m),
+            new MeasurementChannel(10, "P01", ChannelKind.Pressure, "kPa", "INDIGO520", 1, false, null, null, 0m),
         };
 
         return new MonitoringBlueprint(

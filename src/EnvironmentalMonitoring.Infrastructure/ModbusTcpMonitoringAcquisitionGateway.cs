@@ -31,12 +31,13 @@ public sealed class ModbusTcpMonitoringAcquisitionGateway(
                     map.RegisterCount,
                     cancellationToken);
 
-                var value = ModbusRegisterDecoder.Decode(registers, map);
+                var rawValue = ModbusRegisterDecoder.Decode(registers, map);
+                var correctedValue = rawValue + (double)channel.CalibrationOffset;
 
                 measurements.Add(new CapturedMeasurement(
                     channel,
-                    RawValue: Math.Round(value, 3),
-                    CorrectedValue: Math.Round(value, 3),
+                    RawValue: Math.Round(rawValue, 3),
+                    CorrectedValue: Math.Round(correctedValue, 3),
                     QualityStatus: SampleQualityStatus.Normal));
 
                 successfulReads++;
