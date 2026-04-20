@@ -1,0 +1,49 @@
+.\src\EnvironmentalMonitoring.Worker\Properties\launchSettings.json의 시작 설정을 사용하는 중...
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\thswo\Desktop\Environmental_Monitoring\src\EnvironmentalMonitoring.Worker
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Monitoring worker started with 3 devices and 10 channels. Default mode: OneSecond
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Runtime database path: C:\Users\thswo\AppData\Local\EnvironmentalMonitoring\runtime\data\environment-monitoring.db
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:14:50 +09:00. Storage status: Storage healthy (Last write succeeded at 15:14:50)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:14:51 +09:00. Storage status: Storage healthy (Last write succeeded at 15:14:51)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:14:52 +09:00. Storage status: Storage healthy (Last write succeeded at 15:14:52)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:14:53 +09:00. Storage status: Storage healthy (Last write succeeded at 15:14:53)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:14:54 +09:00. Storage status: Storage healthy (Last write succeeded at 15:14:54)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:14:56 +09:00. Storage status: Storage healthy (Last write succeeded at 15:14:56)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:14:57 +09:00. Storage status: Storage healthy (Last write succeeded at 15:14:57)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:14:58 +09:00. Storage status: Storage healthy (Last write succeeded at 15:14:58)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:14:59 +09:00. Storage status: Storage healthy (Last write succeeded at 15:14:59)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:15:00 +09:00. Storage status: Storage healthy (Last write succeeded at 15:15:00)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:15:01 +09:00. Storage status: Storage healthy (Last write succeeded at 15:15:01)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:15:02 +09:00. Storage status: Storage healthy (Last write succeeded at 15:15:02)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:15:03 +09:00. Storage status: Storage healthy (Last write succeeded at 15:15:03)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:15:04 +09:00. Storage status: Storage healthy (Last write succeeded at 15:15:04)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:15:05 +09:00. Storage status: Storage healthy (Last write succeeded at 15:15:05)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:15:06 +09:00. Storage status: Storage healthy (Last write succeeded at 15:15:06)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:15:07 +09:00. Storage status: Storage healthy (Last write succeeded at 15:15:07)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:15:08 +09:00. Storage status: Storage healthy (Last write succeeded at 15:15:08)
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:15:09 +09:00. Storage status: Storage healthy (Last write succeeded at 15:15:09)

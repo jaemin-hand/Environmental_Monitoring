@@ -4,12 +4,18 @@ using EnvironmentalMonitoring.Worker;
 using Microsoft.Extensions.Options;
 
 var builder = Host.CreateApplicationBuilder(args);
+var runtimeOptions = builder.Configuration
+    .GetSection("Monitoring")
+    .Get<MonitoringRuntimeOptions>()
+    ?? new MonitoringRuntimeOptions();
 
 builder.Services.Configure<MonitoringRuntimeOptions>(
     builder.Configuration.GetSection("Monitoring"));
-builder.Services.AddSingleton(MonitoringProjectDefaults.CreateBlueprint());
 builder.Services.AddSingleton(
-    new MonitoringStorageLayout(Path.Combine(AppContext.BaseDirectory, "runtime")));
+    MonitoringProjectDefaults.CreateBlueprint(runtimeOptions.DefaultSamplingMode));
+builder.Services.AddSingleton(
+    new MonitoringStorageLayout(
+        MonitoringStoragePathResolver.ResolveRootDirectory(runtimeOptions.DataRoot)));
 builder.Services.AddSingleton<SqliteMonitoringStorageService>();
 builder.Services.AddSingleton<PlaceholderMonitoringAcquisitionGateway>();
 builder.Services.AddSingleton<ModbusTcpMonitoringAcquisitionGateway>();

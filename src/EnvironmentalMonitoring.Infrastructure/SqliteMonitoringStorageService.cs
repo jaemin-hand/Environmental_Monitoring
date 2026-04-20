@@ -43,23 +43,28 @@ public sealed class SqliteMonitoringStorageService(
                 await InsertSampleAsync(connection, transaction, batchId, measurement, cancellationToken);
             }
 
+            await SynchronizeAlarmEventsAsync(
+                connection,
+                transaction,
+                batchId,
+                snapshot,
+                cancellationToken);
+
             await transaction.CommitAsync(cancellationToken);
 
             _lastSuccessfulWriteAt = snapshot.SampledAt;
             _lastFailureMessage = null;
-
-            return GetCurrentStatus(snapshot.SamplingMode, DateTimeOffset.Now);
         }
         catch (Exception ex)
         {
             _lastFailureMessage = ex.Message;
-
-            return GetCurrentStatus(snapshot.SamplingMode, DateTimeOffset.Now);
         }
         finally
         {
             Interlocked.Decrement(ref _pendingWriteCount);
         }
+
+        return GetCurrentStatus(snapshot.SamplingMode, DateTimeOffset.Now);
     }
 
     public StorageStatusSnapshot GetCurrentStatus(
@@ -287,4 +292,210 @@ public sealed class SqliteMonitoringStorageService(
         command.Parameters.AddWithValue("@QualityStatus", measurement.QualityStatus.ToString());
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
+
+    private static async Task SynchronizeAlarmEventsAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        long batchId,
+        AcquisitionSnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        var activeAlarms = EvaluateAlarms(snapshot)
+            .ToDictionary(item => item.Key, StringComparer.OrdinalIgnoreCase);
+        var openAlarms = await GetOpenAlarmsAsync(connection, transaction, cancellationToken);
+
+        foreach (var activeAlarm in activeAlarms.Values)
+        {
+            if (!openAlarms.ContainsKey(activeAlarm.Key))
+            {
+                await InsertAlarmEventAsync(connection, transaction, batchId, snapshot.SampledAt, activeAlarm, cancellationToken);
+            }
+        }
+
+        foreach (var openAlarm in openAlarms.Values)
+        {
+            if (!activeAlarms.ContainsKey(openAlarm.Key))
+            {
+                await ResolveAlarmEventAsync(connection, transaction, openAlarm.Id, snapshot.SampledAt, cancellationToken);
+            }
+        }
+    }
+
+    private static IReadOnlyList<AlarmState> EvaluateAlarms(AcquisitionSnapshot snapshot)
+    {
+        var alarms = new List<AlarmState>();
+
+        foreach (var measurement in snapshot.Measurements)
+        {
+            var channel = measurement.Channel;
+
+            if (measurement.QualityStatus == SampleQualityStatus.CommunicationError)
+            {
+                alarms.Add(new AlarmState(
+                    BuildAlarmKey(channel.Name, "COMMUNICATION"),
+                    channel.Name,
+                    "COMMUNICATION",
+                    "Warning",
+                    double.NaN,
+                    $"{BuildChannelLabel(channel)} 통신 이상"));
+                continue;
+            }
+
+            if (double.IsNaN(measurement.CorrectedValue) || double.IsInfinity(measurement.CorrectedValue))
+            {
+                continue;
+            }
+
+            var value = measurement.CorrectedValue;
+
+            if (IsOutOfPhysicalRange(channel.Kind, value))
+            {
+                alarms.Add(new AlarmState(
+                    BuildAlarmKey(channel.Name, "OUT_OF_RANGE"),
+                    channel.Name,
+                    "OUT_OF_RANGE",
+                    "Critical",
+                    value,
+                    $"{BuildChannelLabel(channel)} 범위 이탈 ({value:0.0}{channel.Unit})"));
+                continue;
+            }
+
+            if (channel.SupportsDeviationAlarm
+                && channel.TargetValue.HasValue
+                && channel.DefaultDeviationThreshold.HasValue
+                && Math.Abs(value - (double)channel.TargetValue.Value) > (double)channel.DefaultDeviationThreshold.Value)
+            {
+                alarms.Add(new AlarmState(
+                    BuildAlarmKey(channel.Name, "DEVIATION"),
+                    channel.Name,
+                    "DEVIATION",
+                    "Warning",
+                    value,
+                    $"{BuildChannelLabel(channel)} 설정값 이탈 (기준 {channel.TargetValue:0.#}{channel.Unit}, 측정 {value:0.0}{channel.Unit})"));
+            }
+        }
+
+        return alarms;
+    }
+
+    private static bool IsOutOfPhysicalRange(ChannelKind kind, double value) => kind switch
+    {
+        ChannelKind.Temperature => value < -20.0 || value > 60.0,
+        ChannelKind.Humidity => value < 0.0 || value > 100.0,
+        ChannelKind.Pressure => value < 80.0 || value > 120.0,
+        _ => false,
+    };
+
+    private static string BuildChannelLabel(MeasurementChannel channel) => channel.Kind switch
+    {
+        ChannelKind.Temperature => $"CH{channel.ChannelNumber} 온도",
+        ChannelKind.Humidity => "H1 습도",
+        ChannelKind.Pressure => "P1 압력",
+        _ => channel.Name,
+    };
+
+    private static string BuildAlarmKey(string channelCode, string alarmType) => $"{channelCode}|{alarmType}";
+
+    private static async Task<Dictionary<string, OpenAlarmState>> GetOpenAlarmsAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var alarms = new Dictionary<string, OpenAlarmState>(StringComparer.OrdinalIgnoreCase);
+
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT a.id, c.code, a.alarm_type
+            FROM alarm_events a
+            JOIN channels c ON c.id = a.channel_id
+            WHERE a.resolved_at IS NULL;
+            """;
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var id = reader.GetInt64(0);
+            var channelCode = reader.GetString(1);
+            var alarmType = reader.GetString(2);
+            var key = BuildAlarmKey(channelCode, alarmType);
+
+            alarms[key] = new OpenAlarmState(id, key);
+        }
+
+        return alarms;
+    }
+
+    private static async Task InsertAlarmEventAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        long batchId,
+        DateTimeOffset occurredAt,
+        AlarmState alarm,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT INTO alarm_events (
+                channel_id,
+                batch_id,
+                alarm_type,
+                severity,
+                measured_value,
+                message,
+                occurred_at
+            )
+            VALUES (
+                (SELECT id FROM channels WHERE code = @ChannelCode),
+                @BatchId,
+                @AlarmType,
+                @Severity,
+                @MeasuredValue,
+                @Message,
+                @OccurredAt
+            );
+            """;
+        command.Parameters.AddWithValue("@ChannelCode", alarm.ChannelCode);
+        command.Parameters.AddWithValue("@BatchId", batchId);
+        command.Parameters.AddWithValue("@AlarmType", alarm.AlarmType);
+        command.Parameters.AddWithValue("@Severity", alarm.Severity);
+        command.Parameters.AddWithValue("@MeasuredValue", double.IsNaN(alarm.MeasuredValue) ? DBNull.Value : alarm.MeasuredValue);
+        command.Parameters.AddWithValue("@Message", alarm.Message);
+        command.Parameters.AddWithValue("@OccurredAt", occurredAt.ToString("O"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task ResolveAlarmEventAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        long alarmId,
+        DateTimeOffset resolvedAt,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            UPDATE alarm_events
+            SET resolved_at = @ResolvedAt
+            WHERE id = @AlarmId
+              AND resolved_at IS NULL;
+            """;
+        command.Parameters.AddWithValue("@ResolvedAt", resolvedAt.ToString("O"));
+        command.Parameters.AddWithValue("@AlarmId", alarmId);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private sealed record AlarmState(
+        string Key,
+        string ChannelCode,
+        string AlarmType,
+        string Severity,
+        double MeasuredValue,
+        string Message);
+
+    private sealed record OpenAlarmState(
+        long Id,
+        string Key);
 }

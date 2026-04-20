@@ -31,7 +31,7 @@ public sealed class Worker(
             var storageStatus = await storageService.SaveSnapshotAsync(snapshot, stoppingToken);
 
             logger.LogInformation(
-                "Placeholder acquisition stored at {Timestamp}. Storage status: {Summary} ({Detail})",
+                "Acquisition stored at {Timestamp}. Storage status: {Summary} ({Detail})",
                 sampledAt,
                 storageStatus.Summary,
                 storageStatus.Detail);

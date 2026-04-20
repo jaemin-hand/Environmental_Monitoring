@@ -1,0 +1,13 @@
+.\src\EnvironmentalMonitoring.Worker\Properties\launchSettings.json의 시작 설정을 사용하는 중...
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\thswo\Desktop\Environmental_Monitoring\src\EnvironmentalMonitoring.Worker
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Monitoring worker started with 3 devices and 10 channels. Default mode: OneMinute
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Runtime database path: C:\Users\thswo\AppData\Local\EnvironmentalMonitoring\runtime\data\environment-monitoring.db
+info: EnvironmentalMonitoring.Worker.Worker[0]
+      Acquisition stored at 04/20/2026 15:04:06 +09:00. Storage status: Storage delayed (Pending writes: 1, last success 15:04:06)

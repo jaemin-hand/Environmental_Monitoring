@@ -8,4 +8,5 @@ public sealed record MeasurementChannel(
     string DeviceKey,
     int DeviceChannelIndex,
     bool SupportsDeviationAlarm,
-    decimal? DefaultDeviationThreshold);
+    decimal? DefaultDeviationThreshold,
+    decimal? TargetValue);

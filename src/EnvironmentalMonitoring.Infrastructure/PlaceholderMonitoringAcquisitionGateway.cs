@@ -1,40 +1,108 @@
 using EnvironmentalMonitoring.Domain;
+using Microsoft.Extensions.Options;
 
 namespace EnvironmentalMonitoring.Infrastructure;
 
 public sealed class PlaceholderMonitoringAcquisitionGateway(
-    MonitoringBlueprint blueprint) : IMonitoringAcquisitionGateway
+    MonitoringBlueprint blueprint,
+    IOptions<MonitoringRuntimeOptions> options) : IMonitoringAcquisitionGateway
 {
+    private readonly MonitoringRuntimeOptions _options = options.Value;
+
     public Task<AcquisitionSnapshot> CaptureAsync(
         DateTimeOffset sampledAt,
         CancellationToken cancellationToken)
     {
-        var second = sampledAt.Second;
         var measurements = blueprint.Channels
-            .Select(channel =>
-            {
-                var rawValue = channel.Kind switch
-                {
-                    ChannelKind.Temperature => 23.0 + (channel.ChannelNumber % 4) + Math.Sin(second / 10.0 + channel.ChannelNumber) * 0.4,
-                    ChannelKind.Humidity => 45.0 + Math.Sin(second / 15.0) * 2.0,
-                    ChannelKind.Pressure => 101.3 + Math.Cos(second / 12.0) * 0.15,
-                    _ => 0.0,
-                };
-
-                return new CapturedMeasurement(
-                    channel,
-                    RawValue: Math.Round(rawValue, 3),
-                    CorrectedValue: Math.Round(rawValue, 3),
-                    QualityStatus: SampleQualityStatus.Normal);
-            })
+            .Select(channel => CreateMeasurement(channel, sampledAt))
             .ToList();
+
+        var batchStatus = measurements.Any(item => item.QualityStatus == SampleQualityStatus.CommunicationError)
+            ? AcquisitionBatchStatus.Partial
+            : AcquisitionBatchStatus.Success;
 
         AcquisitionSnapshot snapshot = new(
             sampledAt,
             blueprint.DefaultSamplingMode,
             measurements,
-            AcquisitionBatchStatus.Success);
+            batchStatus);
 
         return Task.FromResult(snapshot);
+    }
+
+    private CapturedMeasurement CreateMeasurement(
+        MeasurementChannel channel,
+        DateTimeOffset sampledAt)
+    {
+        var second = sampledAt.Second;
+        var baseValue = channel.Kind switch
+        {
+            ChannelKind.Temperature => 23.0 + Math.Sin(second / 10.0 + channel.ChannelNumber) * 0.6,
+            ChannelKind.Humidity => 45.0 + Math.Sin(second / 15.0) * 2.0,
+            ChannelKind.Pressure => 101.3 + Math.Cos(second / 12.0) * 0.15,
+            _ => 0.0,
+        };
+
+        var qualityStatus = SampleQualityStatus.Normal;
+        var correctedValue = baseValue;
+
+        if (_options.PlaceholderProfile.Equals("AlarmDemo", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyAlarmDemoProfile(channel, sampledAt, ref correctedValue, ref qualityStatus);
+        }
+
+        return new CapturedMeasurement(
+            channel,
+            RawValue: qualityStatus == SampleQualityStatus.CommunicationError
+                ? double.NaN
+                : Math.Round(correctedValue, 3),
+            CorrectedValue: qualityStatus == SampleQualityStatus.CommunicationError
+                ? double.NaN
+                : Math.Round(correctedValue, 3),
+            QualityStatus: qualityStatus);
+    }
+
+    private void ApplyAlarmDemoProfile(
+        MeasurementChannel channel,
+        DateTimeOffset sampledAt,
+        ref double correctedValue,
+        ref SampleQualityStatus qualityStatus)
+    {
+        var cycleSeconds = Math.Max(5, _options.PlaceholderCycleSeconds);
+        var phase = (int)((sampledAt.ToUnixTimeSeconds() / cycleSeconds) % 4);
+
+        switch (phase)
+        {
+            case 1:
+                if (channel.Name == "T04")
+                {
+                    correctedValue = 31.2;
+                }
+                break;
+
+            case 2:
+                if (channel.Name == "T04")
+                {
+                    correctedValue = 31.8;
+                }
+
+                if (channel.Name == "P01")
+                {
+                    correctedValue = 121.4;
+                }
+                break;
+
+            case 3:
+                if (channel.Name == "H01")
+                {
+                    qualityStatus = SampleQualityStatus.CommunicationError;
+                }
+
+                if (channel.Name == "T02")
+                {
+                    correctedValue = 29.4;
+                }
+                break;
+        }
     }
 }
