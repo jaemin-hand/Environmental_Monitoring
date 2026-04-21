@@ -46,8 +46,19 @@ public static class MonitoringBlueprintComposer
 
                 return channel with
                 {
+                    DisplayName = string.IsNullOrWhiteSpace(overrideItem.DisplayName)
+                        ? channel.DisplayName
+                        : overrideItem.DisplayName,
+                    LocationName = string.IsNullOrWhiteSpace(overrideItem.LocationName)
+                        ? channel.LocationName
+                        : overrideItem.LocationName,
                     DefaultDeviationThreshold = overrideItem.DeviationThreshold ?? channel.DefaultDeviationThreshold,
                     TargetValue = overrideItem.TargetValue ?? channel.TargetValue,
+                    LowAlarmLimit = overrideItem.LowAlarmLimit ?? channel.LowAlarmLimit,
+                    HighAlarmLimit = overrideItem.HighAlarmLimit ?? channel.HighAlarmLimit,
+                    CalibrationScale = overrideItem.CalibrationScale == 0m
+                        ? channel.CalibrationScale
+                        : overrideItem.CalibrationScale,
                     CalibrationOffset = overrideItem.Offset,
                 };
             })

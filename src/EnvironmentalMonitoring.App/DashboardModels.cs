@@ -89,9 +89,17 @@ public sealed class SettingsChannelItem
 
     public string DisplayName { get; set; } = string.Empty;
 
+    public string LocationName { get; set; } = string.Empty;
+
     public decimal? TargetValue { get; set; }
 
     public decimal? DeviationThreshold { get; set; }
+
+    public decimal? LowAlarmLimit { get; set; }
+
+    public decimal? HighAlarmLimit { get; set; }
+
+    public decimal CalibrationScale { get; set; } = 1m;
 
     public decimal Offset { get; set; }
 }

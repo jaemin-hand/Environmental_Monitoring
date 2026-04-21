@@ -12,7 +12,9 @@ public sealed record MonitoringSampleRecord(
     SampleQualityStatus QualityStatus);
 
 public sealed record MonitoringAlarmRecord(
+    long Id,
     DateTimeOffset OccurredAt,
+    DateTimeOffset? AcknowledgedAt,
     DateTimeOffset? ResolvedAt,
     string ChannelCode,
     string AlarmType,

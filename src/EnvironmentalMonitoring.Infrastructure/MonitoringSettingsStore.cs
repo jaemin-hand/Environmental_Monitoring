@@ -30,7 +30,12 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
             var document = JsonSerializer.Deserialize<RuntimeMonitoringSettingsDocument>(json, JsonOptions);
             if (document is not null)
             {
-                EnsureMissingEntries(document, runtimeOptions, blueprint);
+                var changed = EnsureMissingEntries(document, runtimeOptions, blueprint);
+                if (changed)
+                {
+                    Save(document);
+                }
+
                 return document;
             }
         }
@@ -75,23 +80,38 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
                 .Select(channel => new RuntimeChannelSetting
                 {
                     Code = channel.Name,
-                    DisplayName = BuildChannelDisplayName(channel),
+                    DisplayName = channel.DisplayName,
+                    LocationName = channel.LocationName,
                     TargetValue = channel.TargetValue,
                     DeviationThreshold = channel.DefaultDeviationThreshold,
+                    LowAlarmLimit = channel.LowAlarmLimit,
+                    HighAlarmLimit = channel.HighAlarmLimit,
+                    CalibrationScale = channel.CalibrationScale,
                     Offset = channel.CalibrationOffset,
                 })
                 .ToList(),
         };
     }
 
-    private static void EnsureMissingEntries(
+    private static bool EnsureMissingEntries(
         RuntimeMonitoringSettingsDocument document,
         MonitoringRuntimeOptions runtimeOptions,
         MonitoringBlueprint blueprint)
     {
+        var changed = false;
+
         document.Monitoring ??= new MonitoringRuntimeOptions();
-        document.Monitoring.GatewayMode ??= runtimeOptions.GatewayMode;
-        document.Monitoring.DataRoot ??= runtimeOptions.DataRoot;
+        if (string.IsNullOrWhiteSpace(document.Monitoring.GatewayMode))
+        {
+            document.Monitoring.GatewayMode = runtimeOptions.GatewayMode;
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(document.Monitoring.DataRoot))
+        {
+            document.Monitoring.DataRoot = runtimeOptions.DataRoot;
+            changed = true;
+        }
 
         var existingDevices = document.Devices.ToDictionary(item => item.Key, StringComparer.OrdinalIgnoreCase);
         foreach (var device in blueprint.Devices)
@@ -105,6 +125,7 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
                     IpAddress = device.IpAddress,
                     Port = device.Port,
                 });
+                changed = true;
             }
         }
 
@@ -116,20 +137,64 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
                 document.Channels.Add(new RuntimeChannelSetting
                 {
                     Code = channel.Name,
-                    DisplayName = BuildChannelDisplayName(channel),
+                    DisplayName = channel.DisplayName,
+                    LocationName = channel.LocationName,
                     TargetValue = channel.TargetValue,
                     DeviationThreshold = channel.DefaultDeviationThreshold,
+                    LowAlarmLimit = channel.LowAlarmLimit,
+                    HighAlarmLimit = channel.HighAlarmLimit,
+                    CalibrationScale = channel.CalibrationScale,
                     Offset = channel.CalibrationOffset,
                 });
+                changed = true;
+            }
+            else
+            {
+                var existing = existingChannels[channel.Name];
+                if (string.IsNullOrWhiteSpace(existing.DisplayName))
+                {
+                    existing.DisplayName = channel.DisplayName;
+                    changed = true;
+                }
+
+                if (string.IsNullOrWhiteSpace(existing.LocationName))
+                {
+                    existing.LocationName = channel.LocationName;
+                    changed = true;
+                }
+
+                if (existing.TargetValue is null && channel.TargetValue is not null)
+                {
+                    existing.TargetValue = channel.TargetValue;
+                    changed = true;
+                }
+
+                if (existing.DeviationThreshold is null && channel.DefaultDeviationThreshold is not null)
+                {
+                    existing.DeviationThreshold = channel.DefaultDeviationThreshold;
+                    changed = true;
+                }
+
+                if (existing.LowAlarmLimit is null && channel.LowAlarmLimit is not null)
+                {
+                    existing.LowAlarmLimit = channel.LowAlarmLimit;
+                    changed = true;
+                }
+
+                if (existing.HighAlarmLimit is null && channel.HighAlarmLimit is not null)
+                {
+                    existing.HighAlarmLimit = channel.HighAlarmLimit;
+                    changed = true;
+                }
+
+                if (existing.CalibrationScale == 0m)
+                {
+                    existing.CalibrationScale = channel.CalibrationScale;
+                    changed = true;
+                }
             }
         }
-    }
 
-    private static string BuildChannelDisplayName(MeasurementChannel channel) => channel.Kind switch
-    {
-        ChannelKind.Temperature => $"CH{channel.ChannelNumber} Temperature",
-        ChannelKind.Humidity => "H1 Humidity",
-        ChannelKind.Pressure => "P1 Pressure",
-        _ => channel.Name,
-    };
+        return changed;
+    }
 }

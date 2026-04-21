@@ -51,7 +51,7 @@ public sealed class PlaceholderMonitoringAcquisitionGateway(
             ApplyAlarmDemoProfile(channel, sampledAt, ref simulatedValue, ref qualityStatus);
         }
 
-        var correctedValue = simulatedValue + (double)channel.CalibrationOffset;
+        var correctedValue = (simulatedValue * (double)channel.CalibrationScale) + (double)channel.CalibrationOffset;
 
         return new CapturedMeasurement(
             channel,

@@ -298,8 +298,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 Code = channel.Code,
                 DisplayName = channel.DisplayName,
+                LocationName = channel.LocationName,
                 TargetValue = channel.TargetValue,
                 DeviationThreshold = channel.DeviationThreshold,
+                LowAlarmLimit = channel.LowAlarmLimit,
+                HighAlarmLimit = channel.HighAlarmLimit,
+                CalibrationScale = channel.CalibrationScale,
                 Offset = channel.Offset,
             });
         }
@@ -332,8 +336,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 {
                     Code = item.Code,
                     DisplayName = item.DisplayName,
+                    LocationName = item.LocationName,
                     TargetValue = item.TargetValue,
                     DeviationThreshold = item.DeviationThreshold,
+                    LowAlarmLimit = item.LowAlarmLimit,
+                    HighAlarmLimit = item.HighAlarmLimit,
+                    CalibrationScale = item.CalibrationScale == 0m ? 1m : item.CalibrationScale,
                     Offset = item.Offset,
                 })
                 .ToList(),
@@ -673,6 +681,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private static string ToDisplayChannelName(MeasurementChannel channel) => channel.Kind switch
     {
+        _ when !string.IsNullOrWhiteSpace(channel.DisplayName) => channel.DisplayName,
         ChannelKind.Temperature => $"CH{channel.ChannelNumber}",
         ChannelKind.Pressure => "P1",
         ChannelKind.Humidity => "H1",
@@ -719,6 +728,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         "COMMUNICATION" => "통신 이상",
         "OUT_OF_RANGE" => "물리 범위 이탈",
         "DEVIATION" => "편차 이탈",
+        "LOW_LIMIT" => "하한 이탈",
+        "HIGH_LIMIT" => "상한 이탈",
         _ => alarmType,
     };
 

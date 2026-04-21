@@ -77,7 +77,9 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
         await using var command = connection.CreateCommand();
         command.CommandText = """
             SELECT
+                a.id,
                 a.occurred_at,
+                a.acknowledged_at,
                 a.resolved_at,
                 c.code,
                 a.alarm_type,
@@ -96,13 +98,15 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
         while (await reader.ReadAsync(cancellationToken))
         {
             records.Add(new MonitoringAlarmRecord(
-                DateTimeOffset.Parse(reader.GetString(0)),
-                reader.IsDBNull(1) ? null : DateTimeOffset.Parse(reader.GetString(1)),
-                reader.GetString(2),
-                reader.GetString(3),
-                ParseSeverity(reader.GetString(4)),
-                reader.IsDBNull(5) ? null : reader.GetDouble(5),
-                reader.GetString(6)));
+                reader.GetInt64(0),
+                DateTimeOffset.Parse(reader.GetString(1)),
+                reader.IsDBNull(2) ? null : DateTimeOffset.Parse(reader.GetString(2)),
+                reader.IsDBNull(3) ? null : DateTimeOffset.Parse(reader.GetString(3)),
+                reader.GetString(4),
+                reader.GetString(5),
+                ParseSeverity(reader.GetString(6)),
+                reader.IsDBNull(7) ? null : reader.GetDouble(7),
+                reader.GetString(8)));
         }
 
         return records;
