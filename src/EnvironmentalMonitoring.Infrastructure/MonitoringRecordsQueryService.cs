@@ -13,6 +13,8 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
 
     public async Task<IReadOnlyList<MonitoringSampleRecord>> GetRecentSamplesAsync(
         int limit,
+        DateOnly? sampledOnDate,
+        string? channelCode,
         CancellationToken cancellationToken)
     {
         if (!File.Exists(storageLayout.DatabaseFilePath))
@@ -26,6 +28,22 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
         await connection.OpenAsync(cancellationToken);
 
         await using var command = connection.CreateCommand();
+        var filters = new List<string>();
+
+        if (sampledOnDate.HasValue)
+        {
+            var dateStart = CreateLocalBoundary(sampledOnDate.Value);
+            filters.Add("b.sampled_at >= @DateStart AND b.sampled_at < @DateEnd");
+            command.Parameters.AddWithValue("@DateStart", dateStart.ToString("O"));
+            command.Parameters.AddWithValue("@DateEnd", dateStart.AddDays(1).ToString("O"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(channelCode))
+        {
+            filters.Add("c.code = @ChannelCode");
+            command.Parameters.AddWithValue("@ChannelCode", channelCode);
+        }
+
         command.CommandText = """
             SELECT
                 b.sampled_at,
@@ -38,6 +56,17 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
             FROM acquisition_batches b
             JOIN samples s ON s.batch_id = b.id
             JOIN channels c ON c.id = s.channel_id
+            """;
+
+        if (filters.Count > 0)
+        {
+            command.CommandText += Environment.NewLine
+                + "WHERE "
+                + string.Join(Environment.NewLine + "  AND ", filters)
+                + Environment.NewLine;
+        }
+
+        command.CommandText += """
             ORDER BY b.id DESC, c.code ASC
             LIMIT @Limit;
             """;
@@ -62,6 +91,10 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
 
     public async Task<IReadOnlyList<MonitoringAlarmRecord>> GetAlarmHistoryAsync(
         int limit,
+        DateOnly? occurredOnDate,
+        string? channelCode,
+        bool activeOnly,
+        bool unacknowledgedOnly,
         CancellationToken cancellationToken)
     {
         if (!File.Exists(storageLayout.DatabaseFilePath))
@@ -75,6 +108,32 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
         await connection.OpenAsync(cancellationToken);
 
         await using var command = connection.CreateCommand();
+        var filters = new List<string>();
+
+        if (occurredOnDate.HasValue)
+        {
+            var dateStart = CreateLocalBoundary(occurredOnDate.Value);
+            filters.Add("a.occurred_at >= @DateStart AND a.occurred_at < @DateEnd");
+            command.Parameters.AddWithValue("@DateStart", dateStart.ToString("O"));
+            command.Parameters.AddWithValue("@DateEnd", dateStart.AddDays(1).ToString("O"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(channelCode))
+        {
+            filters.Add("c.code = @ChannelCode");
+            command.Parameters.AddWithValue("@ChannelCode", channelCode);
+        }
+
+        if (unacknowledgedOnly)
+        {
+            filters.Add("a.acknowledged_at IS NULL");
+            filters.Add("a.resolved_at IS NULL");
+        }
+        else if (activeOnly)
+        {
+            filters.Add("a.resolved_at IS NULL");
+        }
+
         command.CommandText = """
             SELECT
                 a.id,
@@ -88,6 +147,17 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
                 a.message
             FROM alarm_events a
             JOIN channels c ON c.id = a.channel_id
+            """;
+
+        if (filters.Count > 0)
+        {
+            command.CommandText += Environment.NewLine
+                + "WHERE "
+                + string.Join(Environment.NewLine + "  AND ", filters)
+                + Environment.NewLine;
+        }
+
+        command.CommandText += """
             ORDER BY a.occurred_at DESC, a.id DESC
             LIMIT @Limit;
             """;
@@ -110,6 +180,12 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
         }
 
         return records;
+    }
+
+    private static DateTimeOffset CreateLocalBoundary(DateOnly date)
+    {
+        var localDateTime = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Local);
+        return new DateTimeOffset(localDateTime);
     }
 
     private static MonitoringEventSeverity ParseSeverity(string severity) =>

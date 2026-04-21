@@ -104,6 +104,10 @@ public sealed class SettingsChannelItem
     public decimal Offset { get; set; }
 }
 
+public sealed record LookupOption(
+    string Value,
+    string Label);
+
 public sealed record SampleHistoryItem(
     string SampledAt,
     string ChannelCode,
@@ -113,13 +117,17 @@ public sealed record SampleHistoryItem(
     string Quality);
 
 public sealed record AlarmHistoryItem(
+    long Id,
     string OccurredAt,
+    string AcknowledgedAt,
     string ResolvedAt,
     string ChannelCode,
     string AlarmType,
     string Severity,
     string MeasuredValue,
-    string Message);
+    string Message,
+    bool IsAcknowledged,
+    bool IsResolved);
 
 public sealed record LiveChannelItem(
     string ChannelCode,

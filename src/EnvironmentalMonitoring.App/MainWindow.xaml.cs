@@ -3,6 +3,7 @@ using EnvironmentalMonitoring.Infrastructure;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -26,6 +27,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private MonitoringDashboardQueryService _dashboardQueryService = null!;
     private MonitoringRecordsQueryService _recordsQueryService = null!;
+    private MonitoringAlarmCommandService _alarmCommandService = null!;
+    private MonitoringReportExportService _reportExportService = null!;
+    private MonitoringStorageLayout _storageLayout = null!;
     private MonitoringBlueprint _blueprint = null!;
     private MonitoringRuntimeOptions _runtimeOptions = null!;
     private RuntimeMonitoringSettingsDocument _settingsDocument = null!;
@@ -38,6 +42,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _sampleHistorySummary = string.Empty;
     private string _alarmHistorySummary = string.Empty;
     private string _realtimeSummary = string.Empty;
+    private string _reportExportStatusMessage = string.Empty;
     private IReadOnlyList<NavigationItem> _mainMenuItems = [];
     private NavigationItem _settingsMenuItem = new("settings", "설정", false);
     private IReadOnlyList<DashboardStatusCard> _statusCards = [];
@@ -46,6 +51,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private IReadOnlyList<LiveChannelItem> _liveChannelItems = [];
     private IReadOnlyList<SampleHistoryItem> _sampleHistoryItems = [];
     private IReadOnlyList<AlarmHistoryItem> _alarmHistoryItems = [];
+    private IReadOnlyList<LookupOption> _historyChannelOptions = [];
+    private IReadOnlyList<LookupOption> _alarmChannelOptions = [];
+    private IReadOnlyList<LookupOption> _alarmStatusOptions =
+    [
+        new(string.Empty, "전체"),
+        new("ACTIVE", "미해제"),
+        new("UNACKNOWLEDGED", "미확인"),
+    ];
+    private AlarmHistoryItem? _selectedAlarmHistoryItem;
+    private DateTime? _selectedReportDate = DateTime.Today;
+    private DateTime? _selectedAlarmDate;
+    private string _selectedHistoryChannelCode = string.Empty;
+    private string _selectedAlarmChannelCode = string.Empty;
+    private string _selectedAlarmStatus = string.Empty;
     private string _temperatureTrendPoints = string.Empty;
     private string _humidityTrendPoints = string.Empty;
     private SamplingMode _selectedSamplingMode;
@@ -151,6 +170,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         private set => SetField(ref _realtimeSummary, value);
     }
 
+    public string ReportExportStatusMessage
+    {
+        get => _reportExportStatusMessage;
+        private set => SetField(ref _reportExportStatusMessage, value);
+    }
+
     public IReadOnlyList<NavigationItem> MainMenuItems
     {
         get => _mainMenuItems;
@@ -193,10 +218,103 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         private set => SetField(ref _sampleHistoryItems, value);
     }
 
+    public IReadOnlyList<LookupOption> HistoryChannelOptions
+    {
+        get => _historyChannelOptions;
+        private set => SetField(ref _historyChannelOptions, value);
+    }
+
     public IReadOnlyList<AlarmHistoryItem> AlarmHistoryItems
     {
         get => _alarmHistoryItems;
         private set => SetField(ref _alarmHistoryItems, value);
+    }
+
+    public IReadOnlyList<LookupOption> AlarmChannelOptions
+    {
+        get => _alarmChannelOptions;
+        private set => SetField(ref _alarmChannelOptions, value);
+    }
+
+    public IReadOnlyList<LookupOption> AlarmStatusOptions
+    {
+        get => _alarmStatusOptions;
+        private set => SetField(ref _alarmStatusOptions, value);
+    }
+
+    public AlarmHistoryItem? SelectedAlarmHistoryItem
+    {
+        get => _selectedAlarmHistoryItem;
+        set
+        {
+            if (SetField(ref _selectedAlarmHistoryItem, value))
+            {
+                OnPropertyChanged(nameof(CanAcknowledgeSelectedAlarm));
+            }
+        }
+    }
+
+    public bool CanAcknowledgeSelectedAlarm =>
+        SelectedAlarmHistoryItem is { IsAcknowledged: false, IsResolved: false };
+
+    public DateTime? SelectedReportDate
+    {
+        get => _selectedReportDate;
+        set
+        {
+            if (SetField(ref _selectedReportDate, value))
+            {
+                TriggerRefreshForView(MainViewMode.History);
+            }
+        }
+    }
+
+    public DateTime? SelectedAlarmDate
+    {
+        get => _selectedAlarmDate;
+        set
+        {
+            if (SetField(ref _selectedAlarmDate, value))
+            {
+                TriggerRefreshForView(MainViewMode.Alarm);
+            }
+        }
+    }
+
+    public string SelectedHistoryChannelCode
+    {
+        get => _selectedHistoryChannelCode;
+        set
+        {
+            if (SetField(ref _selectedHistoryChannelCode, value))
+            {
+                TriggerRefreshForView(MainViewMode.History);
+            }
+        }
+    }
+
+    public string SelectedAlarmChannelCode
+    {
+        get => _selectedAlarmChannelCode;
+        set
+        {
+            if (SetField(ref _selectedAlarmChannelCode, value))
+            {
+                TriggerRefreshForView(MainViewMode.Alarm);
+            }
+        }
+    }
+
+    public string SelectedAlarmStatus
+    {
+        get => _selectedAlarmStatus;
+        set
+        {
+            if (SetField(ref _selectedAlarmStatus, value))
+            {
+                TriggerRefreshForView(MainViewMode.Alarm);
+            }
+        }
     }
 
     public string TemperatureTrendPoints
@@ -260,15 +378,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         _runtimeOptions = MonitoringRuntimeOptionsResolver.Resolve(_bootstrapRuntimeOptions, _settingsDocument);
         _blueprint = MonitoringBlueprintComposer.Compose(_runtimeOptions, _settingsDocument);
-
-        var dataLayout = new MonitoringStorageLayout(
+        _storageLayout = new MonitoringStorageLayout(
             MonitoringStoragePathResolver.ResolveRootDirectory(_runtimeOptions.DataRoot));
 
-        _dashboardQueryService = new MonitoringDashboardQueryService(dataLayout, _blueprint);
-        _recordsQueryService = new MonitoringRecordsQueryService(dataLayout);
+        _dashboardQueryService = new MonitoringDashboardQueryService(_storageLayout, _blueprint);
+        _recordsQueryService = new MonitoringRecordsQueryService(_storageLayout);
+        _alarmCommandService = new MonitoringAlarmCommandService(_storageLayout);
+        _reportExportService = new MonitoringReportExportService(_storageLayout);
+        UpdateFilterOptions();
 
         RuntimeSettingsFilePath = $"설정 파일: {_settingsStore.SettingsFilePath}";
-        EffectiveDataStoragePath = $"데이터 경로: {dataLayout.RootDirectory}";
+        EffectiveDataStoragePath = $"데이터 경로: {_storageLayout.RootDirectory}";
     }
 
     private void LoadSettingsEditor(RuntimeMonitoringSettingsDocument document)
@@ -306,6 +426,41 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 CalibrationScale = channel.CalibrationScale,
                 Offset = channel.Offset,
             });
+        }
+    }
+
+    private void UpdateFilterOptions()
+    {
+        var channelOptions = _blueprint.Channels
+            .OrderBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(channel => new LookupOption(channel.Name, ToDisplayChannelName(channel)))
+            .ToArray();
+
+        HistoryChannelOptions =
+        [
+            new LookupOption(string.Empty, "전체 채널"),
+            .. channelOptions,
+        ];
+
+        AlarmChannelOptions =
+        [
+            new LookupOption(string.Empty, "전체 채널"),
+            .. channelOptions,
+        ];
+
+        if (!HistoryChannelOptions.Any(option => option.Value == SelectedHistoryChannelCode))
+        {
+            SelectedHistoryChannelCode = string.Empty;
+        }
+
+        if (!AlarmChannelOptions.Any(option => option.Value == SelectedAlarmChannelCode))
+        {
+            SelectedAlarmChannelCode = string.Empty;
+        }
+
+        if (!AlarmStatusOptions.Any(option => option.Value == SelectedAlarmStatus))
+        {
+            SelectedAlarmStatus = string.Empty;
         }
     }
 
@@ -359,20 +514,37 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         try
         {
+            DateOnly? historyDate = SelectedReportDate.HasValue
+                ? DateOnly.FromDateTime(SelectedReportDate.Value.Date)
+                : null;
+            DateOnly? alarmDate = SelectedAlarmDate.HasValue
+                ? DateOnly.FromDateTime(SelectedAlarmDate.Value.Date)
+                : null;
+            var historyChannelCode = NormalizeFilterValue(SelectedHistoryChannelCode);
+            var alarmChannelCode = NormalizeFilterValue(SelectedAlarmChannelCode);
+            var activeOnly = string.Equals(SelectedAlarmStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase);
+            var unacknowledgedOnly = string.Equals(SelectedAlarmStatus, "UNACKNOWLEDGED", StringComparison.OrdinalIgnoreCase);
+
             var dashboardTask = Task.Run(
                 () => _dashboardQueryService.GetSnapshotAsync(CancellationToken.None));
 
             Task<IReadOnlyList<MonitoringSampleRecord>?> samplesTask = ShouldRefreshSampleHistory()
-                ? Task.Run(async () =>
-                    (IReadOnlyList<MonitoringSampleRecord>?)await _recordsQueryService.GetRecentSamplesAsync(
-                        120,
+                ? Task.Run<IReadOnlyList<MonitoringSampleRecord>?>(async () =>
+                    await _recordsQueryService.GetRecentSamplesAsync(
+                        500,
+                        historyDate,
+                        historyChannelCode,
                         CancellationToken.None))
                 : Task.FromResult<IReadOnlyList<MonitoringSampleRecord>?>(null);
 
             Task<IReadOnlyList<MonitoringAlarmRecord>?> alarmsTask = ShouldRefreshAlarmHistory()
-                ? Task.Run(async () =>
-                    (IReadOnlyList<MonitoringAlarmRecord>?)await _recordsQueryService.GetAlarmHistoryAsync(
-                        120,
+                ? Task.Run<IReadOnlyList<MonitoringAlarmRecord>?>(async () =>
+                    await _recordsQueryService.GetAlarmHistoryAsync(
+                        200,
+                        alarmDate,
+                        alarmChannelCode,
+                        activeOnly,
+                        unacknowledgedOnly,
                         CancellationToken.None))
                 : Task.FromResult<IReadOnlyList<MonitoringAlarmRecord>?>(null);
 
@@ -399,6 +571,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         IReadOnlyList<MonitoringSampleRecord>? samples,
         IReadOnlyList<MonitoringAlarmRecord>? alarms)
     {
+        var selectedAlarmId = SelectedAlarmHistoryItem?.Id;
+
         SensorTiles = CreateSensorTiles(snapshot.ChannelSnapshots);
         RecentEvents = CreateRecentEvents(snapshot.RecentEvents);
         StatusCards = CreateStatusCards(snapshot);
@@ -409,13 +583,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (samples is not null)
         {
             SampleHistoryItems = CreateSampleHistoryItems(samples);
-            SampleHistorySummary = BuildSampleHistorySummary(samples);
+            SampleHistorySummary = BuildFilteredSampleHistorySummary(samples);
         }
 
         if (alarms is not null)
         {
             AlarmHistoryItems = CreateAlarmHistoryItems(alarms);
-            AlarmHistorySummary = BuildAlarmHistorySummary(alarms);
+            AlarmHistorySummary = BuildFilteredAlarmHistorySummary(alarms);
+            SelectedAlarmHistoryItem = selectedAlarmId.HasValue
+                ? AlarmHistoryItems.FirstOrDefault(item => item.Id == selectedAlarmId.Value)
+                : null;
         }
     }
 
@@ -427,6 +604,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _currentView is MainViewMode.Dashboard or MainViewMode.Realtime
             ? TimeSpan.FromSeconds(1)
             : TimeSpan.FromSeconds(3);
+
+    private void TriggerRefreshForView(MainViewMode view)
+    {
+        if (_currentView == view)
+        {
+            _ = RefreshAllAsync();
+        }
+    }
+
+    private static string? NormalizeFilterValue(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? null
+            : value;
 
     private void UpdateTrendSeries(IReadOnlyList<MonitoringTrendPoint> points)
     {
@@ -588,7 +778,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     .FirstOrDefault(item => string.Equals(item.Name, alarm.ChannelCode, StringComparison.OrdinalIgnoreCase));
 
                 return new AlarmHistoryItem(
+                    alarm.Id,
                     alarm.OccurredAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
+                    alarm.AcknowledgedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "미확인",
                     alarm.ResolvedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "활성",
                     channel is null
                         ? alarm.ChannelCode
@@ -598,7 +790,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     channel is null
                         ? FormatNullableNumericValue(alarm.MeasuredValue)
                         : FormatValue(channel.Kind, channel.Unit, alarm.MeasuredValue),
-                    alarm.Message);
+                    alarm.Message,
+                    alarm.AcknowledgedAt is not null,
+                    alarm.ResolvedAt is not null);
             })
             .ToArray();
     }
@@ -647,17 +841,39 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         var value = snapshot.Value.Value;
 
-        return channel.Kind switch
+        if (channel.Kind == ChannelKind.Temperature && (value < -20 || value > 60))
         {
-            ChannelKind.Temperature when value < -20 || value > 60 => DashboardSeverity.Critical,
-            ChannelKind.Temperature when channel.TargetValue.HasValue
-                                       && channel.DefaultDeviationThreshold.HasValue
-                                       && Math.Abs(value - (double)channel.TargetValue.Value) > (double)channel.DefaultDeviationThreshold.Value
-                => DashboardSeverity.Warning,
-            ChannelKind.Humidity when value < 0 || value > 100 => DashboardSeverity.Critical,
-            ChannelKind.Pressure when value < 80 || value > 120 => DashboardSeverity.Critical,
-            _ => DashboardSeverity.Normal,
-        };
+            return DashboardSeverity.Critical;
+        }
+
+        if (channel.Kind == ChannelKind.Humidity && (value < 0 || value > 100))
+        {
+            return DashboardSeverity.Critical;
+        }
+
+        if (channel.Kind == ChannelKind.Pressure && (value < 80 || value > 120))
+        {
+            return DashboardSeverity.Critical;
+        }
+
+        if (channel.LowAlarmLimit.HasValue && value < (double)channel.LowAlarmLimit.Value)
+        {
+            return DashboardSeverity.Warning;
+        }
+
+        if (channel.HighAlarmLimit.HasValue && value > (double)channel.HighAlarmLimit.Value)
+        {
+            return DashboardSeverity.Warning;
+        }
+
+        if (channel.TargetValue.HasValue
+            && channel.DefaultDeviationThreshold.HasValue
+            && Math.Abs(value - (double)channel.TargetValue.Value) > (double)channel.DefaultDeviationThreshold.Value)
+        {
+            return DashboardSeverity.Warning;
+        }
+
+        return DashboardSeverity.Normal;
     }
 
     private void UpdateNavigation()
@@ -677,16 +893,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(HistoryViewVisibility));
         OnPropertyChanged(nameof(AlarmViewVisibility));
         OnPropertyChanged(nameof(SettingsViewVisibility));
+        OnPropertyChanged(nameof(CanAcknowledgeSelectedAlarm));
     }
 
-    private static string ToDisplayChannelName(MeasurementChannel channel) => channel.Kind switch
-    {
-        _ when !string.IsNullOrWhiteSpace(channel.DisplayName) => channel.DisplayName,
-        ChannelKind.Temperature => $"CH{channel.ChannelNumber}",
-        ChannelKind.Pressure => "P1",
-        ChannelKind.Humidity => "H1",
-        _ => channel.Name,
-    };
+    private static string ToDisplayChannelName(MeasurementChannel channel) =>
+        string.IsNullOrWhiteSpace(channel.DisplayName)
+            ? channel.Name
+            : channel.DisplayName;
 
     private string ToDisplayChannelName(string channelCode, ChannelKind kind)
     {
@@ -700,8 +913,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         return kind switch
         {
-            ChannelKind.Humidity => "H1",
-            ChannelKind.Pressure => "P1",
+            ChannelKind.Humidity => "H1 Humidity",
+            ChannelKind.Pressure => "P1 Pressure",
             _ => channelCode,
         };
     }
@@ -789,7 +1002,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         var activeCount = alarms.Count(item => item.ResolvedAt is null);
-        return $"최근 {alarms.Count}건 알람 조회 / 현재 미해결 {activeCount}건";
+        var acknowledgedCount = alarms.Count(item => item.AcknowledgedAt is not null && item.ResolvedAt is null);
+        return $"최근 {alarms.Count}건 알람 조회 / 미해결 {activeCount}건 / 확인 완료 {acknowledgedCount}건";
     }
 
     private static string BuildRealtimeSummary(MonitoringDashboardSnapshot snapshot)
@@ -798,13 +1012,50 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return $"마지막 저장 {lastWrite} / 활성 알람 {snapshot.ActiveAlarmCount}건";
     }
 
+    private string BuildFilteredSampleHistorySummary(IReadOnlyList<MonitoringSampleRecord> samples)
+    {
+        var channelLabel = ResolveOptionLabel(HistoryChannelOptions, SelectedHistoryChannelCode, "전체 채널");
+        var dateLabel = SelectedReportDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "전체 기간";
+
+        if (samples.Count == 0)
+        {
+            return $"{dateLabel} / {channelLabel} / 조회 데이터 없음";
+        }
+
+        var latest = samples[0].SampledAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+        return $"{dateLabel} / {channelLabel} / {samples.Count}건 조회 / 최신 {latest}";
+    }
+
+    private string BuildFilteredAlarmHistorySummary(IReadOnlyList<MonitoringAlarmRecord> alarms)
+    {
+        var channelLabel = ResolveOptionLabel(AlarmChannelOptions, SelectedAlarmChannelCode, "전체 채널");
+        var statusLabel = ResolveOptionLabel(AlarmStatusOptions, SelectedAlarmStatus, "전체 상태");
+        var dateLabel = SelectedAlarmDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "전체 기간";
+
+        if (alarms.Count == 0)
+        {
+            return $"{dateLabel} / {channelLabel} / {statusLabel} / 조회 데이터 없음";
+        }
+
+        var activeCount = alarms.Count(item => item.ResolvedAt is null);
+        var acknowledgedCount = alarms.Count(item => item.AcknowledgedAt is not null && item.ResolvedAt is null);
+        return $"{dateLabel} / {channelLabel} / {statusLabel} / {alarms.Count}건 조회 / 미해제 {activeCount}건 / 확인 완료 {acknowledgedCount}건";
+    }
+
+    private static string ResolveOptionLabel(
+        IReadOnlyList<LookupOption> options,
+        string? value,
+        string fallbackLabel) =>
+        options.FirstOrDefault(option => string.Equals(option.Value, value, StringComparison.OrdinalIgnoreCase))?.Label
+        ?? fallbackLabel;
+
     private static string BuildPolylinePoints(
         IReadOnlyList<double> values,
         double minValue,
         double maxValue)
     {
-        const double width = 770d;
-        const double height = 230d;
+        const double width = 760d;
+        const double height = 220d;
 
         if (values.Count == 0)
         {
@@ -950,6 +1201,86 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         catch (Exception ex)
         {
             FooterStatusMessage = $"설정 다시 불러오기 실패: {ex.Message}";
+        }
+    }
+
+    private async void AcknowledgeSelectedAlarmButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedAlarmHistoryItem is null)
+        {
+            FooterStatusMessage = "선택된 알람이 없습니다.";
+            return;
+        }
+
+        try
+        {
+            var acknowledged = await _alarmCommandService.AcknowledgeAlarmAsync(
+                SelectedAlarmHistoryItem.Id,
+                DateTimeOffset.Now,
+                CancellationToken.None);
+
+            FooterStatusMessage = acknowledged
+                ? $"선택 알람 확인 처리 완료: {SelectedAlarmHistoryItem.ChannelCode}"
+                : "선택 알람은 이미 확인되었거나 해제되었습니다.";
+
+            await RefreshAllAsync();
+        }
+        catch (Exception ex)
+        {
+            FooterStatusMessage = $"선택 알람 확인 처리 실패: {ex.Message}";
+        }
+    }
+
+    private async void AcknowledgeAllActiveAlarmsButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var affected = await _alarmCommandService.AcknowledgeActiveAlarmsAsync(
+                DateTimeOffset.Now,
+                CancellationToken.None);
+
+            FooterStatusMessage = $"활성 알람 일괄 확인 처리: {affected}건";
+            await RefreshAllAsync();
+        }
+        catch (Exception ex)
+        {
+            FooterStatusMessage = $"활성 알람 일괄 확인 실패: {ex.Message}";
+        }
+    }
+
+    private async void ExportReportCsvButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var date = DateOnly.FromDateTime((SelectedReportDate ?? DateTime.Today).Date);
+            var outputPath = Path.Combine(_storageLayout.ReportDirectory, $"{date:yyyy-MM-dd}-report.csv");
+            var rows = await _reportExportService.ExportDailyCsvAsync(date, outputPath, CancellationToken.None);
+
+            ReportExportStatusMessage = $"CSV 리포트 생성 완료: {rows}행 / {outputPath}";
+            FooterStatusMessage = ReportExportStatusMessage;
+        }
+        catch (Exception ex)
+        {
+            ReportExportStatusMessage = $"CSV 리포트 생성 실패: {ex.Message}";
+            FooterStatusMessage = ReportExportStatusMessage;
+        }
+    }
+
+    private async void ExportReportTextButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var date = DateOnly.FromDateTime((SelectedReportDate ?? DateTime.Today).Date);
+            var outputPath = Path.Combine(_storageLayout.ReportDirectory, $"{date:yyyy-MM-dd}-summary.txt");
+            await _reportExportService.ExportDailyTextSummaryAsync(date, outputPath, CancellationToken.None);
+
+            ReportExportStatusMessage = $"TXT 요약 리포트 생성 완료: {outputPath}";
+            FooterStatusMessage = ReportExportStatusMessage;
+        }
+        catch (Exception ex)
+        {
+            ReportExportStatusMessage = $"TXT 요약 리포트 생성 실패: {ex.Message}";
+            FooterStatusMessage = ReportExportStatusMessage;
         }
     }
 
