@@ -29,8 +29,8 @@ Windows 기반 환경 모니터링 프로그램의 초기 솔루션 골격입니
 ---
 ## 시스템 구조도
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/d535b88a-754d-4c17-8c26-cf7d89fbcba3" width="24%" height="200">
-  <img src="https://github.com/user-attachments/assets/4a7fff4d-28cf-405d-bf1c-3bf9a51cb004" width="24%" height="200">
-  <img src="https://github.com/user-attachments/assets/26d9a0b2-518a-4530-a673-0081bcc49168" width="24%" height="200">
   <img src="https://github.com/user-attachments/assets/b610c021-6958-42a9-84df-e72960c8d9d8" width="24%" height="200">
+  <img src="https://github.com/user-attachments/assets/26d9a0b2-518a-4530-a673-0081bcc49168" width="24%" height="200">
+  <img src="https://github.com/user-attachments/assets/68ee3cf7-8d41-4042-87af-d26d562161bd" width="24%" height="200">
+  <img src="https://github.com/user-attachments/assets/d535b88a-754d-4c17-8c26-cf7d89fbcba3" width="24%" height="200">
 </p>
