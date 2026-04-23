@@ -13,44 +13,102 @@
         Background="{x:Static local:DashboardPalette.WindowBackground}"
         FontFamily="Malgun Gothic">
     <Window.Resources>
-        <Style x:Key="PanelCardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{x:Static local:DashboardPalette.Surface}" />
-            <Setter Property="CornerRadius" Value="24" />
-        </Style>
+        <SolidColorBrush x:Key="AppBackgroundBrush" Color="#10141A" />
+        <SolidColorBrush x:Key="SideBarBrush" Color="#181C22" />
+        <SolidColorBrush x:Key="CardBrush" Color="#1C2026" />
+        <SolidColorBrush x:Key="CardLowBrush" Color="#0A0E14" />
+        <SolidColorBrush x:Key="CardHighBrush" Color="#262A31" />
+        <SolidColorBrush x:Key="BorderBrush" Color="#31353C" />
+        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#DFE2EB" />
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#9DA3AF" />
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#ABC9EF" />
+        <SolidColorBrush x:Key="GoodBrush" Color="#4AE183" />
+        <SolidColorBrush x:Key="WarnBrush" Color="#FFB4AB" />
 
-        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{x:Static local:DashboardPalette.TextPrimary}" />
-            <Setter Property="FontSize" Value="28" />
-            <Setter Property="FontWeight" Value="SemiBold" />
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardBrush}" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="24" />
         </Style>
 
         <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{x:Static local:DashboardPalette.TextPrimary}" />
-            <Setter Property="FontSize" Value="22" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="FontSize" Value="26" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
-        <Style x:Key="SubtleTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#5A5A5A" />
-            <Setter Property="FontSize" Value="14" />
+        <Style x:Key="MutedTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
 
-        <Style x:Key="MenuButtonStyle" TargetType="Button">
+        <Style x:Key="NavButtonStyle" TargetType="Button">
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Padding" Value="22,18" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="#77808E" />
+            <Setter Property="Padding" Value="18,14" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1C2026" />
+                    <Setter Property="Foreground" Value="#DFE2EB" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="18,0" />
+            <Setter Property="Background" Value="#C8D6FF" />
+            <Setter Property="Foreground" Value="#10141A" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="#31353C" />
+            <Setter Property="Foreground" Value="#DFE2EB" />
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#31353C" />
+            <Setter Property="Foreground" Value="#DFE2EB" />
+            <Setter Property="BorderBrush" Value="#45474D" />
+            <Setter Property="Padding" Value="8,5" />
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#31353C" />
+            <Setter Property="Foreground" Value="#DFE2EB" />
+            <Setter Property="BorderBrush" Value="#45474D" />
+            <Setter Property="Padding" Value="8,5" />
         </Style>
 
         <Style TargetType="DataGrid">
-            <Setter Property="Background" Value="#F7F4EE" />
-            <Setter Property="BorderBrush" Value="#D4CEC0" />
+            <Setter Property="Background" Value="#181C22" />
+            <Setter Property="Foreground" Value="#DFE2EB" />
+            <Setter Property="BorderBrush" Value="#31353C" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="RowBackground" Value="#F7F4EE" />
-            <Setter Property="AlternatingRowBackground" Value="#EEE9DD" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#31353C" />
+            <Setter Property="RowBackground" Value="#1C2026" />
+            <Setter Property="AlternatingRowBackground" Value="#181C22" />
             <Setter Property="HeadersVisibility" Value="Column" />
             <Setter Property="CanUserAddRows" Value="False" />
             <Setter Property="CanUserDeleteRows" Value="False" />
@@ -59,462 +117,491 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="18">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="18" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="18" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <Grid Background="{StaticResource AppBackgroundBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <Border Grid.Row="0"
-                Padding="20,16"
-                Style="{StaticResource PanelCardStyle}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+        <Border Grid.Column="0"
+                Background="{StaticResource SideBarBrush}"
+                BorderBrush="#222832"
+                BorderThickness="0,0,1,0">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top"
+                            Margin="22,28,22,0">
+                    <TextBlock Foreground="#D7E6FF"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Text="환경 제어" />
+                    <TextBlock Margin="0,4,0,34"
+                               Foreground="#8F9097"
+                               FontSize="12"
+                               Text="Dynamo Lab Monitor" />
 
-                <StackPanel Orientation="Horizontal"
-                            VerticalAlignment="Center">
-                    <TextBlock Margin="0,0,14,0"
-                               FontSize="24"
-                               FontWeight="Bold"
-                               Text="ENV" />
-                    <TextBlock VerticalAlignment="Center"
-                               Style="{StaticResource HeaderTextStyle}"
-                               Text="{Binding WindowTitle}" />
+                    <Button Tag="dashboard"
+                            Margin="0,0,0,8"
+                            Background="#262A31"
+                            Foreground="#D1E4FF"
+                            BorderThickness="0"
+                            Padding="18,14"
+                            HorizontalContentAlignment="Left"
+                            Click="NavigationButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="28" Text="GRID" />
+                            <TextBlock Text="개요" />
+                        </StackPanel>
+                    </Button>
+                    <Button Tag="history"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource NavButtonStyle}"
+                            Click="NavigationButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="28" Text="HIS" />
+                            <TextBlock Text="이력 조회" />
+                        </StackPanel>
+                    </Button>
+                    <Button Tag="log"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource NavButtonStyle}"
+                            Click="NavigationButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="28" Text="ALM" />
+                            <TextBlock Text="알람" />
+                        </StackPanel>
+                    </Button>
+                    <Button Tag="realtime"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource NavButtonStyle}"
+                            Click="NavigationButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="28" Text="TRD" />
+                            <TextBlock Text="그래프" />
+                        </StackPanel>
+                    </Button>
+                    <Button Tag="alarm"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource NavButtonStyle}"
+                            Click="NavigationButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="28" Text="LOG" />
+                            <TextBlock Text="로그" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
-                <Border Grid.Column="1"
-                        Padding="18,10"
-                        Background="#B5D99E"
-                        CornerRadius="22">
-                    <TextBlock FontSize="22"
-                               FontWeight="SemiBold"
-                               Text="{Binding CurrentTimeText}" />
-                </Border>
-            </Grid>
+                <StackPanel DockPanel.Dock="Bottom"
+                            Margin="22,0,22,24">
+                    <Border Height="1"
+                            Margin="-22,0,-22,16"
+                            Background="#222832" />
+                    <Button Tag="settings"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource NavButtonStyle}"
+                            Click="NavigationButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="28" Text="SET" />
+                            <TextBlock Text="설정" />
+                        </StackPanel>
+                    </Button>
+                    <Button Tag="system"
+                            Style="{StaticResource NavButtonStyle}"
+                            Click="NavigationButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="28" Text="SYS" />
+                            <TextBlock Text="시스템" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
-        <ItemsControl Grid.Row="2"
-                      ItemsSource="{Binding StatusCards}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Columns="3" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Margin="0,0,18,0"
-                            Padding="22,16"
-                            Background="{Binding Background}"
-                            CornerRadius="22">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+        <Grid Grid.Column="1"
+              Margin="32">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="26" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-                            <StackPanel>
-                                <TextBlock FontSize="16"
-                                           Foreground="#3C3A38"
-                                           Text="{Binding Title}" />
-                                <TextBlock Margin="0,4,0,0"
-                                           FontSize="24"
-                                           FontWeight="SemiBold"
-                                           Text="{Binding Summary}" />
-                                <TextBlock Margin="0,4,0,0"
-                                           FontSize="13"
-                                           Foreground="#403D3B"
-                                           Text="{Binding Detail}" />
-                            </StackPanel>
+            <ItemsControl Grid.Row="0"
+                          ItemsSource="{Binding StatusCards}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="3" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,18,0"
+                                Padding="30,24"
+                                Background="{StaticResource CardBrush}"
+                                CornerRadius="10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Text="{Binding Title}" />
+                                    <TextBlock Margin="0,8,0,0"
+                                               Foreground="{Binding Accent}"
+                                               FontSize="34"
+                                               FontWeight="Bold"
+                                               Text="{Binding Summary}" />
+                                    <TextBlock Margin="0,8,0,0"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="12"
+                                               Text="{Binding Detail}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1"
+                                           VerticalAlignment="Center"
+                                           Foreground="{Binding Accent}"
+                                           FontSize="28"
+                                           FontWeight="Bold"
+                                           Text="{Binding IconText}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
-                            <TextBlock Grid.Column="1"
-                                       VerticalAlignment="Center"
-                                       FontSize="26"
-                                       FontWeight="Bold"
-                                       Text="{Binding IconText}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            <Grid Grid.Row="2">
+                <Grid Visibility="{Binding DashboardViewVisibility}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="26" />
+                        <ColumnDefinition Width="500" />
+                    </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="320" />
-                <ColumnDefinition Width="24" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="26" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
 
-            <Border Grid.Column="0"
-                    Padding="0,18,0,18"
-                    Style="{StaticResource PanelCardStyle}">
-                <DockPanel LastChildFill="True">
-                    <StackPanel DockPanel.Dock="Bottom"
-                                Margin="24,12,24,0">
-                        <Border Height="1"
-                                Background="#AEAEAE" />
-
-                        <Button Tag="{Binding SettingsMenuItem.Key}"
-                                Style="{StaticResource MenuButtonStyle}"
-                                Background="{Binding SettingsMenuItem.Background}"
-                                Click="NavigationButton_Click">
-                            <TextBlock FontSize="22"
-                                       Text="{Binding SettingsMenuItem.Title}" />
-                        </Button>
-
-                        <TextBlock Margin="0,8,0,0"
-                                   TextWrapping="Wrap"
-                                   Style="{StaticResource SubtleTextStyle}"
-                                   Text="{Binding FooterStatusMessage}" />
-                    </StackPanel>
-
-                    <StackPanel Margin="0,20,0,0">
-                        <ItemsControl ItemsSource="{Binding MainMenuItems}">
+                        <ItemsControl Grid.Row="0"
+                                      ItemsSource="{Binding DashboardMetricCards}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="4" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Tag="{Binding Key}"
-                                            Style="{StaticResource MenuButtonStyle}"
-                                            Background="{Binding Background}"
-                                            Click="NavigationButton_Click">
-                                        <TextBlock FontSize="22"
-                                                   Text="{Binding Title}" />
-                                    </Button>
+                                    <Border Margin="0,0,18,0"
+                                            Padding="24"
+                                            Background="{StaticResource CardBrush}"
+                                            CornerRadius="10">
+                                        <StackPanel>
+                                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold"
+                                                       Text="{Binding Title}" />
+                                            <StackPanel Margin="0,12,0,0"
+                                                        Orientation="Horizontal">
+                                                <TextBlock Foreground="{Binding Accent}"
+                                                           FontSize="46"
+                                                           FontWeight="Bold"
+                                                           Text="{Binding Value}" />
+                                                <TextBlock Margin="6,18,0,0"
+                                                           Foreground="{StaticResource MutedTextBrush}"
+                                                           FontSize="20"
+                                                           Text="{Binding Unit}" />
+                                            </StackPanel>
+                                            <TextBlock Margin="0,10,0,0"
+                                                       Foreground="{Binding Accent}"
+                                                       FontSize="13"
+                                                       Text="{Binding Detail}" />
+                                        </StackPanel>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </StackPanel>
-                </DockPanel>
-            </Border>
 
-            <Grid Grid.Column="2">
-                <Grid Visibility="{Binding DashboardViewVisibility}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="540" />
-                        <ColumnDefinition Width="24" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                        <Border Grid.Row="2"
+                                Style="{StaticResource CardStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Style="{StaticResource SectionTitleStyle}"
+                                           Text="열 분포 히트맵" />
 
-                    <Border Grid.Column="0"
-                            Padding="22"
-                            Style="{StaticResource PanelCardStyle}">
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                       Text="시험실 센서 배치도" />
-                            <TextBlock Margin="0,8,0,16"
-                                       Style="{StaticResource SubtleTextStyle}"
-                                       Text="채널별 현재 보정값 기준 상태를 표시합니다." />
+                                <Border Grid.Row="1"
+                                        Margin="0,24,0,0"
+                                        Background="{StaticResource CardLowBrush}"
+                                        BorderBrush="#222832"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        ClipToBounds="True">
+                                    <Viewbox Stretch="Fill">
+                                        <Canvas Width="1000" Height="650">
+                                            <Rectangle Width="1000" Height="650">
+                                                <Rectangle.Fill>
+                                                    <RadialGradientBrush Center="0.78,0.25"
+                                                                         GradientOrigin="0.78,0.25"
+                                                                         RadiusX="0.45"
+                                                                         RadiusY="0.50">
+                                                        <GradientStop Color="#805A332D" Offset="0" />
+                                                        <GradientStop Color="#403B3422" Offset="0.45" />
+                                                        <GradientStop Color="#0010141A" Offset="1" />
+                                                    </RadialGradientBrush>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+                                            <Ellipse Width="760"
+                                                     Height="500"
+                                                     Canvas.Left="120"
+                                                     Canvas.Top="120"
+                                                     Opacity="0.40">
+                                                <Ellipse.Fill>
+                                                    <RadialGradientBrush>
+                                                        <GradientStop Color="#3034B872" Offset="0" />
+                                                        <GradientStop Color="#0010141A" Offset="1" />
+                                                    </RadialGradientBrush>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                            <Ellipse Width="580"
+                                                     Height="420"
+                                                     Canvas.Left="230"
+                                                     Canvas.Top="260"
+                                                     Opacity="0.40">
+                                                <Ellipse.Fill>
+                                                    <RadialGradientBrush>
+                                                        <GradientStop Color="#303B5BAA" Offset="0" />
+                                                        <GradientStop Color="#0010141A" Offset="1" />
+                                                    </RadialGradientBrush>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                            <Rectangle Width="900"
+                                                       Height="550"
+                                                       Canvas.Left="50"
+                                                       Canvas.Top="50"
+                                                       Stroke="#31353C"
+                                                       StrokeThickness="1" />
 
-                            <ItemsControl ItemsSource="{Binding SensorTiles}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal"
-                                                   ItemWidth="235"
-                                                   ItemHeight="138" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Margin="0,0,18,18"
-                                                Padding="16"
-                                                Background="{Binding Background}"
-                                                CornerRadius="20">
-                                            <TextBlock HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="24"
-                                                       FontWeight="SemiBold"
-                                                       TextAlignment="Center"
-                                                       TextWrapping="Wrap"
-                                                       Text="{Binding DisplayText}" />
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
+                                            <ItemsControl ItemsSource="{Binding HeatMapPoints}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <Canvas />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemContainerStyle>
+                                                    <Style TargetType="ContentPresenter">
+                                                        <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                                                        <Setter Property="Canvas.Top" Value="{Binding Top}" />
+                                                    </Style>
+                                                </ItemsControl.ItemContainerStyle>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid>
+                                                            <Ellipse Width="{Binding Size}"
+                                                                     Height="{Binding Size}"
+                                                                     Stroke="{Binding Accent}"
+                                                                     StrokeThickness="3"
+                                                                     Fill="#2031353C" />
+                                                            <Ellipse Width="8"
+                                                                     Height="8"
+                                                                     HorizontalAlignment="Center"
+                                                                     VerticalAlignment="Center"
+                                                                     Fill="{Binding Accent}" />
+                                                            <Border Margin="22,14,0,0"
+                                                                    Padding="8,4"
+                                                                    Background="#DD181C22"
+                                                                    CornerRadius="3">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding ShowLabel}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
+                                                                               FontSize="12"
+                                                                               FontWeight="SemiBold"
+                                                                               Text="{Binding Title}" />
+                                                                    <TextBlock Margin="6,0,0,0"
+                                                                               Foreground="{Binding Accent}"
+                                                                               FontSize="12"
+                                                                               FontWeight="SemiBold"
+                                                                               Text="{Binding Value}" />
+                                                                    <TextBlock Foreground="{Binding Accent}"
+                                                                               FontSize="12"
+                                                                               Text="{Binding Unit}" />
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Canvas>
+                                    </Viewbox>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
 
                     <Grid Grid.Column="2">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="26" />
                             <RowDefinition Height="*" />
-                            <RowDefinition Height="18" />
-                            <RowDefinition Height="250" />
                         </Grid.RowDefinitions>
 
                         <Border Grid.Row="0"
-                                Padding="22"
-                                Style="{StaticResource PanelCardStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                               Text="평균 온도 / 습도 추이" />
-                                    <TextBlock Margin="0,8,0,0"
-                                               Style="{StaticResource SubtleTextStyle}"
-                                               Text="{Binding RealtimeSummary}" />
-                                </StackPanel>
-
-                                <Border Grid.Row="1"
-                                        Margin="0,18,0,10"
-                                        BorderBrush="#D2CEC3"
-                                        BorderThickness="1"
-                                        CornerRadius="12">
-                                    <Grid>
-                                        <UniformGrid Rows="6">
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                        </UniformGrid>
-
-                                        <Canvas Margin="30,18,30,28"
-                                                ClipToBounds="True">
-                                            <Polyline Points="{Binding TemperatureTrendPoints}"
-                                                      Stroke="{x:Static local:DashboardPalette.TempLine}"
-                                                      StrokeThickness="4"
-                                                      StrokeStartLineCap="Round"
-                                                      StrokeEndLineCap="Round"
-                                                      StrokeLineJoin="Round" />
-                                            <Polyline Points="{Binding HumidityTrendPoints}"
-                                                      Stroke="{x:Static local:DashboardPalette.HumidityLine}"
-                                                      StrokeThickness="4"
-                                                      StrokeStartLineCap="Round"
-                                                      StrokeEndLineCap="Round"
-                                                      StrokeLineJoin="Round" />
-                                            <Line X1="760"
-                                                  Y1="0"
-                                                  X2="760"
-                                                  Y2="220"
-                                                  Stroke="#2C2C2C"
-                                                  StrokeThickness="2" />
-                                        </Canvas>
-                                    </Grid>
-                                </Border>
-
-                                <UniformGrid Grid.Row="2"
-                                             Columns="6">
-                                    <TextBlock HorizontalAlignment="Left" Text="04:00" />
-                                    <TextBlock HorizontalAlignment="Center" Text="06:00" />
-                                    <TextBlock HorizontalAlignment="Center" Text="08:00" />
-                                    <TextBlock HorizontalAlignment="Center" Text="10:00" />
-                                    <TextBlock HorizontalAlignment="Center" Text="12:00" />
-                                    <TextBlock HorizontalAlignment="Right" Text="Now" />
-                                </UniformGrid>
-                            </Grid>
-                        </Border>
-
-                        <Border Grid.Row="2"
-                                Padding="20,16"
-                                Background="{x:Static local:DashboardPalette.DarkPanel}"
-                                CornerRadius="24">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-
-                                <ItemsControl ItemsSource="{Binding RecentEvents}">
+                                Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource SectionTitleStyle}"
+                                           Text="실시간 센서 피드" />
+                                <ItemsControl Margin="0,20,0,0"
+                                              ItemsSource="{Binding SensorFeedItems}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel>
-                                                <Grid Margin="0,0,0,10">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="10" />
-                                                        <ColumnDefinition Width="12" />
-                                                        <ColumnDefinition Width="70" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-
-                                                    <Border Grid.Column="0"
-                                                            Width="10"
-                                                            Height="10"
-                                                            CornerRadius="99"
-                                                            VerticalAlignment="Center"
-                                                            Background="{Binding Accent}" />
-                                                    <TextBlock Grid.Column="2"
-                                                               FontSize="18"
-                                                               Foreground="White"
-                                                               Text="{Binding TimestampText}" />
-                                                    <TextBlock Grid.Column="3"
-                                                               Margin="12,0,0,0"
-                                                               FontSize="18"
-                                                               Foreground="White"
-                                                               TextWrapping="Wrap"
-                                                               Text="{Binding Message}" />
-                                                </Grid>
-                                                <Border Height="1"
-                                                        Margin="0,0,0,12"
-                                                        Background="{x:Static local:DashboardPalette.EventBorder}" />
-                                            </StackPanel>
+                                            <Border Margin="0,0,10,10"
+                                                    Padding="16"
+                                                    Background="{StaticResource CardLowBrush}"
+                                                    BorderBrush="{Binding Border}"
+                                                    BorderThickness="2,0,0,0"
+                                                    CornerRadius="5">
+                                                <StackPanel>
+                                                    <DockPanel>
+                                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
+                                                                   FontSize="13"
+                                                                   FontWeight="SemiBold"
+                                                                   Text="{Binding Title}" />
+                                                        <TextBlock DockPanel.Dock="Right"
+                                                                   Foreground="{Binding Accent}"
+                                                                   FontSize="12"
+                                                                   Text="{Binding StatusText}" />
+                                                    </DockPanel>
+                                                    <StackPanel Margin="0,10,0,0"
+                                                                Orientation="Horizontal">
+                                                        <TextBlock Foreground="{Binding Accent}"
+                                                                   FontSize="26"
+                                                                   FontWeight="SemiBold"
+                                                                   Text="{Binding Value}" />
+                                                        <TextBlock Margin="4,9,0,0"
+                                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                                   FontSize="13"
+                                                                   Text="{Binding Unit}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+                            </StackPanel>
+                        </Border>
 
-                                <TextBlock Grid.Row="1"
-                                           HorizontalAlignment="Right"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Foreground="White"
-                                           Text="최근 알람 및 이벤트" />
+                        <Border Grid.Row="2"
+                                Style="{StaticResource CardStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Style="{StaticResource SectionTitleStyle}"
+                                           Text="이벤트 로그" />
+                                <ItemsControl Grid.Row="1"
+                                              Margin="0,20,0,0"
+                                              ItemsSource="{Binding RecentEvents}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,10"
+                                                    Padding="14"
+                                                    Background="{StaticResource CardLowBrush}"
+                                                    BorderBrush="{Binding Accent}"
+                                                    BorderThickness="2,0,0,0"
+                                                    CornerRadius="5">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="20" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Foreground="{Binding Accent}"
+                                                               FontWeight="Bold"
+                                                               Text="!" />
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
+                                                                   FontSize="13"
+                                                                   FontWeight="SemiBold"
+                                                                   Text="{Binding Message}"
+                                                                   TextWrapping="Wrap" />
+                                                        <TextBlock Margin="0,4,0,0"
+                                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                                   FontSize="12"
+                                                                   Text="{Binding TimestampText}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </Grid>
                         </Border>
                     </Grid>
                 </Grid>
 
                 <Grid Visibility="{Binding RealtimeViewVisibility}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="18" />
-                        <RowDefinition Height="250" />
-                    </Grid.RowDefinitions>
-
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="24" />
-                            <ColumnDefinition Width="430" />
-                        </Grid.ColumnDefinitions>
-
-                        <Border Grid.Column="0"
-                                Padding="22"
-                                Style="{StaticResource PanelCardStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
-
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                               Text="실시간 추이 그래프" />
-                                    <TextBlock Margin="0,8,0,0"
-                                               Style="{StaticResource SubtleTextStyle}"
-                                               Text="{Binding RealtimeSummary}" />
-                                </StackPanel>
-
-                                <Border Grid.Row="1"
-                                        Margin="0,18,0,0"
-                                        BorderBrush="#D2CEC3"
-                                        BorderThickness="1"
-                                        CornerRadius="12">
-                                    <Grid>
-                                        <UniformGrid Rows="6">
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                            <Border BorderBrush="#E7E1D5" BorderThickness="0,0,0,1" />
-                                        </UniformGrid>
-
-                                        <Canvas Margin="30,18,30,28"
-                                                ClipToBounds="True">
-                                            <Polyline Points="{Binding TemperatureTrendPoints}"
-                                                      Stroke="{x:Static local:DashboardPalette.TempLine}"
-                                                      StrokeThickness="4"
-                                                      StrokeStartLineCap="Round"
-                                                      StrokeEndLineCap="Round"
-                                                      StrokeLineJoin="Round" />
-                                            <Polyline Points="{Binding HumidityTrendPoints}"
-                                                      Stroke="{x:Static local:DashboardPalette.HumidityLine}"
-                                                      StrokeThickness="4"
-                                                      StrokeStartLineCap="Round"
-                                                      StrokeEndLineCap="Round"
-                                                      StrokeLineJoin="Round" />
-                                            <Line X1="760"
-                                                  Y1="0"
-                                                  X2="760"
-                                                  Y2="220"
-                                                  Stroke="#2C2C2C"
-                                                  StrokeThickness="2" />
-                                        </Canvas>
-                                    </Grid>
-                                </Border>
-                            </Grid>
-                        </Border>
-
-                        <Border Grid.Column="2"
-                                Padding="22"
-                                Style="{StaticResource PanelCardStyle}">
+                    <Border Style="{StaticResource CardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
                             <StackPanel>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                           Text="최신 채널 상태" />
-                                <TextBlock Margin="0,8,0,12"
-                                           Style="{StaticResource SubtleTextStyle}"
-                                           Text="보정 적용값과 품질 상태를 함께 표시합니다." />
-                                <DataGrid ItemsSource="{Binding LiveChannelItems}">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="채널"
-                                                            Binding="{Binding ChannelCode}"
-                                                            Width="110" />
-                                        <DataGridTextColumn Header="측정값"
-                                                            Binding="{Binding Value}"
-                                                            Width="140" />
-                                        <DataGridTextColumn Header="상태"
-                                                            Binding="{Binding Quality}"
-                                                            Width="120" />
-                                        <DataGridTextColumn Header="시각"
-                                                            Binding="{Binding SampledAt}"
-                                                            Width="*" />
-                                    </DataGrid.Columns>
-                                </DataGrid>
+                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="그래프" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Style="{StaticResource MutedTextStyle}"
+                                           Text="{Binding RealtimeSummary}" />
                             </StackPanel>
-                        </Border>
-                    </Grid>
-
-                    <Border Grid.Row="2"
-                            Padding="22"
-                            Style="{StaticResource PanelCardStyle}">
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                       Text="실시간 센서 배치" />
-                            <ItemsControl Margin="0,18,0,0"
-                                          ItemsSource="{Binding SensorTiles}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal"
-                                                   ItemWidth="220"
-                                                   ItemHeight="110" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Margin="0,0,16,14"
-                                                Padding="16"
-                                                Background="{Binding Background}"
-                                                CornerRadius="20">
-                                            <TextBlock HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="22"
-                                                       FontWeight="SemiBold"
-                                                       TextAlignment="Center"
-                                                       TextWrapping="Wrap"
-                                                       Text="{Binding DisplayText}" />
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
+                            <Border Grid.Row="1"
+                                    Margin="0,24,0,0"
+                                    Background="{StaticResource CardLowBrush}"
+                                    BorderBrush="#31353C"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
+                                <Canvas Margin="36"
+                                        ClipToBounds="True">
+                                    <Polyline Points="{Binding TemperatureTrendPoints}"
+                                              Stroke="{x:Static local:DashboardPalette.TempLine}"
+                                              StrokeThickness="4"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              StrokeLineJoin="Round" />
+                                    <Polyline Points="{Binding HumidityTrendPoints}"
+                                              Stroke="{x:Static local:DashboardPalette.HumidityLine}"
+                                              StrokeThickness="4"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              StrokeLineJoin="Round" />
+                                </Canvas>
+                            </Border>
+                        </Grid>
                     </Border>
                 </Grid>
 
-                <Border Padding="24,22"
-                        Style="{StaticResource PanelCardStyle}"
+                <Border Padding="24"
+                        Background="{StaticResource CardBrush}"
+                        CornerRadius="10"
                         Visibility="{Binding HistoryViewVisibility}">
                     <StackPanel>
-                        <DockPanel Margin="0,0,0,14">
-                            <StackPanel DockPanel.Dock="Right"
-                                        Orientation="Horizontal">
+                        <DockPanel Margin="0,0,0,18">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                                 <DatePicker Width="150"
                                             Margin="0,0,10,0"
                                             SelectedDate="{Binding SelectedReportDate}" />
@@ -524,65 +611,42 @@
                                           DisplayMemberPath="Label"
                                           SelectedValuePath="Value"
                                           SelectedValue="{Binding SelectedHistoryChannelCode}" />
-                                <Button Width="140"
-                                        Height="36"
-                                        Margin="0,0,10,0"
-                                        Background="#DCDCDC"
-                                        BorderThickness="0"
+                                <Button Width="150"
+                                        Style="{StaticResource PrimaryButtonStyle}"
                                         Click="ExportReportCsvButton_Click"
-                                        Content="CSV 리포트" />
-                                <Button Width="140"
-                                        Height="36"
-                                        Background="#86FF57"
-                                        BorderThickness="0"
-                                        Click="ExportReportTextButton_Click"
-                                        Content="TXT 요약" />
+                                        Content="CSV 내보내기" />
                             </StackPanel>
-
                             <StackPanel>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                           Text="이력 조회" />
+                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="이력 조회" />
                                 <TextBlock Margin="0,8,0,0"
-                                           Style="{StaticResource SubtleTextStyle}"
+                                           Style="{StaticResource MutedTextStyle}"
                                            Text="{Binding SampleHistorySummary}" />
                                 <TextBlock Margin="0,4,0,0"
-                                           Style="{StaticResource SubtleTextStyle}"
+                                           Style="{StaticResource MutedTextStyle}"
                                            Text="{Binding ReportExportStatusMessage}" />
                             </StackPanel>
                         </DockPanel>
 
                         <DataGrid ItemsSource="{Binding SampleHistoryItems}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="시각"
-                                                    Binding="{Binding SampledAt}"
-                                                    Width="180" />
-                                <DataGridTextColumn Header="채널"
-                                                    Binding="{Binding ChannelCode}"
-                                                    Width="140" />
-                                <DataGridTextColumn Header="종류"
-                                                    Binding="{Binding Kind}"
-                                                    Width="100" />
-                                <DataGridTextColumn Header="Raw"
-                                                    Binding="{Binding RawValue}"
-                                                    Width="120" />
-                                <DataGridTextColumn Header="보정값"
-                                                    Binding="{Binding CorrectedValue}"
-                                                    Width="120" />
-                                <DataGridTextColumn Header="상태"
-                                                    Binding="{Binding Quality}"
-                                                    Width="120" />
+                                <DataGridTextColumn Header="시각" Binding="{Binding SampledAt}" Width="180" />
+                                <DataGridTextColumn Header="채널" Binding="{Binding ChannelCode}" Width="150" />
+                                <DataGridTextColumn Header="종류" Binding="{Binding Kind}" Width="100" />
+                                <DataGridTextColumn Header="Raw" Binding="{Binding RawValue}" Width="120" />
+                                <DataGridTextColumn Header="보정값" Binding="{Binding CorrectedValue}" Width="120" />
+                                <DataGridTextColumn Header="상태" Binding="{Binding Quality}" Width="120" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
                 </Border>
 
-                <Border Padding="24,22"
-                        Style="{StaticResource PanelCardStyle}"
+                <Border Padding="24"
+                        Background="{StaticResource CardBrush}"
+                        CornerRadius="10"
                         Visibility="{Binding AlarmViewVisibility}">
                     <StackPanel>
-                        <DockPanel Margin="0,0,0,14">
-                            <StackPanel DockPanel.Dock="Right"
-                                        Orientation="Horizontal">
+                        <DockPanel Margin="0,0,0,18">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                                 <DatePicker Width="150"
                                             Margin="0,0,10,0"
                                             SelectedDate="{Binding SelectedAlarmDate}" />
@@ -598,27 +662,21 @@
                                           DisplayMemberPath="Label"
                                           SelectedValuePath="Value"
                                           SelectedValue="{Binding SelectedAlarmStatus}" />
-                                <Button Width="180"
-                                        Height="36"
+                                <Button Width="150"
                                         Margin="0,0,10,0"
-                                        Background="#DCDCDC"
-                                        BorderThickness="0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
                                         IsEnabled="{Binding CanAcknowledgeSelectedAlarm}"
                                         Click="AcknowledgeSelectedAlarmButton_Click"
-                                        Content="선택 알람 확인" />
-                                <Button Width="180"
-                                        Height="36"
-                                        Background="#86FF57"
-                                        BorderThickness="0"
+                                        Content="선택 확인" />
+                                <Button Width="150"
+                                        Style="{StaticResource PrimaryButtonStyle}"
                                         Click="AcknowledgeAllActiveAlarmsButton_Click"
-                                        Content="활성 알람 일괄 확인" />
+                                        Content="전체 확인" />
                             </StackPanel>
-
                             <StackPanel>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                           Text="알람 이력" />
+                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="알람" />
                                 <TextBlock Margin="0,8,0,0"
-                                           Style="{StaticResource SubtleTextStyle}"
+                                           Style="{StaticResource MutedTextStyle}"
                                            Text="{Binding AlarmHistorySummary}" />
                             </StackPanel>
                         </DockPanel>
@@ -626,192 +684,177 @@
                         <DataGrid ItemsSource="{Binding AlarmHistoryItems}"
                                   SelectedItem="{Binding SelectedAlarmHistoryItem}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="발생 시각"
-                                                    Binding="{Binding OccurredAt}"
-                                                    Width="160" />
-                                <DataGridTextColumn Header="확인 시각"
-                                                    Binding="{Binding AcknowledgedAt}"
-                                                    Width="160" />
-                                <DataGridTextColumn Header="해제 시각"
-                                                    Binding="{Binding ResolvedAt}"
-                                                    Width="160" />
-                                <DataGridTextColumn Header="채널"
-                                                    Binding="{Binding ChannelCode}"
-                                                    Width="130" />
-                                <DataGridTextColumn Header="알람 종류"
-                                                    Binding="{Binding AlarmType}"
-                                                    Width="120" />
-                                <DataGridTextColumn Header="심각도"
-                                                    Binding="{Binding Severity}"
-                                                    Width="90" />
-                                <DataGridTextColumn Header="측정값"
-                                                    Binding="{Binding MeasuredValue}"
-                                                    Width="100" />
-                                <DataGridTextColumn Header="메시지"
-                                                    Binding="{Binding Message}"
-                                                    Width="*" />
+                                <DataGridTextColumn Header="발생 시각" Binding="{Binding OccurredAt}" Width="170" />
+                                <DataGridTextColumn Header="확인 시각" Binding="{Binding AcknowledgedAt}" Width="170" />
+                                <DataGridTextColumn Header="해제 시각" Binding="{Binding ResolvedAt}" Width="170" />
+                                <DataGridTextColumn Header="채널" Binding="{Binding ChannelCode}" Width="140" />
+                                <DataGridTextColumn Header="알람 종류" Binding="{Binding AlarmType}" Width="130" />
+                                <DataGridTextColumn Header="심각도" Binding="{Binding Severity}" Width="100" />
+                                <DataGridTextColumn Header="측정값" Binding="{Binding MeasuredValue}" Width="110" />
+                                <DataGridTextColumn Header="메시지" Binding="{Binding Message}" Width="*" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
                 </Border>
 
-                <Border Padding="24,22"
-                        Style="{StaticResource PanelCardStyle}"
+                <Border Padding="24"
+                        Background="{StaticResource CardBrush}"
+                        CornerRadius="10"
                         Visibility="{Binding SettingsViewVisibility}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                       Text="설정" />
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="설정" />
                             <TextBlock Margin="0,10,0,0"
-                                       Style="{StaticResource SubtleTextStyle}"
+                                       Style="{StaticResource MutedTextStyle}"
                                        Text="{Binding RuntimeSettingsFilePath}" />
-                            <TextBlock Margin="0,4,0,0"
-                                       Style="{StaticResource SubtleTextStyle}"
-                                       Text="{Binding EffectiveDataStoragePath}" />
                             <TextBlock Margin="0,4,0,18"
-                                       Style="{StaticResource SubtleTextStyle}"
-                                       Text="샘플링 주기, 통신 설정, 채널별 보정/알람 기준을 저장할 수 있습니다." />
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="{Binding EffectiveDataStoragePath}" />
 
-                            <Grid Margin="0,0,0,20">
+                            <Grid Margin="0,0,0,22">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160" />
                                     <ColumnDefinition Width="220" />
-                                    <ColumnDefinition Width="240" />
+                                    <ColumnDefinition Width="160" />
                                     <ColumnDefinition Width="220" />
-                                    <ColumnDefinition Width="240" />
                                 </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="16" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-
-                                <TextBlock Grid.Column="0"
+                                <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
                                            VerticalAlignment="Center"
-                                           FontSize="16"
-                                           Text="샘플링 주기" />
+                                           Text="저장주기" />
                                 <ComboBox Grid.Column="1"
                                           ItemsSource="{Binding SamplingModes}"
-                                          SelectedItem="{Binding SelectedSamplingMode}"
-                                          FontSize="16"
-                                          Padding="8,4" />
-
+                                          SelectedItem="{Binding SelectedSamplingMode}" />
                                 <TextBlock Grid.Column="2"
+                                           Foreground="{StaticResource PrimaryTextBrush}"
                                            VerticalAlignment="Center"
-                                           FontSize="16"
-                                           Text="데이터 루트" />
+                                           Text="데이터 경로" />
                                 <TextBox Grid.Column="3"
-                                         Text="{Binding SettingsDataRoot}"
-                                         FontSize="16"
-                                         Padding="8,4" />
-
-                                <TextBlock Grid.Row="2"
-                                           Grid.Column="0"
-                                           VerticalAlignment="Center"
-                                           FontSize="16"
-                                           Text="게이트웨이 모드" />
-                                <TextBox Grid.Row="2"
-                                         Grid.Column="1"
-                                         Text="{Binding SettingsGatewayMode}"
-                                         FontSize="16"
-                                         Padding="8,4" />
-
-                                <TextBlock Grid.Row="2"
-                                           Grid.Column="2"
-                                           VerticalAlignment="Center"
-                                           FontSize="16"
-                                           Text="테스트 프로필" />
-                                <StackPanel Grid.Row="2"
-                                            Grid.Column="3"
-                                            Orientation="Horizontal">
-                                    <TextBox Width="150"
-                                             Text="{Binding SettingsPlaceholderProfile}"
-                                             FontSize="16"
-                                             Padding="8,4" />
-                                    <TextBox Width="70"
-                                             Margin="10,0,0,0"
-                                             Text="{Binding SettingsPlaceholderCycleSeconds}"
-                                             FontSize="16"
-                                             Padding="8,4" />
-                                </StackPanel>
+                                         Text="{Binding SettingsDataRoot}" />
                             </Grid>
 
-                            <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                       Text="장비 통신 설정" />
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="장비 통신 설정" />
                             <DataGrid Margin="0,12,0,22"
                                       ItemsSource="{Binding DeviceSettingsItems}"
                                       IsReadOnly="False">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Key"
-                                                        Binding="{Binding Key}"
-                                                        IsReadOnly="True"
-                                                        Width="140" />
-                                    <DataGridTextColumn Header="표시명"
-                                                        Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="*" />
-                                    <DataGridTextColumn Header="IP"
-                                                        Binding="{Binding IpAddress, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="220" />
-                                    <DataGridTextColumn Header="Port"
-                                                        Binding="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="120" />
+                                    <DataGridTextColumn Header="Key" Binding="{Binding Key}" IsReadOnly="True" Width="140" />
+                                    <DataGridTextColumn Header="표시명" Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                                    <DataGridTextColumn Header="IP" Binding="{Binding IpAddress, UpdateSourceTrigger=PropertyChanged}" Width="220" />
+                                    <DataGridTextColumn Header="Port" Binding="{Binding Port, UpdateSourceTrigger=PropertyChanged}" Width="120" />
                                 </DataGrid.Columns>
                             </DataGrid>
 
-                            <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                       Text="채널 기준 설정" />
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="채널 기준 설정" />
                             <DataGrid Margin="0,12,0,22"
                                       ItemsSource="{Binding ChannelSettingsItems}"
                                       IsReadOnly="False">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="채널"
-                                                        Binding="{Binding Code}"
-                                                        IsReadOnly="True"
-                                                        Width="110" />
-                                    <DataGridTextColumn Header="표시명"
-                                                        Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="190" />
-                                    <DataGridTextColumn Header="위치명"
-                                                        Binding="{Binding LocationName, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="180" />
-                                    <DataGridTextColumn Header="목표값"
-                                                        Binding="{Binding TargetValue, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="100" />
-                                    <DataGridTextColumn Header="편차 기준"
-                                                        Binding="{Binding DeviationThreshold, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="100" />
-                                    <DataGridTextColumn Header="하한값"
-                                                        Binding="{Binding LowAlarmLimit, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="100" />
-                                    <DataGridTextColumn Header="상한값"
-                                                        Binding="{Binding HighAlarmLimit, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="100" />
-                                    <DataGridTextColumn Header="Scale"
-                                                        Binding="{Binding CalibrationScale, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="90" />
-                                    <DataGridTextColumn Header="Offset"
-                                                        Binding="{Binding Offset, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="90" />
+                                    <DataGridTextColumn Header="채널" Binding="{Binding Code}" IsReadOnly="True" Width="110" />
+                                    <DataGridTextColumn Header="표시명" Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Width="180" />
+                                    <DataGridTextColumn Header="위치명" Binding="{Binding LocationName, UpdateSourceTrigger=PropertyChanged}" Width="180" />
+                                    <DataGridTextColumn Header="목표값" Binding="{Binding TargetValue, UpdateSourceTrigger=PropertyChanged}" Width="100" />
+                                    <DataGridTextColumn Header="편차" Binding="{Binding DeviationThreshold, UpdateSourceTrigger=PropertyChanged}" Width="100" />
+                                    <DataGridTextColumn Header="하한" Binding="{Binding LowAlarmLimit, UpdateSourceTrigger=PropertyChanged}" Width="100" />
+                                    <DataGridTextColumn Header="상한" Binding="{Binding HighAlarmLimit, UpdateSourceTrigger=PropertyChanged}" Width="100" />
+                                    <DataGridTextColumn Header="Scale" Binding="{Binding CalibrationScale, UpdateSourceTrigger=PropertyChanged}" Width="90" />
+                                    <DataGridTextColumn Header="Offset" Binding="{Binding Offset, UpdateSourceTrigger=PropertyChanged}" Width="90" />
                                 </DataGrid.Columns>
                             </DataGrid>
 
                             <StackPanel Orientation="Horizontal"
                                         HorizontalAlignment="Right">
                                 <Button Width="120"
-                                        Height="42"
                                         Margin="0,0,12,0"
-                                        Background="#E0E0E0"
-                                        BorderThickness="0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
                                         Click="ReloadSettingsButton_Click"
                                         Content="다시 불러오기" />
-                                <Button Width="140"
-                                        Height="42"
-                                        Background="#86FF57"
-                                        BorderThickness="0"
+                                <Button Width="120"
+                                        Style="{StaticResource PrimaryButtonStyle}"
                                         Click="SaveSettingsButton_Click"
                                         Content="설정 저장" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
+                </Border>
+
+                <Border Padding="24"
+                        Background="{StaticResource CardBrush}"
+                        CornerRadius="10"
+                        Visibility="{Binding LogViewVisibility}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="로그" />
+                        <TextBlock Margin="0,8,0,20"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Text="최근 알람 및 시스템 이벤트를 확인합니다." />
+                        <ItemsControl ItemsSource="{Binding RecentEvents}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,10"
+                                            Padding="16"
+                                            Background="{StaticResource CardLowBrush}"
+                                            BorderBrush="{Binding Accent}"
+                                            BorderThickness="2,0,0,0"
+                                            CornerRadius="5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="90" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                                       Text="{Binding TimestampText}" />
+                                            <TextBlock Grid.Column="1"
+                                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                                       Text="{Binding Message}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Padding="24"
+                        Background="{StaticResource CardBrush}"
+                        CornerRadius="10"
+                        Visibility="{Binding SystemViewVisibility}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="시스템" />
+                        <TextBlock Margin="0,10,0,0"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Text="{Binding RuntimeSettingsFilePath}" />
+                        <TextBlock Margin="0,6,0,24"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Text="{Binding EffectiveDataStoragePath}" />
+                        <ItemsControl ItemsSource="{Binding StatusCards}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="3" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,16,0"
+                                            Padding="20"
+                                            Background="{StaticResource CardLowBrush}"
+                                            CornerRadius="8">
+                                        <StackPanel>
+                                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                                       Text="{Binding Title}" />
+                                            <TextBlock Margin="0,8,0,0"
+                                                       Foreground="{Binding Accent}"
+                                                       FontSize="24"
+                                                       FontWeight="SemiBold"
+                                                       Text="{Binding Summary}" />
+                                            <TextBlock Margin="0,8,0,0"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       Text="{Binding Detail}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </Border>
             </Grid>
         </Grid>

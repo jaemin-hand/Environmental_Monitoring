@@ -25,6 +25,8 @@ public sealed record DashboardStatusCard(
         DashboardSeverity.Notice => DashboardPalette.Notice,
         _ => DashboardPalette.Normal,
     };
+
+    public Brush Accent => Background;
 }
 
 public sealed record NavigationItem(
@@ -53,6 +55,61 @@ public sealed record SensorTile(
             ChannelKind.Pressure => DashboardPalette.Pressure,
             _ => DashboardPalette.Normal,
         },
+    };
+}
+
+public sealed record DashboardMetricCard(
+    string Title,
+    string Value,
+    string Unit,
+    string Detail,
+    DashboardSeverity Severity)
+{
+    public Brush Accent => Severity switch
+    {
+        DashboardSeverity.Critical => DashboardPalette.Critical,
+        DashboardSeverity.Warning => DashboardPalette.Warning,
+        DashboardSeverity.Notice => DashboardPalette.Notice,
+        _ => DashboardPalette.Primary,
+    };
+}
+
+public sealed record SensorFeedItem(
+    string Title,
+    string Value,
+    string Unit,
+    string StatusText,
+    DashboardSeverity Severity)
+{
+    public Brush Accent => Severity switch
+    {
+        DashboardSeverity.Critical => DashboardPalette.Critical,
+        DashboardSeverity.Warning => DashboardPalette.Critical,
+        DashboardSeverity.Notice => DashboardPalette.Notice,
+        _ => DashboardPalette.Normal,
+    };
+
+    public Brush Border => Severity is DashboardSeverity.Critical or DashboardSeverity.Warning
+        ? DashboardPalette.Critical
+        : DashboardPalette.SurfaceContainerLowest;
+}
+
+public sealed record HeatMapPoint(
+    string Title,
+    string Value,
+    string Unit,
+    double Left,
+    double Top,
+    double Size,
+    bool ShowLabel,
+    DashboardSeverity Severity)
+{
+    public Brush Accent => Severity switch
+    {
+        DashboardSeverity.Critical => DashboardPalette.Critical,
+        DashboardSeverity.Warning => DashboardPalette.Critical,
+        DashboardSeverity.Notice => DashboardPalette.Notice,
+        _ => DashboardPalette.Primary,
     };
 }
 
@@ -137,23 +194,25 @@ public sealed record LiveChannelItem(
 
 internal static class DashboardPalette
 {
-    public static Brush WindowBackground { get; } = Create("#3B3836");
-    public static Brush Surface { get; } = Create("#E6E6E6");
-    public static Brush SurfaceMuted { get; } = Create("#D3D3D3");
-    public static Brush PanelBackground { get; } = Create("#F0F0F0");
-    public static Brush Normal { get; } = Create("#86FF57");
-    public static Brush Notice { get; } = Create("#F3FF57");
+    public static Brush WindowBackground { get; } = Create("#10141A");
+    public static Brush Surface { get; } = Create("#1C2026");
+    public static Brush SurfaceMuted { get; } = Create("#262A31");
+    public static Brush SurfaceContainerLowest { get; } = Create("#0A0E14");
+    public static Brush PanelBackground { get; } = Create("#181C22");
+    public static Brush Normal { get; } = Create("#4AE183");
+    public static Brush Notice { get; } = Create("#AACBE1");
     public static Brush Warning { get; } = Create("#F3B13F");
-    public static Brush Critical { get; } = Create("#F04A32");
-    public static Brush Humidity { get; } = Create("#92ADEE");
-    public static Brush Pressure { get; } = Create("#F2FF5A");
-    public static Brush SelectedMenu { get; } = Create("#C7C7C7");
-    public static Brush DarkPanel { get; } = Create("#4A4744");
-    public static Brush TextPrimary { get; } = Brushes.Black;
-    public static Brush TextMuted { get; } = Create("#5D5A57");
-    public static Brush EventBorder { get; } = Create("#6E6B68");
-    public static Brush TempLine { get; } = Create("#243247");
-    public static Brush HumidityLine { get; } = Create("#B08A2E");
+    public static Brush Critical { get; } = Create("#FFB4AB");
+    public static Brush Humidity { get; } = Create("#AACBE1");
+    public static Brush Pressure { get; } = Create("#D1E4FF");
+    public static Brush Primary { get; } = Create("#ABC9EF");
+    public static Brush SelectedMenu { get; } = Create("#262A31");
+    public static Brush DarkPanel { get; } = Create("#10141A");
+    public static Brush TextPrimary { get; } = Create("#DFE2EB");
+    public static Brush TextMuted { get; } = Create("#C5C6CD");
+    public static Brush EventBorder { get; } = Create("#31353C");
+    public static Brush TempLine { get; } = Create("#ABC9EF");
+    public static Brush HumidityLine { get; } = Create("#4AE183");
 
     private static SolidColorBrush Create(string hex)
     {

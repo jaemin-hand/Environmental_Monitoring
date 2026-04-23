@@ -46,7 +46,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private IReadOnlyList<NavigationItem> _mainMenuItems = [];
     private NavigationItem _settingsMenuItem = new("settings", "설정", false);
     private IReadOnlyList<DashboardStatusCard> _statusCards = [];
+    private IReadOnlyList<DashboardMetricCard> _dashboardMetricCards = [];
     private IReadOnlyList<SensorTile> _sensorTiles = [];
+    private IReadOnlyList<SensorFeedItem> _sensorFeedItems = [];
+    private IReadOnlyList<HeatMapPoint> _heatMapPoints = [];
     private IReadOnlyList<RecentEventItem> _recentEvents = [];
     private IReadOnlyList<LiveChannelItem> _liveChannelItems = [];
     private IReadOnlyList<SampleHistoryItem> _sampleHistoryItems = [];
@@ -194,10 +197,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         private set => SetField(ref _statusCards, value);
     }
 
+    public IReadOnlyList<DashboardMetricCard> DashboardMetricCards
+    {
+        get => _dashboardMetricCards;
+        private set => SetField(ref _dashboardMetricCards, value);
+    }
+
     public IReadOnlyList<SensorTile> SensorTiles
     {
         get => _sensorTiles;
         private set => SetField(ref _sensorTiles, value);
+    }
+
+    public IReadOnlyList<SensorFeedItem> SensorFeedItems
+    {
+        get => _sensorFeedItems;
+        private set => SetField(ref _sensorFeedItems, value);
+    }
+
+    public IReadOnlyList<HeatMapPoint> HeatMapPoints
+    {
+        get => _heatMapPoints;
+        private set => SetField(ref _heatMapPoints, value);
     }
 
     public IReadOnlyList<RecentEventItem> RecentEvents
@@ -373,6 +394,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public Visibility SettingsViewVisibility =>
         _currentView == MainViewMode.Settings ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility LogViewVisibility =>
+        _currentView == MainViewMode.Log ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility SystemViewVisibility =>
+        _currentView == MainViewMode.System ? Visibility.Visible : Visibility.Collapsed;
 
     private void ApplyRuntimeState()
     {
@@ -574,8 +601,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var selectedAlarmId = SelectedAlarmHistoryItem?.Id;
 
         SensorTiles = CreateSensorTiles(snapshot.ChannelSnapshots);
+        SensorFeedItems = CreateSensorFeedItems(snapshot.ChannelSnapshots);
+        HeatMapPoints = CreateHeatMapPoints(snapshot.ChannelSnapshots);
         RecentEvents = CreateRecentEvents(snapshot.RecentEvents);
-        StatusCards = CreateStatusCards(snapshot);
+        StatusCards = CreateTopStatusCards(snapshot);
+        DashboardMetricCards = CreateDashboardMetricCards(snapshot);
         LiveChannelItems = CreateLiveChannelItems(snapshot.ChannelSnapshots);
         RealtimeSummary = BuildRealtimeSummary(snapshot);
         UpdateTrendSeries(snapshot.TrendPoints);
@@ -649,6 +679,52 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             humidityMax);
     }
 
+    private IReadOnlyList<DashboardStatusCard> CreateTopStatusCards(MonitoringDashboardSnapshot snapshot)
+    {
+        var communicationSeverity = ResolveCommunicationSeverity(snapshot.ChannelSnapshots);
+        var communicationSummary = communicationSeverity switch
+        {
+            DashboardSeverity.Warning => "이상",
+            DashboardSeverity.Notice => "대기",
+            _ => "최적",
+        };
+
+        var storageSeverity = snapshot.StorageStatus.Health switch
+        {
+            StorageHealth.Error => DashboardSeverity.Critical,
+            StorageHealth.Delayed => DashboardSeverity.Warning,
+            _ => DashboardSeverity.Normal,
+        };
+
+        var activeAlarmSeverity = snapshot.ActiveAlarmCount == 0
+            ? DashboardSeverity.Normal
+            : MapSeverity(snapshot.HighestActiveAlarmSeverity);
+
+        return
+        [
+            new DashboardStatusCard(
+                "통신 상태",
+                communicationSummary,
+                BuildCleanCommunicationDetail(snapshot.ChannelSnapshots),
+                "NET",
+                communicationSeverity),
+            new DashboardStatusCard(
+                "DB 저장 상태",
+                snapshot.StorageStatus.Health == StorageHealth.Healthy ? "기록 중" : snapshot.StorageStatus.Summary,
+                snapshot.StorageStatus.Detail,
+                "DB",
+                storageSeverity),
+            new DashboardStatusCard(
+                "최근 알람",
+                snapshot.ActiveAlarmCount == 0 ? "정상" : $"{snapshot.ActiveAlarmCount}건",
+                snapshot.ActiveAlarmCount == 0
+                    ? "활성 알람 없음"
+                    : $"최고 심각도 {ToCleanSeverityLabel(activeAlarmSeverity)}",
+                "!",
+                activeAlarmSeverity),
+        ];
+    }
+
     private IReadOnlyList<DashboardStatusCard> CreateStatusCards(MonitoringDashboardSnapshot snapshot)
     {
         var communicationSeverity = ResolveCommunicationSeverity(snapshot.ChannelSnapshots);
@@ -692,6 +768,114 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 "!",
                 activeAlarmSeverity),
         ];
+    }
+
+    private IReadOnlyList<DashboardMetricCard> CreateDashboardMetricCards(MonitoringDashboardSnapshot snapshot)
+    {
+        var temperatureSnapshots = snapshot.ChannelSnapshots
+            .Where(item => item.Kind == ChannelKind.Temperature && item.Value.HasValue)
+            .ToArray();
+        var humiditySnapshot = snapshot.ChannelSnapshots
+            .FirstOrDefault(item => item.Kind == ChannelKind.Humidity && item.Value.HasValue);
+        var pressureSnapshot = snapshot.ChannelSnapshots
+            .FirstOrDefault(item => item.Kind == ChannelKind.Pressure && item.Value.HasValue);
+        var referenceTemperature = temperatureSnapshots.FirstOrDefault();
+
+        double? averageTemperature = temperatureSnapshots.Length == 0
+            ? null
+            : temperatureSnapshots.Average(item => item.Value!.Value);
+
+        return
+        [
+            new DashboardMetricCard(
+                "평균 온도",
+                FormatMetricNumber(averageTemperature),
+                "°C",
+                "기준치 대비 상태 확인",
+                ResolveMetricSeverity(temperatureSnapshots)),
+            new DashboardMetricCard(
+                "상대 습도",
+                FormatMetricNumber(humiditySnapshot?.Value),
+                "%",
+                humiditySnapshot is null ? "미수신" : ToCleanQualityLabel(humiditySnapshot.QualityStatus),
+                humiditySnapshot is null ? DashboardSeverity.Warning : MapQualitySeverity(humiditySnapshot.QualityStatus)),
+            new DashboardMetricCard(
+                "챔버 압력",
+                FormatMetricNumber(pressureSnapshot?.Value),
+                "kPa",
+                pressureSnapshot is null ? "미수신" : ToCleanQualityLabel(pressureSnapshot.QualityStatus),
+                pressureSnapshot is null ? DashboardSeverity.Warning : MapQualitySeverity(pressureSnapshot.QualityStatus)),
+            new DashboardMetricCard(
+                "HMP1 기준온도",
+                FormatMetricNumber(referenceTemperature?.Value),
+                "°C",
+                referenceTemperature is null ? "미수신" : ToCleanQualityLabel(referenceTemperature.QualityStatus),
+                referenceTemperature is null ? DashboardSeverity.Warning : MapQualitySeverity(referenceTemperature.QualityStatus)),
+        ];
+    }
+
+    private IReadOnlyList<SensorFeedItem> CreateSensorFeedItems(
+        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
+    {
+        var lookup = channelSnapshots.ToDictionary(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase);
+
+        return _blueprint.Channels
+            .Where(channel => channel.Kind == ChannelKind.Temperature)
+            .Take(8)
+            .Select(channel =>
+            {
+                lookup.TryGetValue(channel.Name, out var snapshot);
+                var severity = ResolveTileSeverity(channel, snapshot);
+
+                return new SensorFeedItem(
+                    ToDisplayChannelName(channel),
+                    FormatMetricNumber(snapshot?.Value),
+                    "°C",
+                    snapshot is null ? "미수신" : ToCleanQualityLabel(snapshot.QualityStatus),
+                    severity);
+            })
+            .ToArray();
+    }
+
+    private IReadOnlyList<HeatMapPoint> CreateHeatMapPoints(
+        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
+    {
+        var positions = new (double Left, double Top, double Size)[]
+        {
+            (500, 310, 24),
+            (500, 440, 20),
+            (720, 220, 34),
+            (720, 440, 26),
+            (300, 220, 18),
+            (830, 220, 18),
+            (300, 440, 18),
+            (830, 440, 18),
+        };
+
+        var lookup = channelSnapshots.ToDictionary(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase);
+        var temperatureChannels = _blueprint.Channels
+            .Where(channel => channel.Kind == ChannelKind.Temperature)
+            .Take(8)
+            .ToArray();
+
+        return temperatureChannels
+            .Select((channel, index) =>
+            {
+                lookup.TryGetValue(channel.Name, out var snapshot);
+                var position = positions[Math.Min(index, positions.Length - 1)];
+                var severity = ResolveTileSeverity(channel, snapshot);
+
+                return new HeatMapPoint(
+                    ToDisplayChannelName(channel),
+                    FormatMetricNumber(snapshot?.Value),
+                    "°C",
+                    position.Left,
+                    position.Top,
+                    position.Size,
+                    severity is DashboardSeverity.Critical or DashboardSeverity.Warning,
+                    severity);
+            })
+            .ToArray();
     }
 
     private IReadOnlyList<SensorTile> CreateSensorTiles(
@@ -893,6 +1077,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(HistoryViewVisibility));
         OnPropertyChanged(nameof(AlarmViewVisibility));
         OnPropertyChanged(nameof(SettingsViewVisibility));
+        OnPropertyChanged(nameof(LogViewVisibility));
+        OnPropertyChanged(nameof(SystemViewVisibility));
         OnPropertyChanged(nameof(CanAcknowledgeSelectedAlarm));
     }
 
@@ -944,6 +1130,66 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         "LOW_LIMIT" => "하한 이탈",
         "HIGH_LIMIT" => "상한 이탈",
         _ => alarmType,
+    };
+
+    private static DashboardSeverity ResolveMetricSeverity(
+        IReadOnlyList<MonitoringChannelSnapshot> snapshots)
+    {
+        if (snapshots.Count == 0)
+        {
+            return DashboardSeverity.Warning;
+        }
+
+        if (snapshots.Any(item => item.QualityStatus != SampleQualityStatus.Normal))
+        {
+            return DashboardSeverity.Warning;
+        }
+
+        return DashboardSeverity.Normal;
+    }
+
+    private static DashboardSeverity MapQualitySeverity(SampleQualityStatus status) => status switch
+    {
+        SampleQualityStatus.Normal => DashboardSeverity.Normal,
+        SampleQualityStatus.Filtered => DashboardSeverity.Notice,
+        _ => DashboardSeverity.Warning,
+    };
+
+    private static string FormatMetricNumber(double? value) =>
+        value.HasValue
+            ? value.Value.ToString("0.0", CultureInfo.InvariantCulture)
+            : "--";
+
+    private static string BuildCleanCommunicationDetail(
+        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
+    {
+        if (channelSnapshots.All(item => item.SampledAt is null))
+        {
+            return "수집 대기 중";
+        }
+
+        var errorCount = channelSnapshots.Count(item => item.QualityStatus == SampleQualityStatus.CommunicationError);
+
+        return errorCount == 0
+            ? $"{channelSnapshots.Count}채널 응답 / Modbus TCP + RS-485"
+            : $"통신 이상 {errorCount}채널";
+    }
+
+    private static string ToCleanQualityLabel(SampleQualityStatus status) => status switch
+    {
+        SampleQualityStatus.Normal => "정상",
+        SampleQualityStatus.CommunicationError => "통신 이상",
+        SampleQualityStatus.OutOfRange => "범위 이탈",
+        SampleQualityStatus.Filtered => "필터링",
+        _ => status.ToString(),
+    };
+
+    private static string ToCleanSeverityLabel(DashboardSeverity severity) => severity switch
+    {
+        DashboardSeverity.Critical => "경보",
+        DashboardSeverity.Warning => "주의",
+        DashboardSeverity.Notice => "확인 필요",
+        _ => "정상",
     };
 
     private static string FormatValue(ChannelKind kind, string unit, double? value)
@@ -1152,6 +1398,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             "history" => MainViewMode.History,
             "alarm" => MainViewMode.Alarm,
             "settings" => MainViewMode.Settings,
+            "log" => MainViewMode.Log,
+            "system" => MainViewMode.System,
             _ => MainViewMode.Dashboard,
         };
 
@@ -1291,5 +1539,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         History,
         Alarm,
         Settings,
+        Log,
+        System,
     }
 }
