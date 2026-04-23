@@ -26,3 +26,8 @@ Windows 기반 환경 모니터링 프로그램의 초기 솔루션 골격입니
 - 실시간 그래프 바인딩
 - 알람 이벤트 이력 저장
 - 자동 시작 및 비정상 종료 복구
+---
+## 시스템 구조도
+<img width="2693" height="2412" alt="final_diagram" src="https://github.com/user-attachments/assets/1abce60d-ede0-43a3-8a4a-f761cba96b8b" />
+
+
