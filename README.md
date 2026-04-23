@@ -28,6 +28,6 @@ Windows 기반 환경 모니터링 프로그램의 초기 솔루션 골격입니
 - 자동 시작 및 비정상 종료 복구
 ---
 ## 시스템 구조도
-<img width="4337" height="2704" alt="Group 34" src="https://github.com/user-attachments/assets/acd9c6e5-7c33-4f9b-947b-56b2e87c4676" />
+<img width="2693" height="2412" alt="final_diagram" src="https://github.com/user-attachments/assets/1abce60d-ede0-43a3-8a4a-f761cba96b8b" />
 
 
