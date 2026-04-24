@@ -7,12 +7,16 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace EnvironmentalMonitoring.App;
 
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
+    private static readonly Brush SelectedNavBackgroundBrush = CreateFrozenBrush("#1C2026");
+    private static readonly Brush SelectedNavForegroundBrush = CreateFrozenBrush("#DFE2EB");
+    private static readonly Brush SelectedNavBorderBrush = CreateFrozenBrush("#8DB2FF");
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _refreshTimer;
     private readonly MonitoringSettingsStore _settingsStore;
@@ -706,13 +710,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 "통신 상태",
                 communicationSummary,
                 BuildCleanCommunicationDetail(snapshot.ChannelSnapshots),
-                "NET",
+                "●",
                 communicationSeverity),
             new DashboardStatusCard(
                 "DB 저장 상태",
                 snapshot.StorageStatus.Health == StorageHealth.Healthy ? "기록 중" : snapshot.StorageStatus.Summary,
                 snapshot.StorageStatus.Detail,
-                "DB",
+                "🔒",
                 storageSeverity),
             new DashboardStatusCard(
                 "최근 알람",
@@ -720,7 +724,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 snapshot.ActiveAlarmCount == 0
                     ? "활성 알람 없음"
                     : $"최고 심각도 {ToCleanSeverityLabel(activeAlarmSeverity)}",
-                "!",
+                "▲",
                 activeAlarmSeverity),
         ];
     }
@@ -1080,12 +1084,53 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(LogViewVisibility));
         OnPropertyChanged(nameof(SystemViewVisibility));
         OnPropertyChanged(nameof(CanAcknowledgeSelectedAlarm));
+        ApplySidebarSelectionState();
+    }
+
+    private void ApplySidebarSelectionState()
+    {
+        ApplySidebarButtonState(DashboardNavButton, _currentView == MainViewMode.Dashboard);
+        ApplySidebarButtonState(HistoryNavButton, _currentView == MainViewMode.History);
+        ApplySidebarButtonState(AlarmNavButton, _currentView == MainViewMode.Alarm);
+        ApplySidebarButtonState(RealtimeNavButton, _currentView == MainViewMode.Realtime);
+        ApplySidebarButtonState(LogNavButton, _currentView == MainViewMode.Log);
+        ApplySidebarButtonState(SettingsNavButton, _currentView == MainViewMode.Settings);
+        ApplySidebarButtonState(SystemNavButton, _currentView == MainViewMode.System);
+    }
+
+    private static void ApplySidebarButtonState(Button? button, bool isSelected)
+    {
+        if (button is null)
+        {
+            return;
+        }
+
+        if (isSelected)
+        {
+            button.Background = SelectedNavBackgroundBrush;
+            button.Foreground = SelectedNavForegroundBrush;
+            button.BorderBrush = SelectedNavBorderBrush;
+            button.BorderThickness = new Thickness(3, 0, 0, 0);
+            return;
+        }
+
+        button.ClearValue(BackgroundProperty);
+        button.ClearValue(ForegroundProperty);
+        button.ClearValue(BorderBrushProperty);
+        button.ClearValue(BorderThicknessProperty);
     }
 
     private static string ToDisplayChannelName(MeasurementChannel channel) =>
         string.IsNullOrWhiteSpace(channel.DisplayName)
             ? channel.Name
             : channel.DisplayName;
+
+    private static SolidColorBrush CreateFrozenBrush(string hex)
+    {
+        var brush = (SolidColorBrush)new BrushConverter().ConvertFromString(hex)!;
+        brush.Freeze();
+        return brush;
+    }
 
     private string ToDisplayChannelName(string channelCode, ChannelKind kind)
     {
