@@ -8,8 +8,8 @@
         Title="Environmental Monitoring"
         Width="1820"
         Height="1120"
-        MinWidth="1440"
-        MinHeight="900"
+        MinWidth="1180"
+        MinHeight="760"
         Background="{x:Static local:DashboardPalette.WindowBackground}"
         FontFamily="Malgun Gothic">
     <Window.Resources>
@@ -44,6 +44,7 @@
 
         <Style x:Key="NavButtonStyle" TargetType="Button">
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="#77808E" />
             <Setter Property="Padding" Value="18,14" />
@@ -55,6 +56,8 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="6"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -139,52 +142,53 @@
                                FontSize="12"
                                Text="Dynamo Lab Monitor" />
 
-                    <Button Tag="dashboard"
+                    <Button x:Name="DashboardNavButton"
+                            Tag="dashboard"
                             Margin="0,0,0,8"
-                            Background="#262A31"
-                            Foreground="#D1E4FF"
-                            BorderThickness="0"
-                            Padding="18,14"
-                            HorizontalContentAlignment="Left"
+                            Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="28" Text="GRID" />
+                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
                             <TextBlock Text="개요" />
                         </StackPanel>
                     </Button>
-                    <Button Tag="history"
+                    <Button x:Name="HistoryNavButton"
+                            Tag="history"
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="28" Text="HIS" />
+                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
                             <TextBlock Text="이력 조회" />
                         </StackPanel>
                     </Button>
-                    <Button Tag="log"
+                    <Button x:Name="AlarmNavButton"
+                            Tag="alarm"
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="28" Text="ALM" />
+                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
                             <TextBlock Text="알람" />
                         </StackPanel>
                     </Button>
-                    <Button Tag="realtime"
+                    <Button x:Name="RealtimeNavButton"
+                            Tag="realtime"
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="28" Text="TRD" />
+                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
                             <TextBlock Text="그래프" />
                         </StackPanel>
                     </Button>
-                    <Button Tag="alarm"
+                    <Button x:Name="LogNavButton"
+                            Tag="log"
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="28" Text="LOG" />
+                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
                             <TextBlock Text="로그" />
                         </StackPanel>
                     </Button>
@@ -195,20 +199,22 @@
                     <Border Height="1"
                             Margin="-22,0,-22,16"
                             Background="#222832" />
-                    <Button Tag="settings"
+                    <Button x:Name="SettingsNavButton"
+                            Tag="settings"
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="28" Text="SET" />
+                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
                             <TextBlock Text="설정" />
                         </StackPanel>
                     </Button>
-                    <Button Tag="system"
+                    <Button x:Name="SystemNavButton"
+                            Tag="system"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="28" Text="SYS" />
+                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
                             <TextBlock Text="시스템" />
                         </StackPanel>
                     </Button>
@@ -234,7 +240,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Margin="0,0,18,0"
-                                Padding="30,24"
+                                Padding="24,18"
                                 Background="{StaticResource CardBrush}"
                                 CornerRadius="10">
                             <Grid>
@@ -271,10 +277,11 @@
 
             <Grid Grid.Row="2">
                 <Grid Visibility="{Binding DashboardViewVisibility}">
+                    <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="26" />
-                        <ColumnDefinition Width="500" />
+                        <ColumnDefinition Width="480" />
                     </Grid.ColumnDefinitions>
 
                     <Grid Grid.Column="0">
@@ -293,30 +300,32 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Margin="0,0,18,0"
-                                            Padding="24"
+                                    <Border Margin="0,0,14,0"
+                                            Padding="20,18"
                                             Background="{StaticResource CardBrush}"
                                             CornerRadius="10">
                                         <StackPanel>
                                             <TextBlock Foreground="{StaticResource MutedTextBrush}"
-                                                       FontSize="13"
+                                                       FontSize="12"
                                                        FontWeight="SemiBold"
-                                                       Text="{Binding Title}" />
-                                            <StackPanel Margin="0,12,0,0"
+                                                       Text="{Binding Title}"
+                                                       TextWrapping="Wrap" />
+                                            <StackPanel Margin="0,10,0,0"
                                                         Orientation="Horizontal">
                                                 <TextBlock Foreground="{Binding Accent}"
-                                                           FontSize="46"
+                                                           FontSize="36"
                                                            FontWeight="Bold"
                                                            Text="{Binding Value}" />
-                                                <TextBlock Margin="6,18,0,0"
+                                                <TextBlock Margin="5,14,0,0"
                                                            Foreground="{StaticResource MutedTextBrush}"
-                                                           FontSize="20"
+                                                           FontSize="16"
                                                            Text="{Binding Unit}" />
                                             </StackPanel>
-                                            <TextBlock Margin="0,10,0,0"
+                                            <TextBlock Margin="0,8,0,0"
                                                        Foreground="{Binding Accent}"
-                                                       FontSize="13"
-                                                       Text="{Binding Detail}" />
+                                                       FontSize="12"
+                                                       Text="{Binding Detail}"
+                                                       TextWrapping="Wrap" />
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
@@ -334,13 +343,14 @@
                                            Text="열 분포 히트맵" />
 
                                 <Border Grid.Row="1"
+                                        MinHeight="520"
                                         Margin="0,24,0,0"
                                         Background="{StaticResource CardLowBrush}"
                                         BorderBrush="#222832"
                                         BorderThickness="1"
                                         CornerRadius="8"
                                         ClipToBounds="True">
-                                    <Viewbox Stretch="Fill">
+                                    <Viewbox Stretch="Uniform">
                                         <Canvas Width="1000" Height="650">
                                             <Rectangle Width="1000" Height="650">
                                                 <Rectangle.Fill>
@@ -458,11 +468,12 @@
                         </Grid.RowDefinitions>
 
                         <Border Grid.Row="0"
+                                MaxHeight="380"
                                 Style="{StaticResource CardStyle}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource SectionTitleStyle}"
                                            Text="실시간 센서 피드" />
-                                <ItemsControl Margin="0,20,0,0"
+                                <ItemsControl Margin="0,16,0,0"
                                               ItemsSource="{Binding SensorFeedItems}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -471,8 +482,8 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="0,0,10,10"
-                                                    Padding="16"
+                                            <Border Margin="0,0,8,8"
+                                                    Padding="12"
                                                     Background="{StaticResource CardLowBrush}"
                                                     BorderBrush="{Binding Border}"
                                                     BorderThickness="2,0,0,0"
@@ -480,23 +491,25 @@
                                                 <StackPanel>
                                                     <DockPanel>
                                                         <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                                                   FontSize="13"
-                                                                   FontWeight="SemiBold"
-                                                                   Text="{Binding Title}" />
-                                                        <TextBlock DockPanel.Dock="Right"
-                                                                   Foreground="{Binding Accent}"
                                                                    FontSize="12"
+                                                                   FontWeight="SemiBold"
+                                                                   Text="{Binding Title}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock DockPanel.Dock="Right"
+                                                                   Margin="6,0,0,0"
+                                                                   Foreground="{Binding Accent}"
+                                                                   FontSize="11"
                                                                    Text="{Binding StatusText}" />
                                                     </DockPanel>
-                                                    <StackPanel Margin="0,10,0,0"
+                                                    <StackPanel Margin="0,6,0,0"
                                                                 Orientation="Horizontal">
                                                         <TextBlock Foreground="{Binding Accent}"
-                                                                   FontSize="26"
+                                                                   FontSize="22"
                                                                    FontWeight="SemiBold"
                                                                    Text="{Binding Value}" />
-                                                        <TextBlock Margin="4,9,0,0"
+                                                        <TextBlock Margin="3,7,0,0"
                                                                    Foreground="{StaticResource MutedTextBrush}"
-                                                                   FontSize="13"
+                                                                   FontSize="11"
                                                                    Text="{Binding Unit}" />
                                                     </StackPanel>
                                                 </StackPanel>
@@ -553,6 +566,7 @@
                                 </ItemsControl>
                             </Grid>
                         </Border>
+                    </Grid>
                     </Grid>
                 </Grid>
 
