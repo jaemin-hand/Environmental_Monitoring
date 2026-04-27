@@ -5,12 +5,12 @@ using Microsoft.Extensions.Options;
 namespace EnvironmentalMonitoring.Infrastructure;
 
 public sealed class ModbusTcpMonitoringAcquisitionGateway(
-    MonitoringBlueprint blueprint,
     IOptions<MonitoringRuntimeOptions> options,
     ModbusTcpClient modbusTcpClient,
     ILogger<ModbusTcpMonitoringAcquisitionGateway> logger) : IMonitoringAcquisitionGateway
 {
     public async Task<AcquisitionSnapshot> CaptureAsync(
+        MonitoringBlueprint blueprint,
         DateTimeOffset sampledAt,
         CancellationToken cancellationToken)
     {
@@ -22,7 +22,7 @@ public sealed class ModbusTcpMonitoringAcquisitionGateway(
             try
             {
                 var map = GetRegisterMap(channel);
-                var device = GetDevice(channel.DeviceKey);
+                var device = GetDevice(blueprint, channel.DeviceKey);
                 var registers = await modbusTcpClient.ReadHoldingRegistersAsync(
                     device.IpAddress,
                     device.Port,
@@ -72,7 +72,7 @@ public sealed class ModbusTcpMonitoringAcquisitionGateway(
             batchStatus);
     }
 
-    private DeviceEndpoint GetDevice(string deviceKey)
+    private static DeviceEndpoint GetDevice(MonitoringBlueprint blueprint, string deviceKey)
     {
         var device = blueprint.Devices.FirstOrDefault(item => item.Key == deviceKey);
 

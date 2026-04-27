@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -105,6 +106,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _settingsGatewayMode = string.Empty;
     private string _settingsPlaceholderProfile = string.Empty;
     private int _settingsPlaceholderCycleSeconds;
+    private bool _isFullScreen;
+    private WindowStyle _restoreWindowStyle;
+    private ResizeMode _restoreResizeMode;
+    private WindowState _restoreWindowState;
+    private bool _restoreTopmost;
+    private double _restoreLeft;
+    private double _restoreTop;
+    private double _restoreWidth;
+    private double _restoreHeight;
 
     public MainWindow()
     {
@@ -143,6 +153,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _refreshTimer.Tick += async (_, _) => await RefreshAllAsync();
         _refreshTimer.Start();
 
+        PreviewKeyDown += MainWindow_PreviewKeyDown;
         Loaded += async (_, _) => await RefreshAllAsync();
         Closed += (_, _) =>
         {
@@ -811,9 +822,76 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool ShouldRefreshAlarmHistory() => _currentView == MainViewMode.Alarm;
 
     private TimeSpan GetRefreshInterval() =>
-        _currentView is MainViewMode.Dashboard or MainViewMode.Realtime
-            ? TimeSpan.FromSeconds(1)
-            : TimeSpan.FromSeconds(3);
+        TimeSpan.FromSeconds((int)_runtimeOptions.DefaultSamplingMode);
+
+    private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        var isAltEnter =
+            e.SystemKey == Key.Enter
+            || (e.Key == Key.Enter && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt));
+
+        if (e.Key == Key.F11 || isAltEnter)
+        {
+            ToggleFullScreen();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape && _isFullScreen)
+        {
+            ExitFullScreen();
+            e.Handled = true;
+        }
+    }
+
+    private void ToggleFullScreen()
+    {
+        if (_isFullScreen)
+        {
+            ExitFullScreen();
+            return;
+        }
+
+        EnterFullScreen();
+    }
+
+    private void EnterFullScreen()
+    {
+        _restoreWindowStyle = WindowStyle;
+        _restoreResizeMode = ResizeMode;
+        _restoreWindowState = WindowState;
+        _restoreTopmost = Topmost;
+        _restoreLeft = Left;
+        _restoreTop = Top;
+        _restoreWidth = Width;
+        _restoreHeight = Height;
+
+        _isFullScreen = true;
+        WindowState = WindowState.Normal;
+        WindowStyle = WindowStyle.None;
+        ResizeMode = ResizeMode.NoResize;
+        Topmost = true;
+        WindowState = WindowState.Maximized;
+    }
+
+    private void ExitFullScreen()
+    {
+        if (!_isFullScreen)
+        {
+            return;
+        }
+
+        _isFullScreen = false;
+        WindowState = WindowState.Normal;
+        WindowStyle = _restoreWindowStyle;
+        ResizeMode = _restoreResizeMode;
+        Topmost = _restoreTopmost;
+        Left = _restoreLeft;
+        Top = _restoreTop;
+        Width = _restoreWidth;
+        Height = _restoreHeight;
+        WindowState = _restoreWindowState;
+    }
 
     private void TriggerRefreshForView(MainViewMode view)
     {
@@ -1720,6 +1798,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _settingsDocument = BuildSettingsDocumentFromEditor();
             _settingsStore.Save(_settingsDocument);
             ApplyRuntimeState();
+            _refreshTimer.Interval = GetRefreshInterval();
             FooterStatusMessage = $"설정을 저장했습니다. {DateTime.Now:HH:mm:ss}";
             await RefreshAllAsync();
         }
@@ -1738,6 +1817,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 MonitoringProjectDefaults.CreateBlueprint(_bootstrapRuntimeOptions.DefaultSamplingMode));
             LoadSettingsEditor(_settingsDocument);
             ApplyRuntimeState();
+            _refreshTimer.Interval = GetRefreshInterval();
             FooterStatusMessage = $"설정을 다시 불러왔습니다. {DateTime.Now:HH:mm:ss}";
             await RefreshAllAsync();
         }

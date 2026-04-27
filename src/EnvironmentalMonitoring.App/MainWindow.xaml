@@ -42,6 +42,15 @@
             <Setter Property="FontSize" Value="13" />
         </Style>
 
+        <Style x:Key="NavIconStyle" TargetType="Path">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Margin" Value="0,0,14,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="Fill" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+        </Style>
+
         <Style x:Key="NavButtonStyle" TargetType="Button">
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="BorderBrush" Value="Transparent" />
@@ -136,7 +145,7 @@
                     <TextBlock Foreground="#D7E6FF"
                                FontSize="14"
                                FontWeight="SemiBold"
-                               Text="환경 제어" />
+                               Text="환경 모니터링" />
                     <TextBlock Margin="0,4,0,34"
                                Foreground="#8F9097"
                                FontSize="12"
@@ -147,8 +156,9 @@
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Style="{StaticResource NavIconStyle}"
+                                  Data="M10 6V0H18V6H10ZM0 10V0H8V10H0ZM10 18V8H18V18H10ZM0 18V12H8V18H0Z" />
                             <TextBlock Text="개요" />
                         </StackPanel>
                     </Button>
@@ -157,8 +167,9 @@
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Style="{StaticResource NavIconStyle}"
+                                  Data="M0 8V0H8V8H0ZM0 18V10H8V18H0ZM10 8V0H18V8H10ZM10 18V10H18V18H10ZM2 6H6V2H2V6ZM12 6H16V2H12V6ZM12 16H16V12H12V16ZM2 16H6V12H2V16Z" />
                             <TextBlock Text="이력 조회" />
                         </StackPanel>
                     </Button>
@@ -167,8 +178,9 @@
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Style="{StaticResource NavIconStyle}"
+                                  Data="M2.925 14.15C2.025 13.2333 1.3125 12.1708 0.7875 10.9625C0.2625 9.75417 0 8.45833 0 7.075C0 5.675 0.2625 4.37083 0.7875 3.1625C1.3125 1.95417 2.025 0.9 2.925 0L4.35 1.425C3.61667 2.15833 3.04167 3.00833 2.625 3.975C2.20833 4.94167 2 5.975 2 7.075C2 8.19167 2.20833 9.23333 2.625 10.2C3.04167 11.1667 3.61667 12.0083 4.35 12.725L2.925 14.15ZM5.75 11.325C5.21667 10.775 4.79167 10.1375 4.475 9.4125C4.15833 8.6875 4 7.90833 4 7.075C4 6.225 4.15833 5.4375 4.475 4.7125C4.79167 3.9875 5.21667 3.35833 5.75 2.825L7.175 4.25C6.80833 4.61667 6.52083 5.04167 6.3125 5.525C6.10417 6.00833 6 6.525 6 7.075C6 7.625 6.10417 8.14167 6.3125 8.625C6.52083 9.10833 6.80833 9.53333 7.175 9.9L5.75 11.325ZM10 9.075C9.45 9.075 8.97917 8.87917 8.5875 8.4875C8.19583 8.09583 8 7.625 8 7.075C8 6.525 8.19583 6.05417 8.5875 5.6625C8.97917 5.27083 9.45 5.075 10 5.075C10.55 5.075 11.0208 5.27083 11.4125 5.6625C11.8042 6.05417 12 6.525 12 7.075C12 7.625 11.8042 8.09583 11.4125 8.4875C11.0208 8.87917 10.55 9.075 10 9.075ZM14.25 11.325L12.825 9.9C13.1917 9.53333 13.4792 9.10833 13.6875 8.625C13.8958 8.14167 14 7.625 14 7.075C14 6.525 13.8958 6.00833 13.6875 5.525C13.4792 5.04167 13.1917 4.61667 12.825 4.25L14.25 2.825C14.7833 3.35833 15.2083 3.9875 15.525 4.7125C15.8417 5.4375 16 6.225 16 7.075C16 7.90833 15.8417 8.6875 15.525 9.4125C15.2083 10.1375 14.7833 10.775 14.25 11.325ZM17.075 14.15L15.65 12.725C16.3833 11.9917 16.9583 11.1417 17.375 10.175C17.7917 9.20833 18 8.175 18 7.075C18 5.95833 17.7917 4.91667 17.375 3.95C16.9583 2.98333 16.3833 2.14167 15.65 1.425L17.075 0C17.975 0.9 18.6875 1.95417 19.2125 3.1625C19.7375 4.37083 20 5.675 20 7.075C20 8.45833 19.7375 9.75417 19.2125 10.9625C18.6875 12.1708 17.975 13.2333 17.075 14.15Z" />
                             <TextBlock Text="알람" />
                         </StackPanel>
                     </Button>
@@ -177,8 +189,9 @@
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Style="{StaticResource NavIconStyle}"
+                                  Data="M0 18V16L2 14V18H0ZM4 18V12L6 10V18H4ZM8 18V10L10 12.025V18H8ZM12 18V12.025L14 10.025V18H12ZM16 18V8L18 6V18H16ZM0 12.825V10L7 3L11 7L18 0V2.825L11 9.825L7 5.825L0 12.825Z" />
                             <TextBlock Text="그래프" />
                         </StackPanel>
                     </Button>
@@ -187,8 +200,9 @@
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Style="{StaticResource NavIconStyle}"
+                                  Data="M2 16C1.45 16 0.979167 15.8042 0.5875 15.4125C0.195833 15.0208 0 14.55 0 14V2C0 1.45 0.195833 0.979167 0.5875 0.5875C0.979167 0.195833 1.45 0 2 0H18C18.55 0 19.0208 0.195833 19.4125 0.5875C19.8042 0.979167 20 1.45 20 2V14C20 14.55 19.8042 15.0208 19.4125 15.4125C19.0208 15.8042 18.55 16 18 16H2ZM2 14H18V4H2V14ZM5.5 13L4.1 11.6L6.675 9L4.075 6.4L5.5 5L9.5 9L5.5 13ZM10 13V11H16V13H10Z" />
                             <TextBlock Text="로그" />
                         </StackPanel>
                     </Button>
@@ -204,8 +218,9 @@
                             Margin="0,0,0,8"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Style="{StaticResource NavIconStyle}"
+                                  Data="M4.25833 11.6667L4.025 9.8C3.89861 9.75139 3.77951 9.69306 3.66771 9.625C3.5559 9.55694 3.44653 9.48403 3.33958 9.40625L1.60417 10.1354L0 7.36458L1.50208 6.22708C1.49236 6.15903 1.4875 6.0934 1.4875 6.03021C1.4875 5.96701 1.4875 5.90139 1.4875 5.83333C1.4875 5.76528 1.4875 5.69965 1.4875 5.63646C1.4875 5.57326 1.49236 5.50764 1.50208 5.43958L0 4.30208L1.60417 1.53125L3.33958 2.26042C3.44653 2.18264 3.55833 2.10972 3.675 2.04167C3.79167 1.97361 3.90833 1.91528 4.025 1.86667L4.25833 0H7.46667L7.7 1.86667C7.82639 1.91528 7.94549 1.97361 8.05729 2.04167C8.1691 2.10972 8.27847 2.18264 8.38542 2.26042L10.1208 1.53125L11.725 4.30208L10.2229 5.43958C10.2326 5.50764 10.2375 5.57326 10.2375 5.63646C10.2375 5.69965 10.2375 5.76528 10.2375 5.83333C10.2375 5.90139 10.2375 5.96701 10.2375 6.03021C10.2375 6.0934 10.2278 6.15903 10.2083 6.22708L11.7104 7.36458L10.1062 10.1354L8.38542 9.40625C8.27847 9.48403 8.16667 9.55694 8.05 9.625C7.93333 9.69306 7.81667 9.75139 7.7 9.8L7.46667 11.6667H4.25833ZM5.27917 10.5H6.43125L6.63542 8.95417C6.93681 8.87639 7.21632 8.76215 7.47396 8.61146C7.7316 8.46076 7.96736 8.27847 8.18125 8.06458L9.625 8.6625L10.1938 7.67083L8.93958 6.72292C8.98819 6.58681 9.02222 6.4434 9.04167 6.29271C9.06111 6.14201 9.07083 5.98889 9.07083 5.83333C9.07083 5.67778 9.06111 5.52465 9.04167 5.37396C9.02222 5.22326 8.98819 5.07986 8.93958 4.94375L10.1938 3.99583L9.625 3.00417L8.18125 3.61667C7.96736 3.39306 7.7316 3.2059 7.47396 3.05521C7.21632 2.90451 6.93681 2.79028 6.63542 2.7125L6.44583 1.16667H5.29375L5.08958 2.7125C4.78819 2.79028 4.50868 2.90451 4.25104 3.05521C3.9934 3.2059 3.75764 3.38819 3.54375 3.60208L2.1 3.00417L1.53125 3.99583L2.78542 4.92917C2.73681 5.075 2.70278 5.22083 2.68333 5.36667C2.66389 5.5125 2.65417 5.66806 2.65417 5.83333C2.65417 5.98889 2.66389 6.13958 2.68333 6.28542C2.70278 6.43125 2.73681 6.57708 2.78542 6.72292L1.53125 7.67083L2.1 8.6625L3.54375 8.05C3.75764 8.27361 3.9934 8.46076 4.25104 8.61146C4.50868 8.76215 4.78819 8.87639 5.08958 8.95417L5.27917 10.5ZM5.89167 7.875C6.45556 7.875 6.93681 7.67569 7.33542 7.27708C7.73403 6.87847 7.93333 6.39722 7.93333 5.83333C7.93333 5.26944 7.73403 4.78819 7.33542 4.38958C6.93681 3.99097 6.45556 3.79167 5.89167 3.79167C5.31806 3.79167 4.83438 3.99097 4.44063 4.38958C4.04688 4.78819 3.85 5.26944 3.85 5.83333C3.85 6.39722 4.04688 6.87847 4.44063 7.27708C4.83438 7.67569 5.31806 7.875 5.89167 7.875Z" />
                             <TextBlock Text="설정" />
                         </StackPanel>
                     </Button>
@@ -213,8 +228,9 @@
                             Tag="system"
                             Style="{StaticResource NavButtonStyle}"
                             Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="22" Text="■" FontSize="8" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Style="{StaticResource NavIconStyle}"
+                                  Data="M5.80417 9.33333C6.00833 9.33333 6.1809 9.26285 6.32188 9.12187C6.46285 8.9809 6.53333 8.80833 6.53333 8.60417C6.53333 8.4 6.46285 8.22743 6.32188 8.08646C6.1809 7.94549 6.00833 7.875 5.80417 7.875C5.6 7.875 5.42743 7.94549 5.28646 8.08646C5.14549 8.22743 5.075 8.4 5.075 8.60417C5.075 8.80833 5.14549 8.9809 5.28646 9.12187C5.42743 9.26285 5.6 9.33333 5.80417 9.33333ZM5.27917 7.0875H6.35833C6.35833 6.76667 6.39479 6.51389 6.46771 6.32917C6.54062 6.14444 6.74722 5.89167 7.0875 5.57083C7.34028 5.31806 7.53958 5.07743 7.68542 4.84896C7.83125 4.62049 7.90417 4.34583 7.90417 4.025C7.90417 3.48056 7.70486 3.0625 7.30625 2.77083C6.90764 2.47917 6.43611 2.33333 5.89167 2.33333C5.3375 2.33333 4.88785 2.47917 4.54271 2.77083C4.19757 3.0625 3.95694 3.4125 3.82083 3.82083L4.78333 4.2C4.83194 4.025 4.94132 3.83542 5.11146 3.63125C5.2816 3.42708 5.54167 3.325 5.89167 3.325C6.20278 3.325 6.43611 3.41007 6.59167 3.58021C6.74722 3.75035 6.825 3.9375 6.825 4.14167C6.825 4.33611 6.76667 4.5184 6.65 4.68854C6.53333 4.85868 6.3875 5.01667 6.2125 5.1625C5.78472 5.54167 5.52222 5.82847 5.425 6.02292C5.32778 6.21736 5.27917 6.57222 5.27917 7.0875ZM5.83333 11.6667C5.02639 11.6667 4.26806 11.5135 3.55833 11.2073C2.84861 10.901 2.23125 10.4854 1.70625 9.96042C1.18125 9.43542 0.765625 8.81806 0.459375 8.10833C0.153125 7.39861 0 6.64028 0 5.83333C0 5.02639 0.153125 4.26806 0.459375 3.55833C0.765625 2.84861 1.18125 2.23125 1.70625 1.70625C2.23125 1.18125 2.84861 0.765625 3.55833 0.459375C4.26806 0.153125 5.02639 0 5.83333 0C6.64028 0 7.39861 0.153125 8.10833 0.459375C8.81806 0.765625 9.43542 1.18125 9.96042 1.70625C10.4854 2.23125 10.901 2.84861 11.2073 3.55833C11.5135 4.26806 11.6667 5.02639 11.6667 5.83333C11.6667 6.64028 11.5135 7.39861 11.2073 8.10833C10.901 8.81806 10.4854 9.43542 9.96042 9.96042C9.43542 10.4854 8.81806 10.901 8.10833 11.2073C7.39861 11.5135 6.64028 11.6667 5.83333 11.6667ZM5.83333 10.5C7.13611 10.5 8.23958 10.0479 9.14375 9.14375C10.0479 8.23958 10.5 7.13611 10.5 5.83333C10.5 4.53056 10.0479 3.42708 9.14375 2.52292C8.23958 1.61875 7.13611 1.16667 5.83333 1.16667C4.53056 1.16667 3.42708 1.61875 2.52292 2.52292C1.61875 3.42708 1.16667 4.53056 1.16667 5.83333C1.16667 7.13611 1.61875 8.23958 2.52292 9.14375C3.42708 10.0479 4.53056 10.5 5.83333 10.5Z" />
                             <TextBlock Text="시스템" />
                         </StackPanel>
                     </Button>
@@ -527,41 +543,44 @@
                                 </Grid.RowDefinitions>
                                 <TextBlock Style="{StaticResource SectionTitleStyle}"
                                            Text="이벤트 로그" />
-                                <ItemsControl Grid.Row="1"
+                                <ScrollViewer Grid.Row="1"
                                               Margin="0,14,0,0"
-                                              ItemsSource="{Binding RecentEvents}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Margin="0,0,0,8"
-                                                    Padding="12,10"
-                                                    Background="{StaticResource CardLowBrush}"
-                                                    BorderBrush="{Binding Accent}"
-                                                    BorderThickness="2,0,0,0"
-                                                    CornerRadius="5">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="20" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Foreground="{Binding Accent}"
-                                                               FontWeight="Bold"
-                                                               Text="!" />
-                                                    <StackPanel Grid.Column="1">
-                                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                                                   FontSize="13"
-                                                                   FontWeight="SemiBold"
-                                                                   Text="{Binding Message}"
-                                                                   TextWrapping="Wrap" />
-                                                        <TextBlock Margin="0,4,0,0"
-                                                                   Foreground="{StaticResource MutedTextBrush}"
-                                                                   FontSize="12"
-                                                                   Text="{Binding TimestampText}" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding RecentEvents}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,8"
+                                                        Padding="12,10"
+                                                        Background="{StaticResource CardLowBrush}"
+                                                        BorderBrush="{Binding Accent}"
+                                                        BorderThickness="2,0,0,0"
+                                                        CornerRadius="5">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="20" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Foreground="{Binding Accent}"
+                                                                   FontWeight="Bold"
+                                                                   Text="!" />
+                                                        <StackPanel Grid.Column="1">
+                                                            <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
+                                                                       FontSize="13"
+                                                                       FontWeight="SemiBold"
+                                                                       Text="{Binding Message}"
+                                                                       TextWrapping="Wrap" />
+                                                            <TextBlock Margin="0,4,0,0"
+                                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                                       FontSize="12"
+                                                                       Text="{Binding TimestampText}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
                             </Grid>
                         </Border>
                     </Grid>
