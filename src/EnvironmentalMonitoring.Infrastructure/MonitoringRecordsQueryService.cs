@@ -13,7 +13,8 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
 
     public async Task<IReadOnlyList<MonitoringSampleRecord>> GetRecentSamplesAsync(
         int limit,
-        DateOnly? sampledOnDate,
+        DateOnly? sampledFromDate,
+        DateOnly? sampledToDate,
         string? channelCode,
         CancellationToken cancellationToken)
     {
@@ -30,11 +31,17 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
         await using var command = connection.CreateCommand();
         var filters = new List<string>();
 
-        if (sampledOnDate.HasValue)
+        if (sampledFromDate.HasValue)
         {
-            var dateStart = CreateLocalBoundary(sampledOnDate.Value);
-            filters.Add("b.sampled_at >= @DateStart AND b.sampled_at < @DateEnd");
+            var dateStart = CreateLocalBoundary(sampledFromDate.Value);
+            filters.Add("b.sampled_at >= @DateStart");
             command.Parameters.AddWithValue("@DateStart", dateStart.ToString("O"));
+        }
+
+        if (sampledToDate.HasValue)
+        {
+            var dateStart = CreateLocalBoundary(sampledToDate.Value);
+            filters.Add("b.sampled_at < @DateEnd");
             command.Parameters.AddWithValue("@DateEnd", dateStart.AddDays(1).ToString("O"));
         }
 
