@@ -230,50 +230,49 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <ItemsControl Grid.Row="0"
-                          ItemsSource="{Binding StatusCards}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Columns="3" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="0,0,18,0"
-                                Padding="24,18"
-                                Background="{StaticResource CardBrush}"
-                                CornerRadius="10">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel>
+            <Border Grid.Row="0"
+                    Background="{StaticResource CardBrush}"
+                    CornerRadius="10">
+                <ItemsControl ItemsSource="{Binding StatusCards}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="24,14"
+                                    BorderBrush="#31353C"
+                                    BorderThickness="0,0,1,0">
+                                <StackPanel VerticalAlignment="Center">
                                     <TextBlock Foreground="{StaticResource MutedTextBrush}"
-                                               FontSize="13"
+                                               FontSize="11"
                                                FontWeight="SemiBold"
                                                Text="{Binding Title}" />
-                                    <TextBlock Margin="0,8,0,0"
-                                               Foreground="{Binding Accent}"
-                                               FontSize="34"
-                                               FontWeight="Bold"
-                                               Text="{Binding Summary}" />
-                                    <TextBlock Margin="0,8,0,0"
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="0,6,0,0">
+                                        <TextBlock Foreground="{Binding Accent}"
+                                                   FontSize="22"
+                                                   FontWeight="Bold"
+                                                   VerticalAlignment="Center"
+                                                   Text="{Binding Summary}" />
+                                        <TextBlock Margin="8,0,0,0"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{Binding Accent}"
+                                                   FontSize="16"
+                                                   Text="{Binding IconText}" />
+                                    </StackPanel>
+                                    <TextBlock Margin="0,4,0,0"
                                                Foreground="{StaticResource MutedTextBrush}"
-                                               FontSize="12"
-                                               Text="{Binding Detail}" />
+                                               FontSize="11"
+                                               Text="{Binding Detail}"
+                                               TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
-                                <TextBlock Grid.Column="1"
-                                           VerticalAlignment="Center"
-                                           Foreground="{Binding Accent}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Text="{Binding IconText}" />
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
 
             <Grid Grid.Row="2">
                 <Grid Visibility="{Binding DashboardViewVisibility}">
@@ -462,13 +461,12 @@
 
                     <Grid Grid.Column="2">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="3*" />
                             <RowDefinition Height="26" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="2*" />
                         </Grid.RowDefinitions>
 
                         <Border Grid.Row="0"
-                                MaxHeight="380"
                                 Style="{StaticResource CardStyle}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource SectionTitleStyle}"
@@ -482,8 +480,8 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="0,0,8,8"
-                                                    Padding="12"
+                                            <Border Margin="0,0,6,6"
+                                                    Padding="10,8"
                                                     Background="{StaticResource CardLowBrush}"
                                                     BorderBrush="{Binding Border}"
                                                     BorderThickness="2,0,0,0"
@@ -491,25 +489,25 @@
                                                 <StackPanel>
                                                     <DockPanel>
                                                         <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                                                   FontSize="12"
+                                                                   FontSize="11"
                                                                    FontWeight="SemiBold"
                                                                    Text="{Binding Title}"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <TextBlock DockPanel.Dock="Right"
-                                                                   Margin="6,0,0,0"
+                                                                   Margin="4,0,0,0"
                                                                    Foreground="{Binding Accent}"
-                                                                   FontSize="11"
+                                                                   FontSize="10"
                                                                    Text="{Binding StatusText}" />
                                                     </DockPanel>
-                                                    <StackPanel Margin="0,6,0,0"
+                                                    <StackPanel Margin="0,4,0,0"
                                                                 Orientation="Horizontal">
                                                         <TextBlock Foreground="{Binding Accent}"
-                                                                   FontSize="22"
+                                                                   FontSize="18"
                                                                    FontWeight="SemiBold"
                                                                    Text="{Binding Value}" />
-                                                        <TextBlock Margin="3,7,0,0"
+                                                        <TextBlock Margin="3,5,0,0"
                                                                    Foreground="{StaticResource MutedTextBrush}"
-                                                                   FontSize="11"
+                                                                   FontSize="10"
                                                                    Text="{Binding Unit}" />
                                                     </StackPanel>
                                                 </StackPanel>
@@ -530,12 +528,12 @@
                                 <TextBlock Style="{StaticResource SectionTitleStyle}"
                                            Text="이벤트 로그" />
                                 <ItemsControl Grid.Row="1"
-                                              Margin="0,20,0,0"
+                                              Margin="0,14,0,0"
                                               ItemsSource="{Binding RecentEvents}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="0,0,0,10"
-                                                    Padding="14"
+                                            <Border Margin="0,0,0,8"
+                                                    Padding="12,10"
                                                     Background="{StaticResource CardLowBrush}"
                                                     BorderBrush="{Binding Accent}"
                                                     BorderThickness="2,0,0,0"
@@ -609,10 +607,260 @@
                     </Border>
                 </Grid>
 
+                <Grid Visibility="{Binding HistoryViewVisibility}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            Padding="24"
+                            Background="{StaticResource CardBrush}"
+                            CornerRadius="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="18" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="16" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Text="조회 조건" />
+
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="0.9*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="1.2*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="1.2*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="0.9*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="1.2*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="조회 기간" />
+                                    <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                                        <DatePicker Width="170"
+                                                    SelectedDate="{Binding SelectedReportDate}" />
+                                        <TextBlock Margin="10,8"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   Text="~" />
+                                        <DatePicker Width="170"
+                                                    SelectedDate="{Binding SelectedHistoryEndDate}" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="저장주기" />
+                                    <ComboBox Margin="0,8,0,0"
+                                              ItemsSource="{Binding SamplingModes}"
+                                              SelectedItem="{Binding SelectedSamplingMode}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="채널 선택" />
+                                    <ComboBox Margin="0,8,0,0"
+                                              ItemsSource="{Binding HistoryChannelOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SelectedHistoryChannelCode}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="6">
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="위치 선택" />
+                                    <ComboBox Margin="0,8,0,0"
+                                              ItemsSource="{Binding HistoryLocationOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SelectedHistoryLocationName}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="8">
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="상태 필터" />
+                                    <ComboBox Margin="0,8,0,0"
+                                              ItemsSource="{Binding HistoryStatusOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SelectedHistoryStatus}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="10">
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="데이터 종류" />
+                                    <ComboBox Margin="0,8,0,0"
+                                              ItemsSource="{Binding HistoryKindOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SelectedHistoryKind}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Border Grid.Row="3"
+                                    Height="1"
+                                    Background="#31353C" />
+
+                            <StackPanel Grid.Row="4"
+                                        HorizontalAlignment="Right"
+                                        Orientation="Horizontal">
+                                <Button Width="110"
+                                        Margin="0,0,10,0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Click="ResetHistoryFiltersButton_Click"
+                                        Content="초기화" />
+                                <Button Width="140"
+                                        Margin="0,0,10,0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Click="ExportReportCsvButton_Click"
+                                        Content="CSV 내보내기" />
+                                <Button Width="110"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Click="RefreshHistoryButton_Click"
+                                        Content="조회" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <UniformGrid Grid.Row="2"
+                                 Columns="6">
+                        <Border Margin="0,0,14,0" Padding="18" Background="{StaticResource CardBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="조회 건수" />
+                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryCountText}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="0,0,14,0" Padding="18" Background="{StaticResource CardBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="최소값" />
+                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryMinText}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="0,0,14,0" Padding="18" Background="{StaticResource CardBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="최대값" />
+                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryMaxText}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="0,0,14,0" Padding="18" Background="{StaticResource CardBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="평균값" />
+                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryAverageText}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="0,0,14,0" Padding="18" Background="{StaticResource CardBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="마지막 수집" />
+                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryLastSampleText}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Padding="18" Background="#211415" BorderBrush="#5C312D" BorderThickness="1" CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Foreground="{StaticResource WarnBrush}" FontSize="13" Text="알람 발생 건수" />
+                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource WarnBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryAlarmCountText}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <Grid Grid.Row="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="340" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Background="{StaticResource CardBrush}"
+                                BorderBrush="#31353C"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                            <DataGrid ItemsSource="{Binding SampleHistoryItems}"
+                                      SelectedItem="{Binding SelectedSampleHistoryItem}"
+                                      AutoGenerateColumns="False">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="시각" Binding="{Binding SampledAt}" Width="180" />
+                                    <DataGridTextColumn Header="채널명" Binding="{Binding ChannelCode}" Width="110" />
+                                    <DataGridTextColumn Header="위치명" Binding="{Binding LocationName}" Width="160" />
+                                    <DataGridTextColumn Header="데이터 종류" Binding="{Binding Kind}" Width="120" />
+                                    <DataGridTextColumn Header="RAW 값" Binding="{Binding RawValue}" Width="110" />
+                                    <DataGridTextColumn Header="보정값" Binding="{Binding CorrectedValue}" Width="110" />
+                                    <DataGridTextColumn Header="단위" Binding="{Binding Unit}" Width="80" />
+                                    <DataGridTextColumn Header="상태" Binding="{Binding Quality}" Width="100" />
+                                    <DataGridTextColumn Header="알람 여부" Binding="{Binding AlarmText}" Width="100" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+
+                        <Border Grid.Column="2"
+                                Padding="24"
+                                Background="{StaticResource CardBrush}"
+                                BorderBrush="#31353C"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
+                                           FontSize="22"
+                                           FontWeight="SemiBold"
+                                           Text="상세 정보" />
+                                <Border Margin="0,22,0,0"
+                                        Padding="18"
+                                        Background="{StaticResource CardHighBrush}"
+                                        BorderBrush="#3A3F49"
+                                        BorderThickness="1"
+                                        CornerRadius="6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource MutedTextStyle}" Text="선택 행 데이터" />
+                                            <TextBlock Margin="0,12,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="18" FontWeight="SemiBold" Text="{Binding SelectedSampleHistoryItem.ChannelCode}" />
+                                            <TextBlock Margin="0,8,0,0" Style="{StaticResource MutedTextStyle}" Text="{Binding SelectedSampleHistoryItem.SampledAt}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Foreground="{StaticResource PrimaryBrush}" FontSize="26" FontWeight="SemiBold" Text="{Binding SelectedSampleHistoryItem.CorrectedValue}" />
+                                            <TextBlock Margin="6,9,0,0" Foreground="{StaticResource MutedTextBrush}" FontSize="13" Text="{Binding SelectedSampleHistoryItem.Unit}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <Border Margin="0,18,0,0" Padding="18" Background="{StaticResource CardLowBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="6">
+                                    <Grid>
+                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}" Text="통신 상태" />
+                                        <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource GoodBrush}" Text="{Binding SelectedSampleHistoryItem.Quality}" />
+                                    </Grid>
+                                </Border>
+
+                                <Border Margin="0,18,0,0" Padding="18" Background="{StaticResource CardLowBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="6">
+                                    <StackPanel>
+                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}" Text="해당 시점 알람" />
+                                        <TextBlock Margin="0,12,0,0" Style="{StaticResource MutedTextStyle}" Text="{Binding SelectedSampleHistoryItem.AlarmText}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <TextBlock Margin="0,24,0,0" Foreground="{StaticResource MutedTextBrush}" FontWeight="SemiBold" Text="비고 / 이벤트 메시지" />
+                                <Border Margin="0,10,0,0" MinHeight="88" Padding="16" Background="{StaticResource CardLowBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="6">
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="{Binding ReportExportStatusMessage}" TextWrapping="Wrap" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+
                 <Border Padding="24"
                         Background="{StaticResource CardBrush}"
                         CornerRadius="10"
-                        Visibility="{Binding HistoryViewVisibility}">
+                        Visibility="Collapsed">
                     <StackPanel>
                         <DockPanel Margin="0,0,0,18">
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">

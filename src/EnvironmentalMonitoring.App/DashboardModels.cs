@@ -168,10 +168,15 @@ public sealed record LookupOption(
 public sealed record SampleHistoryItem(
     string SampledAt,
     string ChannelCode,
+    string LocationName,
     string Kind,
     string RawValue,
     string CorrectedValue,
-    string Quality);
+    string Unit,
+    string Quality)
+{
+    public string AlarmText => Quality == "정상" ? "-" : "!";
+}
 
 public sealed record AlarmHistoryItem(
     long Id,
