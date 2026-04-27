@@ -4,12 +4,12 @@ using Microsoft.Extensions.Options;
 namespace EnvironmentalMonitoring.Infrastructure;
 
 public sealed class PlaceholderMonitoringAcquisitionGateway(
-    MonitoringBlueprint blueprint,
     IOptions<MonitoringRuntimeOptions> options) : IMonitoringAcquisitionGateway
 {
     private readonly MonitoringRuntimeOptions _options = options.Value;
 
     public Task<AcquisitionSnapshot> CaptureAsync(
+        MonitoringBlueprint blueprint,
         DateTimeOffset sampledAt,
         CancellationToken cancellationToken)
     {

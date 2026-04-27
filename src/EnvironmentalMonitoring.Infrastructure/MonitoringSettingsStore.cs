@@ -6,6 +6,12 @@ namespace EnvironmentalMonitoring.Infrastructure;
 
 public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayout)
 {
+    private static readonly HashSet<string> ObsoleteDefaultDeviceKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "ADAM6015-A",
+        "ADAM6015-B",
+    };
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -110,6 +116,13 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
         if (string.IsNullOrWhiteSpace(document.Monitoring.DataRoot))
         {
             document.Monitoring.DataRoot = runtimeOptions.DataRoot;
+            changed = true;
+        }
+
+        var removedObsoleteDevices = document.Devices.RemoveAll(
+            device => ObsoleteDefaultDeviceKeys.Contains(device.Key));
+        if (removedObsoleteDevices > 0)
+        {
             changed = true;
         }
 
