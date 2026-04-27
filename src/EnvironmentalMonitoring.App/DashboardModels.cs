@@ -95,9 +95,14 @@ public sealed record SensorFeedItem(
 }
 
 public sealed record HeatMapPoint(
+    string ChannelCode,
     string Title,
+    string LocationName,
     string Value,
     string Unit,
+    string TargetText,
+    string DeltaText,
+    string StatusText,
     double Left,
     double Top,
     double Size,
@@ -111,7 +116,18 @@ public sealed record HeatMapPoint(
         DashboardSeverity.Notice => DashboardPalette.Notice,
         _ => DashboardPalette.Primary,
     };
+
+    public string TooltipText =>
+        $"{Title}\n위치: {LocationName}\n현재값: {Value}{Unit}\n기준값: {TargetText}\n편차: {DeltaText}\n상태: {StatusText}";
 }
+
+public sealed record HeatMapCell(
+    double Left,
+    double Top,
+    double Width,
+    double Height,
+    Brush Fill,
+    string TooltipText);
 
 public sealed record RecentEventItem(
     DateTimeOffset Timestamp,
