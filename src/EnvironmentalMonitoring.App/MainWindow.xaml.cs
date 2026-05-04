@@ -18,17 +18,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private static readonly Brush SelectedNavBackgroundBrush = CreateFrozenBrush("#1C2026");
     private static readonly Brush SelectedNavForegroundBrush = CreateFrozenBrush("#DFE2EB");
     private static readonly Brush SelectedNavBorderBrush = CreateFrozenBrush("#8DB2FF");
-    private static readonly (double Left, double Top, double Size)[] HeatMapSensorPositions =
-    [
-        (500, 310, 24),
-        (500, 440, 20),
-        (720, 220, 34),
-        (720, 440, 26),
-        (300, 220, 18),
-        (830, 220, 18),
-        (300, 440, 18),
-        (830, 440, 18),
-    ];
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _refreshTimer;
     private readonly MonitoringSettingsStore _settingsStore;
@@ -65,8 +54,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private IReadOnlyList<DashboardMetricCard> _dashboardMetricCards = [];
     private IReadOnlyList<SensorTile> _sensorTiles = [];
     private IReadOnlyList<SensorFeedItem> _sensorFeedItems = [];
-    private IReadOnlyList<HeatMapCell> _heatMapCells = [];
-    private IReadOnlyList<HeatMapPoint> _heatMapPoints = [];
     private IReadOnlyList<RecentEventItem> _recentEvents = [];
     private IReadOnlyList<LiveChannelItem> _liveChannelItems = [];
     private IReadOnlyList<SampleHistoryItem> _sampleHistoryItems = [];
@@ -266,18 +253,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         get => _sensorFeedItems;
         private set => SetField(ref _sensorFeedItems, value);
-    }
-
-    public IReadOnlyList<HeatMapPoint> HeatMapPoints
-    {
-        get => _heatMapPoints;
-        private set => SetField(ref _heatMapPoints, value);
-    }
-
-    public IReadOnlyList<HeatMapCell> HeatMapCells
-    {
-        get => _heatMapCells;
-        private set => SetField(ref _heatMapCells, value);
     }
 
     public IReadOnlyList<RecentEventItem> RecentEvents
@@ -805,8 +780,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         SensorTiles = CreateSensorTiles(snapshot.ChannelSnapshots);
         SensorFeedItems = CreateSensorFeedItems(snapshot.ChannelSnapshots);
-        HeatMapCells = CreateHeatMapCells(snapshot.ChannelSnapshots);
-        HeatMapPoints = CreateHeatMapPoints(snapshot.ChannelSnapshots);
         RecentEvents = CreateRecentEvents(snapshot.RecentEvents);
         StatusCards = CreateTopStatusCards(snapshot);
         DashboardMetricCards = CreateDashboardMetricCards(snapshot);
@@ -1113,183 +1086,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             })
             .ToArray();
     }
-
-    private IReadOnlyList<HeatMapPoint> CreateHeatMapPoints(
-        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
-    {
-        var lookup = channelSnapshots.ToDictionary(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase);
-        var temperatureChannels = _blueprint.Channels
-            .Where(channel => channel.Kind == ChannelKind.Temperature)
-            .Take(8)
-            .ToArray();
-
-        return temperatureChannels
-            .Select((channel, index) =>
-            {
-                lookup.TryGetValue(channel.Name, out var snapshot);
-                var position = HeatMapSensorPositions[Math.Min(index, HeatMapSensorPositions.Length - 1)];
-                var severity = ResolveTileSeverity(channel, snapshot);
-                var value = snapshot?.Value;
-                var targetText = channel.TargetValue.HasValue
-                    ? $"{channel.TargetValue.Value:0.0}°C"
-                    : "-";
-                var deltaText = value.HasValue && channel.TargetValue.HasValue
-                    ? FormatSignedTemperatureDelta(value.Value - (double)channel.TargetValue.Value)
-                    : "-";
-                var statusText = snapshot is null
-                    ? "미수신"
-                    : ToCleanQualityLabel(snapshot.QualityStatus);
-
-                return new HeatMapPoint(
-                    channel.Name,
-                    ToDisplayChannelName(channel),
-                    channel.LocationName,
-                    FormatMetricNumber(value),
-                    "°C",
-                    targetText,
-                    deltaText,
-                    statusText,
-                    position.Left,
-                    position.Top,
-                    position.Size,
-                    severity is DashboardSeverity.Critical or DashboardSeverity.Warning,
-                    severity);
-            })
-            .ToArray();
-    }
-
-    private IReadOnlyList<HeatMapCell> CreateHeatMapCells(
-        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
-    {
-        var sourcePoints = CreateHeatMapSourcePoints(channelSnapshots);
-        if (sourcePoints.Count == 0)
-        {
-            return [];
-        }
-
-        const double roomLeft = 50;
-        const double roomTop = 50;
-        const double roomWidth = 900;
-        const double roomHeight = 550;
-        const double cellSize = 50;
-
-        var referenceTemperature = sourcePoints.Average(item => item.Target);
-        var cells = new List<HeatMapCell>();
-
-        for (var y = roomTop; y < roomTop + roomHeight; y += cellSize)
-        {
-            for (var x = roomLeft; x < roomLeft + roomWidth; x += cellSize)
-            {
-                var width = Math.Min(cellSize, roomLeft + roomWidth - x);
-                var height = Math.Min(cellSize, roomTop + roomHeight - y);
-                var estimate = EstimateTemperatureByIdw(
-                    sourcePoints,
-                    x + width / 2.0,
-                    y + height / 2.0);
-                var delta = estimate - referenceTemperature;
-
-                cells.Add(new HeatMapCell(
-                    x,
-                    y,
-                    width,
-                    height,
-                    CreateHeatMapBrush(delta),
-                    $"보간 온도: {estimate:0.0}°C\n기준 대비: {FormatSignedTemperatureDelta(delta)}"));
-            }
-        }
-
-        return cells;
-    }
-
-    private List<(double X, double Y, double Value, double Target)> CreateHeatMapSourcePoints(
-        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
-    {
-        var lookup = channelSnapshots.ToDictionary(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase);
-        var temperatureChannels = _blueprint.Channels
-            .Where(channel => channel.Kind == ChannelKind.Temperature)
-            .Take(8)
-            .ToArray();
-        var sourcePoints = new List<(double X, double Y, double Value, double Target)>();
-
-        for (var index = 0; index < temperatureChannels.Length; index++)
-        {
-            var channel = temperatureChannels[index];
-            if (!lookup.TryGetValue(channel.Name, out var snapshot)
-                || !snapshot.Value.HasValue
-                || double.IsNaN(snapshot.Value.Value)
-                || double.IsInfinity(snapshot.Value.Value)
-                || snapshot.QualityStatus == SampleQualityStatus.CommunicationError)
-            {
-                continue;
-            }
-
-            var position = HeatMapSensorPositions[Math.Min(index, HeatMapSensorPositions.Length - 1)];
-            sourcePoints.Add((
-                position.Left + position.Size / 2.0,
-                position.Top + position.Size / 2.0,
-                snapshot.Value.Value,
-                channel.TargetValue.HasValue ? (double)channel.TargetValue.Value : 23.0));
-        }
-
-        return sourcePoints;
-    }
-
-    private static double EstimateTemperatureByIdw(
-        IReadOnlyList<(double X, double Y, double Value, double Target)> sourcePoints,
-        double x,
-        double y)
-    {
-        const double power = 2.0;
-        var weightedSum = 0.0;
-        var weightTotal = 0.0;
-
-        foreach (var point in sourcePoints)
-        {
-            var distance = Math.Sqrt(Math.Pow(point.X - x, 2) + Math.Pow(point.Y - y, 2));
-            if (distance < 0.001)
-            {
-                return point.Value;
-            }
-
-            var weight = 1.0 / Math.Pow(distance, power);
-            weightedSum += point.Value * weight;
-            weightTotal += weight;
-        }
-
-        return weightTotal <= 0.0
-            ? sourcePoints.Average(item => item.Value)
-            : weightedSum / weightTotal;
-    }
-
-    private static Brush CreateHeatMapBrush(double delta)
-    {
-        if (delta <= -5.0)
-        {
-            return CreateFrozenBrush("#AA2563EB");
-        }
-
-        if (delta <= -2.0)
-        {
-            return CreateFrozenBrush("#8859A7FF");
-        }
-
-        if (delta < 2.0)
-        {
-            return CreateFrozenBrush("#6634B872");
-        }
-
-        if (delta < 5.0)
-        {
-            return CreateFrozenBrush("#99F3B13F");
-        }
-
-        return CreateFrozenBrush("#AAFF6B5D");
-    }
-
-    private static string FormatSignedTemperatureDelta(double delta) =>
-        delta >= 0
-            ? $"+{delta:0.0}°C"
-            : $"{delta:0.0}°C";
 
     private IReadOnlyList<SensorTile> CreateSensorTiles(
         IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)

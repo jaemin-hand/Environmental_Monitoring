@@ -94,41 +94,6 @@ public sealed record SensorFeedItem(
         : DashboardPalette.SurfaceContainerLowest;
 }
 
-public sealed record HeatMapPoint(
-    string ChannelCode,
-    string Title,
-    string LocationName,
-    string Value,
-    string Unit,
-    string TargetText,
-    string DeltaText,
-    string StatusText,
-    double Left,
-    double Top,
-    double Size,
-    bool ShowLabel,
-    DashboardSeverity Severity)
-{
-    public Brush Accent => Severity switch
-    {
-        DashboardSeverity.Critical => DashboardPalette.Critical,
-        DashboardSeverity.Warning => DashboardPalette.Critical,
-        DashboardSeverity.Notice => DashboardPalette.Notice,
-        _ => DashboardPalette.Primary,
-    };
-
-    public string TooltipText =>
-        $"{Title}\n위치: {LocationName}\n현재값: {Value}{Unit}\n기준값: {TargetText}\n편차: {DeltaText}\n상태: {StatusText}";
-}
-
-public sealed record HeatMapCell(
-    double Left,
-    double Top,
-    double Width,
-    double Height,
-    Brush Fill,
-    string TooltipText);
-
 public sealed record RecentEventItem(
     DateTimeOffset Timestamp,
     string Message,

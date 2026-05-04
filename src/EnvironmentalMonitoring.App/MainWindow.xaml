@@ -355,7 +355,7 @@
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
                                 <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                           Text="열 분포 히트맵" />
+                                           Text="맵" />
 
                                 <Border Grid.Row="1"
                                         MinHeight="520"
@@ -365,135 +365,7 @@
                                         BorderThickness="1"
                                         CornerRadius="8"
                                         ClipToBounds="True">
-                                    <Viewbox Stretch="Uniform">
-                                        <Canvas Width="1000" Height="650">
-                                            <Rectangle Width="1000"
-                                                       Height="650"
-                                                       Fill="#0A0E14" />
-                                            <ItemsControl ItemsSource="{Binding HeatMapCells}">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <Canvas />
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemContainerStyle>
-                                                    <Style TargetType="ContentPresenter">
-                                                        <Setter Property="Canvas.Left" Value="{Binding Left}" />
-                                                        <Setter Property="Canvas.Top" Value="{Binding Top}" />
-                                                    </Style>
-                                                </ItemsControl.ItemContainerStyle>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Rectangle Width="{Binding Width}"
-                                                                   Height="{Binding Height}"
-                                                                   Fill="{Binding Fill}"
-                                                                   Opacity="0.92"
-                                                                   ToolTip="{Binding TooltipText}" />
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                            <Rectangle Width="900"
-                                                       Height="550"
-                                                       Canvas.Left="50"
-                                                       Canvas.Top="50"
-                                                       Fill="#350A0E14" />
-                                            <Rectangle Width="900"
-                                                       Height="550"
-                                                       Canvas.Left="50"
-                                                       Canvas.Top="50"
-                                                       Stroke="#31353C"
-                                                       StrokeThickness="1" />
-                                            <Border Canvas.Left="66"
-                                                    Canvas.Top="58"
-                                                    Padding="10,7"
-                                                    Background="#DD181C22"
-                                                    CornerRadius="4">
-                                                <StackPanel>
-                                                    <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                                               FontSize="12"
-                                                               FontWeight="SemiBold"
-                                                               Text="온도 분포 보간도 (IDW)" />
-                                                    <StackPanel Margin="0,6,0,0"
-                                                                Orientation="Horizontal">
-                                                        <Rectangle Width="34" Height="8" Fill="#2563EB" />
-                                                        <Rectangle Width="34" Height="8" Fill="#59A7FF" />
-                                                        <Rectangle Width="34" Height="8" Fill="#34B872" />
-                                                        <Rectangle Width="34" Height="8" Fill="#F3B13F" />
-                                                        <Rectangle Width="34" Height="8" Fill="#FF6B5D" />
-                                                    </StackPanel>
-                                                    <DockPanel Margin="0,4,0,0">
-                                                        <TextBlock DockPanel.Dock="Left"
-                                                                   Foreground="{StaticResource MutedTextBrush}"
-                                                                   FontSize="10"
-                                                                   Text="-5°C 이하" />
-                                                        <TextBlock Foreground="{StaticResource MutedTextBrush}"
-                                                                   FontSize="10"
-                                                                   HorizontalAlignment="Right"
-                                                                   Text="+5°C 이상" />
-                                                    </DockPanel>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <ItemsControl ItemsSource="{Binding HeatMapPoints}">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <Canvas />
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemContainerStyle>
-                                                    <Style TargetType="ContentPresenter">
-                                                        <Setter Property="Canvas.Left" Value="{Binding Left}" />
-                                                        <Setter Property="Canvas.Top" Value="{Binding Top}" />
-                                                    </Style>
-                                                </ItemsControl.ItemContainerStyle>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid ToolTip="{Binding TooltipText}">
-                                                            <Ellipse Width="{Binding Size}"
-                                                                     Height="{Binding Size}"
-                                                                     Stroke="{Binding Accent}"
-                                                                     StrokeThickness="3"
-                                                                     Fill="#2031353C" />
-                                                            <Ellipse Width="8"
-                                                                     Height="8"
-                                                                     HorizontalAlignment="Center"
-                                                                     VerticalAlignment="Center"
-                                                                     Fill="{Binding Accent}" />
-                                                            <Border Margin="22,14,0,0"
-                                                                    Padding="8,4"
-                                                                    Background="#DD181C22"
-                                                                    CornerRadius="3">
-                                                                <Border.Style>
-                                                                    <Style TargetType="Border">
-                                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding ShowLabel}" Value="True">
-                                                                                <Setter Property="Visibility" Value="Visible" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </Border.Style>
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                                                               FontSize="12"
-                                                                               FontWeight="SemiBold"
-                                                                               Text="{Binding Title}" />
-                                                                    <TextBlock Margin="6,0,0,0"
-                                                                               Foreground="{Binding Accent}"
-                                                                               FontSize="12"
-                                                                               FontWeight="SemiBold"
-                                                                               Text="{Binding Value}" />
-                                                                    <TextBlock Foreground="{Binding Accent}"
-                                                                               FontSize="12"
-                                                                               Text="{Binding Unit}" />
-                                                                </StackPanel>
-                                                            </Border>
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </Canvas>
-                                    </Viewbox>
+                                    <Grid />
                                 </Border>
                             </Grid>
                         </Border>
