@@ -1071,7 +1071,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         return _blueprint.Channels
             .Where(channel => channel.Kind == ChannelKind.Temperature)
-            .Take(8)
+            .Take(6)
             .Select(channel =>
             {
                 lookup.TryGetValue(channel.Name, out var snapshot);

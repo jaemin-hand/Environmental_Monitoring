@@ -131,7 +131,7 @@
 
     <Grid Background="{StaticResource AppBackgroundBrush}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="220" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
@@ -239,7 +239,7 @@
         </Border>
 
         <Grid Grid.Column="1"
-              Margin="32">
+              Margin="24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="26" />
@@ -295,8 +295,8 @@
                     <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="26" />
-                        <ColumnDefinition Width="480" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="390" />
                     </Grid.ColumnDefinitions>
 
                     <Grid Grid.Column="0">
@@ -365,7 +365,7 @@
                                         BorderThickness="1"
                                         CornerRadius="8"
                                         ClipToBounds="True">
-                                    <Grid />
+                                    <local:DynamometerRoomMapControl />
                                 </Border>
                             </Grid>
                         </Border>
