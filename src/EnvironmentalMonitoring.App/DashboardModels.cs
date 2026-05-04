@@ -94,25 +94,6 @@ public sealed record SensorFeedItem(
         : DashboardPalette.SurfaceContainerLowest;
 }
 
-public sealed record HeatMapPoint(
-    string Title,
-    string Value,
-    string Unit,
-    double Left,
-    double Top,
-    double Size,
-    bool ShowLabel,
-    DashboardSeverity Severity)
-{
-    public Brush Accent => Severity switch
-    {
-        DashboardSeverity.Critical => DashboardPalette.Critical,
-        DashboardSeverity.Warning => DashboardPalette.Critical,
-        DashboardSeverity.Notice => DashboardPalette.Notice,
-        _ => DashboardPalette.Primary,
-    };
-}
-
 public sealed record RecentEventItem(
     DateTimeOffset Timestamp,
     string Message,

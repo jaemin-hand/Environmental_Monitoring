@@ -54,7 +54,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private IReadOnlyList<DashboardMetricCard> _dashboardMetricCards = [];
     private IReadOnlyList<SensorTile> _sensorTiles = [];
     private IReadOnlyList<SensorFeedItem> _sensorFeedItems = [];
-    private IReadOnlyList<HeatMapPoint> _heatMapPoints = [];
     private IReadOnlyList<RecentEventItem> _recentEvents = [];
     private IReadOnlyList<LiveChannelItem> _liveChannelItems = [];
     private IReadOnlyList<SampleHistoryItem> _sampleHistoryItems = [];
@@ -254,12 +253,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         get => _sensorFeedItems;
         private set => SetField(ref _sensorFeedItems, value);
-    }
-
-    public IReadOnlyList<HeatMapPoint> HeatMapPoints
-    {
-        get => _heatMapPoints;
-        private set => SetField(ref _heatMapPoints, value);
     }
 
     public IReadOnlyList<RecentEventItem> RecentEvents
@@ -787,7 +780,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         SensorTiles = CreateSensorTiles(snapshot.ChannelSnapshots);
         SensorFeedItems = CreateSensorFeedItems(snapshot.ChannelSnapshots);
-        HeatMapPoints = CreateHeatMapPoints(snapshot.ChannelSnapshots);
         RecentEvents = CreateRecentEvents(snapshot.RecentEvents);
         StatusCards = CreateTopStatusCards(snapshot);
         DashboardMetricCards = CreateDashboardMetricCards(snapshot);
@@ -1090,47 +1082,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     FormatMetricNumber(snapshot?.Value),
                     "°C",
                     snapshot is null ? "미수신" : ToCleanQualityLabel(snapshot.QualityStatus),
-                    severity);
-            })
-            .ToArray();
-    }
-
-    private IReadOnlyList<HeatMapPoint> CreateHeatMapPoints(
-        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
-    {
-        var positions = new (double Left, double Top, double Size)[]
-        {
-            (500, 310, 24),
-            (500, 440, 20),
-            (720, 220, 34),
-            (720, 440, 26),
-            (300, 220, 18),
-            (830, 220, 18),
-            (300, 440, 18),
-            (830, 440, 18),
-        };
-
-        var lookup = channelSnapshots.ToDictionary(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase);
-        var temperatureChannels = _blueprint.Channels
-            .Where(channel => channel.Kind == ChannelKind.Temperature)
-            .Take(8)
-            .ToArray();
-
-        return temperatureChannels
-            .Select((channel, index) =>
-            {
-                lookup.TryGetValue(channel.Name, out var snapshot);
-                var position = positions[Math.Min(index, positions.Length - 1)];
-                var severity = ResolveTileSeverity(channel, snapshot);
-
-                return new HeatMapPoint(
-                    ToDisplayChannelName(channel),
-                    FormatMetricNumber(snapshot?.Value),
-                    "°C",
-                    position.Left,
-                    position.Top,
-                    position.Size,
-                    severity is DashboardSeverity.Critical or DashboardSeverity.Warning,
                     severity);
             })
             .ToArray();

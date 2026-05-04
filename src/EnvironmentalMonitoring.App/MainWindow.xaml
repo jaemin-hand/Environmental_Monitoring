@@ -355,7 +355,7 @@
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
                                 <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                           Text="열 분포 히트맵" />
+                                           Text="맵" />
 
                                 <Border Grid.Row="1"
                                         MinHeight="520"
@@ -365,111 +365,7 @@
                                         BorderThickness="1"
                                         CornerRadius="8"
                                         ClipToBounds="True">
-                                    <Viewbox Stretch="Uniform">
-                                        <Canvas Width="1000" Height="650">
-                                            <Rectangle Width="1000" Height="650">
-                                                <Rectangle.Fill>
-                                                    <RadialGradientBrush Center="0.78,0.25"
-                                                                         GradientOrigin="0.78,0.25"
-                                                                         RadiusX="0.45"
-                                                                         RadiusY="0.50">
-                                                        <GradientStop Color="#805A332D" Offset="0" />
-                                                        <GradientStop Color="#403B3422" Offset="0.45" />
-                                                        <GradientStop Color="#0010141A" Offset="1" />
-                                                    </RadialGradientBrush>
-                                                </Rectangle.Fill>
-                                            </Rectangle>
-                                            <Ellipse Width="760"
-                                                     Height="500"
-                                                     Canvas.Left="120"
-                                                     Canvas.Top="120"
-                                                     Opacity="0.40">
-                                                <Ellipse.Fill>
-                                                    <RadialGradientBrush>
-                                                        <GradientStop Color="#3034B872" Offset="0" />
-                                                        <GradientStop Color="#0010141A" Offset="1" />
-                                                    </RadialGradientBrush>
-                                                </Ellipse.Fill>
-                                            </Ellipse>
-                                            <Ellipse Width="580"
-                                                     Height="420"
-                                                     Canvas.Left="230"
-                                                     Canvas.Top="260"
-                                                     Opacity="0.40">
-                                                <Ellipse.Fill>
-                                                    <RadialGradientBrush>
-                                                        <GradientStop Color="#303B5BAA" Offset="0" />
-                                                        <GradientStop Color="#0010141A" Offset="1" />
-                                                    </RadialGradientBrush>
-                                                </Ellipse.Fill>
-                                            </Ellipse>
-                                            <Rectangle Width="900"
-                                                       Height="550"
-                                                       Canvas.Left="50"
-                                                       Canvas.Top="50"
-                                                       Stroke="#31353C"
-                                                       StrokeThickness="1" />
-
-                                            <ItemsControl ItemsSource="{Binding HeatMapPoints}">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <Canvas />
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemContainerStyle>
-                                                    <Style TargetType="ContentPresenter">
-                                                        <Setter Property="Canvas.Left" Value="{Binding Left}" />
-                                                        <Setter Property="Canvas.Top" Value="{Binding Top}" />
-                                                    </Style>
-                                                </ItemsControl.ItemContainerStyle>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid>
-                                                            <Ellipse Width="{Binding Size}"
-                                                                     Height="{Binding Size}"
-                                                                     Stroke="{Binding Accent}"
-                                                                     StrokeThickness="3"
-                                                                     Fill="#2031353C" />
-                                                            <Ellipse Width="8"
-                                                                     Height="8"
-                                                                     HorizontalAlignment="Center"
-                                                                     VerticalAlignment="Center"
-                                                                     Fill="{Binding Accent}" />
-                                                            <Border Margin="22,14,0,0"
-                                                                    Padding="8,4"
-                                                                    Background="#DD181C22"
-                                                                    CornerRadius="3">
-                                                                <Border.Style>
-                                                                    <Style TargetType="Border">
-                                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding ShowLabel}" Value="True">
-                                                                                <Setter Property="Visibility" Value="Visible" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </Border.Style>
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                                                               FontSize="12"
-                                                                               FontWeight="SemiBold"
-                                                                               Text="{Binding Title}" />
-                                                                    <TextBlock Margin="6,0,0,0"
-                                                                               Foreground="{Binding Accent}"
-                                                                               FontSize="12"
-                                                                               FontWeight="SemiBold"
-                                                                               Text="{Binding Value}" />
-                                                                    <TextBlock Foreground="{Binding Accent}"
-                                                                               FontSize="12"
-                                                                               Text="{Binding Unit}" />
-                                                                </StackPanel>
-                                                            </Border>
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </Canvas>
-                                    </Viewbox>
+                                    <Grid />
                                 </Border>
                             </Grid>
                         </Border>
