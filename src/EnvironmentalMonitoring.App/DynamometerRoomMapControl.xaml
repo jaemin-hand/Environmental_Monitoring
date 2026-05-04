@@ -1,0 +1,326 @@
+<UserControl x:Class="EnvironmentalMonitoring.App.DynamometerRoomMapControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root"
+             SnapsToDevicePixels="True"
+             TextOptions.TextFormattingMode="Display">
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="MapPanelBrush" Color="#0B0F14" />
+        <SolidColorBrush x:Key="MapPanelEdgeBrush" Color="#1F3A52" />
+        <SolidColorBrush x:Key="WallBackBrush" Color="#161E2A" />
+        <SolidColorBrush x:Key="WallLineBrush" Color="#50627A" />
+        <SolidColorBrush x:Key="WallGlowBrush" Color="#203D59" />
+        <SolidColorBrush x:Key="DeviceFillBrush" Color="#071015" />
+        <SolidColorBrush x:Key="DeviceStrokeBrush" Color="#18B7D6" />
+        <SolidColorBrush x:Key="MapTextBrush" Color="#AFC6E8" />
+        <SolidColorBrush x:Key="MutedMapTextBrush" Color="#7D8EA7" />
+        <SolidColorBrush x:Key="OrangeBrush" Color="#FF9F45" />
+        <SolidColorBrush x:Key="OrangeSoftBrush" Color="#24140B" />
+
+        <DropShadowEffect x:Key="CyanGlowEffect"
+                          BlurRadius="18"
+                          Color="#18B7D6"
+                          Opacity="0.35"
+                          ShadowDepth="0" />
+        <DropShadowEffect x:Key="BlueWallGlowEffect"
+                          BlurRadius="14"
+                          Color="#2D6FA3"
+                          Opacity="0.28"
+                          ShadowDepth="0" />
+        <DropShadowEffect x:Key="OrangeGlowEffect"
+                          BlurRadius="16"
+                          Color="#FF9F45"
+                          Opacity="0.34"
+                          ShadowDepth="0" />
+
+        <DrawingBrush x:Key="FineGridBrush"
+                      TileMode="Tile"
+                      Viewport="0,0,18,18"
+                      ViewportUnits="Absolute"
+                      Opacity="0.11">
+            <DrawingBrush.Drawing>
+                <GeometryDrawing Brush="Transparent">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#2A3B4F" Thickness="0.6" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <LineGeometry StartPoint="0,0" EndPoint="18,0" />
+                            <LineGeometry StartPoint="0,0" EndPoint="0,18" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
+
+        <DrawingBrush x:Key="HatchBrush"
+                      TileMode="Tile"
+                      Viewport="0,0,18,18"
+                      ViewportUnits="Absolute"
+                      Opacity="0.32">
+            <DrawingBrush.Drawing>
+                <GeometryDrawing Brush="Transparent">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF9F45" Thickness="1.1" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <LineGeometry StartPoint="0,18" EndPoint="18,0" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
+
+        <Style x:Key="MapLabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource MapTextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="18" />
+        </Style>
+
+        <Style x:Key="DeviceLabelStyle" TargetType="TextBlock" BasedOn="{StaticResource MapLabelStyle}">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="22" />
+        </Style>
+    </UserControl.Resources>
+
+    <Border Background="{StaticResource MapPanelBrush}"
+            BorderBrush="{StaticResource MapPanelEdgeBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            ClipToBounds="True">
+        <Viewbox Stretch="Uniform">
+            <!-- 표시 좌표계는 도면 주변 여백을 줄인 920 x 610이다. 내부 도면 좌표는 유지해서 배치 조정 부담을 줄인다. -->
+            <Canvas Width="920" Height="610" Background="{StaticResource MapPanelBrush}" ClipToBounds="True">
+                <Rectangle Width="920" Height="610" Fill="{StaticResource FineGridBrush}" />
+
+                <Canvas Canvas.Left="-110"
+                        Canvas.Top="-60"
+                        Width="1100"
+                        Height="650">
+
+                <!-- 시험실 벽체: 두꺼운 배경 라인 위에 얇은 네온 라인을 겹쳐 벽 두께와 발광감을 표현한다. -->
+                <Path Data="M140,70 L310,70 M310,78 L805,78 M805,70 L965,70 L965,590 L690,590 L690,578 L642,578 L642,622 L458,622 L458,578 L410,578 L410,590 L140,590 L140,70"
+                      Stroke="{StaticResource WallBackBrush}"
+                      StrokeThickness="10"
+                      StrokeStartLineCap="Square"
+                      StrokeEndLineCap="Square" />
+                <Path Data="M140,70 L310,70 M310,78 L805,78 M805,70 L965,70 L965,590 L690,590 L690,578 L642,578 L642,622 L458,622 L458,578 L410,578 L410,590 L140,590 L140,70"
+                      Stroke="{StaticResource WallLineBrush}"
+                      StrokeThickness="1.4"
+                      Effect="{StaticResource BlueWallGlowEffect}"
+                      StrokeStartLineCap="Square"
+                      StrokeEndLineCap="Square" />
+
+                <!-- 좌측 벽 보강선 -->
+                <Line X1="147" Y1="175" X2="147" Y2="500" Stroke="{StaticResource WallGlowBrush}" StrokeThickness="1" Opacity="0.55" />
+                <Line X1="958" Y1="110" X2="958" Y2="565" Stroke="{StaticResource WallGlowBrush}" StrokeThickness="1" Opacity="0.55" />
+
+                <!-- 차고문 -->
+                <Rectangle Canvas.Left="458"
+                           Canvas.Top="590"
+                           Width="184"
+                           Height="32"
+                           Fill="#0A1018"
+                           Stroke="#263749"
+                           StrokeThickness="1" />
+                <TextBlock Canvas.Left="528"
+                           Canvas.Top="598"
+                           Foreground="{StaticResource MutedMapTextBrush}"
+                           FontSize="17"
+                           FontWeight="SemiBold"
+                           Text="차고문" />
+
+                <!-- 장치 박스 4개 -->
+                <Grid Canvas.Left="330" Canvas.Top="205" Width="155" Height="120">
+                    <Rectangle Fill="{StaticResource DeviceFillBrush}"
+                               RadiusX="5"
+                               RadiusY="5"
+                               Stroke="{StaticResource DeviceStrokeBrush}"
+                               StrokeThickness="1.2"
+                               Effect="{StaticResource CyanGlowEffect}" />
+                    <TextBlock Style="{StaticResource DeviceLabelStyle}" Text="장치" />
+                </Grid>
+                <Grid Canvas.Left="630" Canvas.Top="205" Width="155" Height="120">
+                    <Rectangle Fill="{StaticResource DeviceFillBrush}"
+                               RadiusX="5"
+                               RadiusY="5"
+                               Stroke="{StaticResource DeviceStrokeBrush}"
+                               StrokeThickness="1.2"
+                               Effect="{StaticResource CyanGlowEffect}" />
+                    <TextBlock Style="{StaticResource DeviceLabelStyle}" Text="장치" />
+                </Grid>
+                <Grid Canvas.Left="330" Canvas.Top="385" Width="155" Height="120">
+                    <Rectangle Fill="{StaticResource DeviceFillBrush}"
+                               RadiusX="5"
+                               RadiusY="5"
+                               Stroke="{StaticResource DeviceStrokeBrush}"
+                               StrokeThickness="1.2"
+                               Effect="{StaticResource CyanGlowEffect}" />
+                    <TextBlock Style="{StaticResource DeviceLabelStyle}" Text="장치" />
+                </Grid>
+                <Grid Canvas.Left="630" Canvas.Top="385" Width="155" Height="120">
+                    <Rectangle Fill="{StaticResource DeviceFillBrush}"
+                               RadiusX="5"
+                               RadiusY="5"
+                               Stroke="{StaticResource DeviceStrokeBrush}"
+                               StrokeThickness="1.2"
+                               Effect="{StaticResource CyanGlowEffect}" />
+                    <TextBlock Style="{StaticResource DeviceLabelStyle}" Text="장치" />
+                </Grid>
+
+                <!-- 주행풍 FAN -->
+                <Grid Canvas.Left="455" Canvas.Top="102" Width="205" Height="70">
+                    <Rectangle Fill="#071015"
+                               RadiusX="6"
+                               RadiusY="6"
+                               Stroke="#72CAE5"
+                               StrokeThickness="1.1"
+                               Opacity="0.88"
+                               Effect="{StaticResource CyanGlowEffect}" />
+                    <Image Width="48"
+                           Height="48"
+                           Margin="18,0,0,0"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           SnapsToDevicePixels="True"
+                           Source="/Assets/wind_FAN_icon.png"
+                           Stretch="Uniform" />
+                    <TextBlock Margin="78,0,0,0"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource MapTextBrush}"
+                               FontSize="21"
+                               FontWeight="SemiBold"
+                               Text="주행풍 FAN" />
+                </Grid>
+
+                <!-- Indigo520 라벨 -->
+                <Border Canvas.Left="760"
+                        Canvas.Top="95"
+                        Width="92"
+                        Height="42"
+                        Background="#0D1325"
+                        BorderBrush="#335FA4"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Effect="{StaticResource BlueWallGlowEffect}">
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="#D7E4F6"
+                               FontSize="16"
+                               Text="Indigo520" />
+                </Border>
+
+                <!-- 전기 패널 설치 제한 구역 -->
+                <Grid Canvas.Left="875" Canvas.Top="110" Width="105" Height="270">
+                    <Rectangle Fill="{StaticResource OrangeSoftBrush}"
+                               RadiusX="4"
+                               RadiusY="4"
+                               Stroke="{StaticResource OrangeBrush}"
+                               StrokeThickness="1.1"
+                               Effect="{StaticResource OrangeGlowEffect}" />
+                    <Rectangle Margin="4"
+                               Fill="{StaticResource HatchBrush}"
+                               RadiusX="3"
+                               RadiusY="3"
+                               Opacity="0.55" />
+                    <TextBlock Margin="0,78,0,0"
+                               HorizontalAlignment="Center"
+                               Foreground="#FFB389"
+                               FontSize="30"
+                               Text="⚠" />
+                    <TextBlock Margin="0,130,0,0"
+                               HorizontalAlignment="Center"
+                               Foreground="#FFB389"
+                               FontSize="19"
+                               FontWeight="SemiBold"
+                               Text="전기 패널" />
+                    <TextBlock Margin="0,168,0,0"
+                               HorizontalAlignment="Center"
+                               Foreground="#FFE0CE"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Text="설치 제한 구역" />
+                </Grid>
+
+                <!-- 우측 하단 기둥: 우측/하단 벽에 붙는 고정 장애물 영역 -->
+                <Rectangle Canvas.Left="875"
+                           Canvas.Top="505"
+                           Width="105"
+                           Height="75"
+                           Fill="#0A0F16"
+                           Stroke="#53606F"
+                           StrokeThickness="1.2"
+                           RadiusX="4"
+                           RadiusY="4"
+                           Opacity="0.9" />
+
+                <Image Canvas.Left="478"
+                       Canvas.Top="198"
+                       Width="144"
+                       Height="285"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       SnapsToDevicePixels="True"
+                       Source="/Assets/top_view_car.png"
+                       Stretch="Uniform">
+                    <Image.Effect>
+                        <DropShadowEffect BlurRadius="18"
+                                          Color="#6F7D91"
+                                          Opacity="0.42"
+                                          ShadowDepth="0" />
+                    </Image.Effect>
+                </Image>
+
+                <!-- 센서 포인트: Left/Top/State/TemperatureText는 추후 실시간 데이터로 바인딩 가능하다. -->
+                <ItemsControl ItemsSource="{Binding SensorMarkers, ElementName=Root}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas Width="1100" Height="650" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                            <Setter Property="Canvas.Top" Value="{Binding Top}" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Width="120"
+                                  Height="38"
+                                  ToolTip="{Binding ToolTipText}">
+                                <Ellipse Width="32"
+                                         Height="32"
+                                         HorizontalAlignment="Left"
+                                         VerticalAlignment="Center"
+                                         Fill="{Binding GlowBrush}"
+                                         Opacity="0.45" />
+                                <Ellipse Width="24"
+                                         Height="24"
+                                         Margin="4,0,0,0"
+                                         HorizontalAlignment="Left"
+                                         VerticalAlignment="Center"
+                                         Fill="#0B0F14"
+                                         Stroke="{Binding AccentBrush}"
+                                         StrokeThickness="2.2" />
+                                <Ellipse Width="9"
+                                         Height="9"
+                                         Margin="11.5,0,0,0"
+                                         HorizontalAlignment="Left"
+                                         VerticalAlignment="Center"
+                                         Fill="{Binding AccentBrush}" />
+                                <TextBlock Margin="40,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="#D6E2F1"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Text="{Binding Label}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                </Canvas>
+            </Canvas>
+        </Viewbox>
+    </Border>
+</UserControl>

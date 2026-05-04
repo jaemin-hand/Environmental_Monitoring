@@ -12,6 +12,36 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
         "ADAM6015-B",
     };
 
+    private static readonly HashSet<string> ObsoleteDefaultChannelCodes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "T07",
+        "T08",
+    };
+
+    private static readonly Dictionary<string, string> PreviousDefaultChannelDisplayNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["T01"] = "Point 1 (HMP1 기준)",
+        ["T02"] = "Point 2 (입구)",
+        ["T03"] = "Point 3 (센터)",
+        ["T04"] = "Point 4 (앞단)",
+        ["T05"] = "Point 5",
+        ["T06"] = "Point 6",
+        ["H01"] = "H1 Humidity",
+        ["P01"] = "P1 Pressure",
+    };
+
+    private static readonly Dictionary<string, string> PreviousDefaultChannelLocationNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["T01"] = "시험장 중앙 (1.5m)",
+        ["T02"] = "시험장 입구 근처",
+        ["T03"] = "샤시다이나모 근접",
+        ["T04"] = "배기/환기구 근처",
+        ["T05"] = "실험실 구석 A",
+        ["T06"] = "실험실 구석 B",
+        ["H01"] = "습도 설치 위치 협의",
+        ["P01"] = "압력 설치 위치 협의",
+    };
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -126,6 +156,13 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
             changed = true;
         }
 
+        var removedObsoleteChannels = document.Channels.RemoveAll(
+            channel => ObsoleteDefaultChannelCodes.Contains(channel.Code));
+        if (removedObsoleteChannels > 0)
+        {
+            changed = true;
+        }
+
         var existingDevices = document.Devices.ToDictionary(item => item.Key, StringComparer.OrdinalIgnoreCase);
         foreach (var device in blueprint.Devices)
         {
@@ -164,13 +201,13 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
             else
             {
                 var existing = existingChannels[channel.Name];
-                if (string.IsNullOrWhiteSpace(existing.DisplayName))
+                if (ShouldUseBlueprintText(existing.DisplayName, PreviousDefaultChannelDisplayNames, channel.Name))
                 {
                     existing.DisplayName = channel.DisplayName;
                     changed = true;
                 }
 
-                if (string.IsNullOrWhiteSpace(existing.LocationName))
+                if (ShouldUseBlueprintText(existing.LocationName, PreviousDefaultChannelLocationNames, channel.Name))
                 {
                     existing.LocationName = channel.LocationName;
                     changed = true;
@@ -209,5 +246,19 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
         }
 
         return changed;
+    }
+
+    private static bool ShouldUseBlueprintText(
+        string? currentValue,
+        IReadOnlyDictionary<string, string> previousDefaults,
+        string channelCode)
+    {
+        if (string.IsNullOrWhiteSpace(currentValue))
+        {
+            return true;
+        }
+
+        return previousDefaults.TryGetValue(channelCode, out var previousDefault)
+            && string.Equals(currentValue, previousDefault, StringComparison.Ordinal);
     }
 }

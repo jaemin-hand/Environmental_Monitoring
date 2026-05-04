@@ -5,6 +5,11 @@
     <ProjectReference Include="..\EnvironmentalMonitoring.Infrastructure\EnvironmentalMonitoring.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Assets\top_view_car.png" />
+    <Resource Include="Assets\wind_FAN_icon.png" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
