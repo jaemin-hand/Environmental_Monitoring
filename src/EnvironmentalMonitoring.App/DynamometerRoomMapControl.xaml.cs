@@ -30,11 +30,12 @@ public partial class DynamometerRoomMapControl : UserControl
     {
         return
         [
-            new("T1", 260, 105, 23.0, "정상", DynamometerRoomSensorState.Normal),
-            new("T2", 160, 305, 23.5, "안정", DynamometerRoomSensorState.Stable),
-            new("T3", 185, 535, 22.8, "정상", DynamometerRoomSensorState.Normal),
-            new("T4", 705, 540, 22.6, "정상", DynamometerRoomSensorState.Normal),
-            new("T5", 905, 395, 58.2, "경고", DynamometerRoomSensorState.Warning),
+            // label, left, top, temperature, statusText, Sensorstate
+            new("T1", 260, 75, 23.0, "정상", DynamometerRoomSensorState.Normal),
+            new("T2", 150, 305, 23.5, "안정", DynamometerRoomSensorState.Stable),
+            new("T3", 150, 540, 22.8, "정상", DynamometerRoomSensorState.Normal),
+            new("T4", 705, 550, 22.6, "정상", DynamometerRoomSensorState.Normal),
+            new("T5", 875, 460, 58.2, "경고", DynamometerRoomSensorState.Warning),
         ];
     }
 }

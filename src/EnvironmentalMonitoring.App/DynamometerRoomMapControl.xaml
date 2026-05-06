@@ -99,12 +99,12 @@
                         Height="650">
 
                 <!-- 시험실 벽체: 두꺼운 배경 라인 위에 얇은 네온 라인을 겹쳐 벽 두께와 발광감을 표현한다. -->
-                <Path Data="M140,70 L310,70 M310,78 L805,78 M805,70 L965,70 L965,590 L690,590 L690,578 L642,578 L642,622 L458,622 L458,578 L410,578 L410,590 L140,590 L140,70"
+                <Path Data="M140,70 L965,70 L965,505 L875,505 L875,590 L690,590 L690,578 L642,578 L642,622 L458,622 L458,578 L410,578 L410,590 L140,590 L140,70"
                       Stroke="{StaticResource WallBackBrush}"
                       StrokeThickness="10"
                       StrokeStartLineCap="Square"
                       StrokeEndLineCap="Square" />
-                <Path Data="M140,70 L310,70 M310,78 L805,78 M805,70 L965,70 L965,590 L690,590 L690,578 L642,578 L642,622 L458,622 L458,578 L410,578 L410,590 L140,590 L140,70"
+                <Path Data="M140,70 L965,70 L965,505 L875,505 L875,590 L690,590 L690,578 L642,578 L642,622 L458,622 L458,578 L410,578 L410,590 L140,590 L140,70"
                       Stroke="{StaticResource WallLineBrush}"
                       StrokeThickness="1.4"
                       Effect="{StaticResource BlueWallGlowEffect}"
@@ -113,7 +113,7 @@
 
                 <!-- 좌측 벽 보강선 -->
                 <Line X1="147" Y1="175" X2="147" Y2="500" Stroke="{StaticResource WallGlowBrush}" StrokeThickness="1" Opacity="0.55" />
-                <Line X1="958" Y1="110" X2="958" Y2="565" Stroke="{StaticResource WallGlowBrush}" StrokeThickness="1" Opacity="0.55" />
+                <Line X1="958" Y1="110" X2="958" Y2="500" Stroke="{StaticResource WallGlowBrush}" StrokeThickness="1" Opacity="0.55" />
 
                 <!-- 차고문 -->
                 <Rectangle Canvas.Left="458"
@@ -224,36 +224,13 @@
                                RadiusX="3"
                                RadiusY="3"
                                Opacity="0.55" />
-                    <TextBlock Margin="0,78,0,0"
-                               HorizontalAlignment="Center"
-                               Foreground="#FFB389"
-                               FontSize="30"
-                               Text="⚠" />
                     <TextBlock Margin="0,130,0,0"
                                HorizontalAlignment="Center"
                                Foreground="#FFB389"
                                FontSize="19"
                                FontWeight="SemiBold"
                                Text="전기 패널" />
-                    <TextBlock Margin="0,168,0,0"
-                               HorizontalAlignment="Center"
-                               Foreground="#FFE0CE"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               Text="설치 제한 구역" />
                 </Grid>
-
-                <!-- 우측 하단 기둥: 우측/하단 벽에 붙는 고정 장애물 영역 -->
-                <Rectangle Canvas.Left="875"
-                           Canvas.Top="505"
-                           Width="105"
-                           Height="75"
-                           Fill="#0A0F16"
-                           Stroke="#53606F"
-                           StrokeThickness="1.2"
-                           RadiusX="4"
-                           RadiusY="4"
-                           Opacity="0.9" />
 
                 <Image Canvas.Left="478"
                        Canvas.Top="198"

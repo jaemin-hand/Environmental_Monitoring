@@ -20,7 +20,7 @@
 
 ## Schedule Risks
 
-- Indigo520와 ADAM-6015의 실제 Modbus register map 확보 지연
+- Indigo520와 TMW110의 실제 Modbus register map 확보 지연
 - 압력 센서 범위가 고객 요구사양 120 kPa를 충족하지 않는 이슈
 - 온도 정확도 요구와 센서/모듈 조합 정확도 검증 필요
 - 고객사 보안 정책으로 인한 방화벽, 자동 시작, 파일 접근 제한

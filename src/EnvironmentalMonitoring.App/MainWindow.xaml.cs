@@ -953,7 +953,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return
         [
             new DashboardStatusCard(
-                "중심 상태",
+                "통신 상태",
                 communicationSummary,
                 BuildCleanCommunicationDetail(snapshot.ChannelSnapshots),
                 "●",
@@ -1056,7 +1056,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 pressureSnapshot is null ? "미수신" : ToCleanQualityLabel(pressureSnapshot.QualityStatus),
                 pressureSnapshot is null ? DashboardSeverity.Warning : MapQualitySeverity(pressureSnapshot.QualityStatus)),
             new DashboardMetricCard(
-                "HMPI 기준온도",
+                "HMP1 기준온도",
                 FormatMetricNumber(referenceTemperature?.Value),
                 "°C",
                 referenceTemperature is null ? "미수신" : ToCleanQualityLabel(referenceTemperature.QualityStatus),
