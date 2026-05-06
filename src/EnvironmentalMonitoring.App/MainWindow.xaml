@@ -484,40 +484,356 @@
                 </Grid>
 
                 <Grid Visibility="{Binding RealtimeViewVisibility}">
-                    <Border Style="{StaticResource CardStyle}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="24" />
+                        <RowDefinition Height="2.3*" />
+                        <RowDefinition Height="24" />
+                        <RowDefinition Height="1*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Foreground="{StaticResource PrimaryTextBrush}"
+                               FontSize="26"
+                               FontWeight="SemiBold"
+                               Text="그래프 모니터링" />
+
+                    <ItemsControl Grid.Row="2"
+                                  ItemsSource="{Binding GraphSummaryCards}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="5" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,18,0"
+                                        Padding="22,18"
+                                        Background="{StaticResource CardBrush}"
+                                        BorderBrush="#242A33"
+                                        BorderThickness="1"
+                                        CornerRadius="10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="12"
+                                                       FontWeight="SemiBold"
+                                                       Text="{Binding Title}" />
+                                            <StackPanel Margin="0,12,0,0"
+                                                        Orientation="Horizontal">
+                                                <TextBlock Foreground="{Binding Accent}"
+                                                           FontSize="25"
+                                                           FontWeight="SemiBold"
+                                                           Text="{Binding Value}" />
+                                                <TextBlock Margin="5,7,0,0"
+                                                           Foreground="{StaticResource MutedTextBrush}"
+                                                           FontSize="16"
+                                                           Text="{Binding Unit}" />
+                                            </StackPanel>
+                                            <TextBlock Margin="0,10,0,0"
+                                                       Foreground="{Binding Accent}"
+                                                       FontSize="11"
+                                                       Text="{Binding Detail}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1"
+                                                   Margin="12,0,0,0"
+                                                   HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{Binding IconAccent}"
+                                                   FontSize="20"
+                                                   FontWeight="SemiBold"
+                                                   Opacity="0.65"
+                                                   Text="{Binding IconText}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border Grid.Row="4"
+                            Padding="18,16"
+                            Background="{StaticResource CardBrush}"
+                            BorderBrush="#242A33"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                        <StackPanel Orientation="Horizontal">
+                            <CheckBox Margin="0,0,24,0"
+                                      VerticalAlignment="Center"
+                                      Content="전체"
+                                      Foreground="{StaticResource PrimaryTextBrush}"
+                                      IsChecked="{Binding GraphAllSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Border Width="1"
+                                    Height="22"
+                                    Margin="0,0,24,0"
+                                    Background="#2A3038" />
+                            <ItemsControl ItemsSource="{Binding GraphChannelFilterItems}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Margin="0,0,18,0"
+                                                  VerticalAlignment="Center"
+                                                  Content="{Binding Label}"
+                                                  Foreground="{StaticResource MutedTextBrush}"
+                                                  IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="6"
+                            Background="{StaticResource CardBrush}"
+                            BorderBrush="#242A33"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            ClipToBounds="True">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="66" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="그래프" />
-                                <TextBlock Margin="0,8,0,0"
-                                           Style="{StaticResource MutedTextStyle}"
-                                           Text="{Binding RealtimeSummary}" />
-                            </StackPanel>
+
+                            <Grid Grid.Row="0"
+                                  Background="{StaticResource CardBrush}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Margin="32,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontSize="16"
+                                           Text="온도" />
+                                <TextBlock Grid.Column="1"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="16"
+                                           Text="습도" />
+                                <TextBlock Grid.Column="2"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="16"
+                                           Text="대기압" />
+                                <StackPanel Grid.Column="3"
+                                            Margin="0,0,22,0"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <Border Padding="14,8"
+                                            Background="#123052"
+                                            CornerRadius="5">
+                                        <TextBlock Foreground="{StaticResource PrimaryBrush}" FontSize="12" Text="1초" />
+                                    </Border>
+                                    <TextBlock Margin="22,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Text="1분" />
+                                    <TextBlock Margin="22,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Text="10분" />
+                                    <TextBlock Margin="22,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Text="일" />
+                                    <Border Width="1" Height="22" Margin="18,0" Background="#2A3038" />
+                                    <Border Padding="14,8"
+                                            Background="#31445C"
+                                            CornerRadius="5">
+                                        <TextBlock Foreground="{StaticResource PrimaryBrush}" FontSize="12" Text="조회" />
+                                    </Border>
+                                </StackPanel>
+                                <Border Grid.Column="0"
+                                        Width="96"
+                                        Height="2"
+                                        Margin="28,0,0,0"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Bottom"
+                                        Background="{StaticResource PrimaryBrush}" />
+                            </Grid>
+
                             <Border Grid.Row="1"
-                                    Margin="0,24,0,0"
-                                    Background="{StaticResource CardLowBrush}"
-                                    BorderBrush="#31353C"
-                                    BorderThickness="1"
-                                    CornerRadius="8">
-                                <Canvas Margin="36"
-                                        ClipToBounds="True">
-                                    <Polyline Points="{Binding TemperatureTrendPoints}"
-                                              Stroke="{x:Static local:DashboardPalette.TempLine}"
-                                              StrokeThickness="4"
-                                              StrokeStartLineCap="Round"
-                                              StrokeEndLineCap="Round"
-                                              StrokeLineJoin="Round" />
-                                    <Polyline Points="{Binding HumidityTrendPoints}"
-                                              Stroke="{x:Static local:DashboardPalette.HumidityLine}"
-                                              StrokeThickness="4"
-                                              StrokeStartLineCap="Round"
-                                              StrokeEndLineCap="Round"
-                                              StrokeLineJoin="Round" />
-                                </Canvas>
+                                    Background="{StaticResource CardBrush}"
+                                    BorderBrush="#242A33"
+                                    BorderThickness="0,1,0,0">
+                                <Grid>
+                                    <Viewbox Margin="30,28,30,30"
+                                             Stretch="Fill">
+                                        <Canvas Width="760"
+                                                Height="220"
+                                                ClipToBounds="True">
+                                            <Line X1="0" Y1="25" X2="760" Y2="25" Stroke="#2A3038" StrokeThickness="1" />
+                                            <Line X1="0" Y1="85" X2="760" Y2="85" Stroke="#2A3038" StrokeThickness="1" />
+                                            <Line X1="0" Y1="145" X2="760" Y2="145" Stroke="#2A3038" StrokeThickness="1" />
+                                            <Line X1="0" Y1="205" X2="760" Y2="205" Stroke="#2A3038" StrokeThickness="1" />
+                                            <ItemsControl Width="760"
+                                                          Height="220"
+                                                          ItemsSource="{Binding GraphSeriesItems}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <Canvas />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Polyline Points="{Binding Points}"
+                                                                  Stroke="{Binding Accent}"
+                                                                  StrokeThickness="3"
+                                                                  StrokeStartLineCap="Round"
+                                                                  StrokeEndLineCap="Round"
+                                                                  StrokeLineJoin="Round"
+                                                                  Opacity="0.9" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Canvas>
+                                    </Viewbox>
+
+                                    <ItemsControl Margin="0,28,32,0"
+                                                  HorizontalAlignment="Right"
+                                                  VerticalAlignment="Top"
+                                                  ItemsSource="{Binding GraphLegendItems}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,8"
+                                                        Padding="12,8"
+                                                        Background="#31353C"
+                                                        CornerRadius="5"
+                                                        Opacity="0.92">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Width="14"
+                                                                Height="4"
+                                                                Margin="0,0,8,0"
+                                                                VerticalAlignment="Center"
+                                                                Background="{Binding Accent}" />
+                                                        <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                                                   FontSize="12"
+                                                                   Text="{Binding Label}" />
+                                                        <TextBlock Margin="5,0,0,0"
+                                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                                   FontSize="12"
+                                                                   Text="{Binding Value}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
                             </Border>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="8"
+                            Background="{StaticResource CardBrush}"
+                            BorderBrush="#242A33"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            ClipToBounds="True">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="64" />
+                                <RowDefinition Height="38" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <StackPanel Margin="24,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBlock Foreground="{StaticResource WarnBrush}"
+                                               FontSize="18"
+                                               Text="!" />
+                                    <TextBlock Margin="12,0,0,0"
+                                               Foreground="{StaticResource PrimaryTextBrush}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Text="알람/이벤트 로그" />
+                                </StackPanel>
+                                <TextBlock Margin="0,0,24,0"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontSize="13"
+                                           Text="모든 로그 보기" />
+                            </Grid>
+
+                            <Grid Grid.Row="1"
+                                  Background="#181C22">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.1*" />
+                                    <ColumnDefinition Width="1.15*" />
+                                    <ColumnDefinition Width="1.8*" />
+                                    <ColumnDefinition Width="0.7*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Margin="24,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="11" FontStyle="Italic" Text="TIME" />
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="11" FontStyle="Italic" Text="SENSOR" />
+                                <TextBlock Grid.Column="2" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="11" FontStyle="Italic" Text="CONTENT" />
+                                <TextBlock Grid.Column="3" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="11" FontStyle="Italic" Text="VALUE" />
+                            </Grid>
+
+                            <ScrollViewer Grid.Row="2"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding GraphEventLogItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid MinHeight="48"
+                                                  Background="{StaticResource CardBrush}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="1.1*" />
+                                                    <ColumnDefinition Width="1.15*" />
+                                                    <ColumnDefinition Width="1.8*" />
+                                                    <ColumnDefinition Width="0.7*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Margin="24,0,0,0"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{StaticResource MutedTextBrush}"
+                                                           FontSize="13"
+                                                           Text="{Binding Time}" />
+                                                <TextBlock Grid.Column="1"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                                           FontSize="13"
+                                                           FontWeight="SemiBold"
+                                                           Text="{Binding Sensor}" />
+                                                <StackPanel Grid.Column="2"
+                                                            VerticalAlignment="Center"
+                                                            Orientation="Horizontal">
+                                                    <Border Padding="10,5"
+                                                            Background="{Binding BadgeBackground}"
+                                                            CornerRadius="4">
+                                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
+                                                                   FontSize="10"
+                                                                   FontStyle="Italic"
+                                                                   Text="{Binding BadgeText}" />
+                                                    </Border>
+                                                    <TextBlock Margin="12,0,0,0"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{StaticResource PrimaryTextBrush}"
+                                                               FontSize="13"
+                                                               Text="{Binding Content}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="3"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{Binding Accent}"
+                                                           FontSize="13"
+                                                           FontWeight="SemiBold"
+                                                           Text="{Binding Value}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
                         </Grid>
                     </Border>
                 </Grid>

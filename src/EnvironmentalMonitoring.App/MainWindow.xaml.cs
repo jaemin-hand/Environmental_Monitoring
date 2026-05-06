@@ -18,6 +18,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private static readonly Brush SelectedNavBackgroundBrush = CreateFrozenBrush("#1C2026");
     private static readonly Brush SelectedNavForegroundBrush = CreateFrozenBrush("#DFE2EB");
     private static readonly Brush SelectedNavBorderBrush = CreateFrozenBrush("#8DB2FF");
+    private static readonly Brush[] GraphSeriesBrushes =
+    [
+        CreateFrozenBrush("#ABC9EF"),
+        CreateFrozenBrush("#4AE183"),
+        CreateFrozenBrush("#F3B13F"),
+        CreateFrozenBrush("#FFB4AB"),
+        CreateFrozenBrush("#AACBE1"),
+        CreateFrozenBrush("#D1E4FF"),
+        CreateFrozenBrush("#7CA8FF"),
+        CreateFrozenBrush("#6BFE9C"),
+    ];
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _refreshTimer;
     private readonly MonitoringSettingsStore _settingsStore;
@@ -52,6 +63,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private NavigationItem _settingsMenuItem = new("settings", "설정", false);
     private IReadOnlyList<DashboardStatusCard> _statusCards = [];
     private IReadOnlyList<DashboardMetricCard> _dashboardMetricCards = [];
+    private IReadOnlyList<GraphSummaryCard> _graphSummaryCards = [];
+    private IReadOnlyList<GraphLegendItem> _graphLegendItems = [];
+    private IReadOnlyList<GraphSeriesItem> _graphSeriesItems = [];
+    private IReadOnlyList<GraphEventLogItem> _graphEventLogItems = [];
+    private IReadOnlyList<MonitoringSampleRecord> _graphSamples = [];
     private IReadOnlyList<SensorTile> _sensorTiles = [];
     private IReadOnlyList<SensorFeedItem> _sensorFeedItems = [];
     private IReadOnlyList<RecentEventItem> _recentEvents = [];
@@ -94,6 +110,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _selectedAlarmStatus = string.Empty;
     private string _temperatureTrendPoints = string.Empty;
     private string _humidityTrendPoints = string.Empty;
+    private bool _graphAllSelected = true;
+    private bool _isUpdatingGraphFilterSelection;
     private string _historyCountText = "0";
     private string _historyMinText = "-";
     private string _historyMaxText = "-";
@@ -171,6 +189,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public ObservableCollection<SettingsChannelItem> ChannelSettingsItems { get; } = [];
 
+    public ObservableCollection<GraphChannelFilterItem> GraphChannelFilterItems { get; } = [];
+
     public string CurrentTimeText
     {
         get => _currentTimeText;
@@ -241,6 +261,57 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         get => _dashboardMetricCards;
         private set => SetField(ref _dashboardMetricCards, value);
+    }
+
+    public IReadOnlyList<GraphSummaryCard> GraphSummaryCards
+    {
+        get => _graphSummaryCards;
+        private set => SetField(ref _graphSummaryCards, value);
+    }
+
+    public IReadOnlyList<GraphLegendItem> GraphLegendItems
+    {
+        get => _graphLegendItems;
+        private set => SetField(ref _graphLegendItems, value);
+    }
+
+    public IReadOnlyList<GraphSeriesItem> GraphSeriesItems
+    {
+        get => _graphSeriesItems;
+        private set => SetField(ref _graphSeriesItems, value);
+    }
+
+    public IReadOnlyList<GraphEventLogItem> GraphEventLogItems
+    {
+        get => _graphEventLogItems;
+        private set => SetField(ref _graphEventLogItems, value);
+    }
+
+    public bool GraphAllSelected
+    {
+        get => _graphAllSelected;
+        set
+        {
+            if (!SetField(ref _graphAllSelected, value))
+            {
+                return;
+            }
+
+            if (_isUpdatingGraphFilterSelection)
+            {
+                return;
+            }
+
+            _isUpdatingGraphFilterSelection = true;
+
+            foreach (var item in GraphChannelFilterItems)
+            {
+                item.IsSelected = value;
+            }
+
+            _isUpdatingGraphFilterSelection = false;
+            RefreshGraphSeriesFromCache();
+        }
     }
 
     public IReadOnlyList<SensorTile> SensorTiles
@@ -555,6 +626,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _alarmCommandService = new MonitoringAlarmCommandService(_storageLayout);
         _reportExportService = new MonitoringReportExportService(_storageLayout);
         UpdateFilterOptions();
+        UpdateGraphFilterItems();
 
         RuntimeSettingsFilePath = $"설정 파일: {_settingsStore.SettingsFilePath}";
         EffectiveDataStoragePath = $"데이터 경로: {_storageLayout.RootDirectory}";
@@ -662,6 +734,59 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    private void UpdateGraphFilterItems()
+    {
+        var previousSelection = GraphChannelFilterItems
+            .ToDictionary(item => item.Code, item => item.IsSelected, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in GraphChannelFilterItems)
+        {
+            item.PropertyChanged -= GraphChannelFilterItem_PropertyChanged;
+        }
+
+        GraphChannelFilterItems.Clear();
+
+        var graphChannels = _blueprint.Channels
+            .Where(channel => channel.Kind is ChannelKind.Temperature or ChannelKind.Humidity or ChannelKind.Pressure)
+            .OrderBy(channel => GetGraphChannelSortKey(channel))
+            .ToArray();
+
+        _isUpdatingGraphFilterSelection = true;
+
+        foreach (var channel in graphChannels)
+        {
+            var item = new GraphChannelFilterItem(
+                channel.Name,
+                ToGraphFilterLabel(channel),
+                channel.Kind)
+            {
+                IsSelected = !previousSelection.TryGetValue(channel.Name, out var selected) || selected,
+            };
+            item.PropertyChanged += GraphChannelFilterItem_PropertyChanged;
+            GraphChannelFilterItems.Add(item);
+        }
+
+        GraphAllSelected = GraphChannelFilterItems.Count > 0
+            && GraphChannelFilterItems.All(item => item.IsSelected);
+        _isUpdatingGraphFilterSelection = false;
+        RefreshGraphSeriesFromCache();
+    }
+
+    private void GraphChannelFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(GraphChannelFilterItem.IsSelected) || _isUpdatingGraphFilterSelection)
+        {
+            return;
+        }
+
+        _isUpdatingGraphFilterSelection = true;
+        GraphAllSelected = GraphChannelFilterItems.Count > 0
+            && GraphChannelFilterItems.All(item => item.IsSelected);
+        _isUpdatingGraphFilterSelection = false;
+
+        RefreshGraphSeriesFromCache();
+    }
+
     private RuntimeMonitoringSettingsDocument BuildSettingsDocumentFromEditor()
     {
         return new RuntimeMonitoringSettingsDocument
@@ -750,12 +875,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         CancellationToken.None))
                 : Task.FromResult<IReadOnlyList<MonitoringAlarmRecord>?>(null);
 
-            await Task.WhenAll(dashboardTask, samplesTask, alarmsTask);
+            Task<IReadOnlyList<MonitoringSampleRecord>?> graphSamplesTask = ShouldRefreshGraphSamples()
+                ? Task.Run<IReadOnlyList<MonitoringSampleRecord>?>(async () =>
+                    await _recordsQueryService.GetRecentSamplesAsync(
+                        2000,
+                        null,
+                        null,
+                        null,
+                        CancellationToken.None))
+                : Task.FromResult<IReadOnlyList<MonitoringSampleRecord>?>(null);
+
+            await Task.WhenAll(dashboardTask, samplesTask, alarmsTask, graphSamplesTask);
 
             ApplyRefreshState(
                 await dashboardTask,
                 await samplesTask,
-                await alarmsTask);
+                await alarmsTask,
+                await graphSamplesTask);
         }
         catch (Exception ex)
         {
@@ -771,7 +907,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void ApplyRefreshState(
         MonitoringDashboardSnapshot snapshot,
         IReadOnlyList<MonitoringSampleRecord>? samples,
-        IReadOnlyList<MonitoringAlarmRecord>? alarms)
+        IReadOnlyList<MonitoringAlarmRecord>? alarms,
+        IReadOnlyList<MonitoringSampleRecord>? graphSamples = null)
     {
         var selectedAlarmId = SelectedAlarmHistoryItem?.Id;
         var selectedSampleKey = SelectedSampleHistoryItem is null
@@ -783,9 +920,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         RecentEvents = CreateRecentEvents(snapshot.RecentEvents);
         StatusCards = CreateTopStatusCards(snapshot);
         DashboardMetricCards = CreateDashboardMetricCards(snapshot);
+        GraphSummaryCards = CreateGraphSummaryCards(snapshot);
+        GraphEventLogItems = CreateGraphEventLogItems(snapshot.RecentEvents);
         LiveChannelItems = CreateLiveChannelItems(snapshot.ChannelSnapshots);
         RealtimeSummary = BuildRealtimeSummary(snapshot);
         UpdateTrendSeries(snapshot.TrendPoints);
+
+        if (graphSamples is not null)
+        {
+            _graphSamples = graphSamples;
+            RefreshGraphSeriesFromCache();
+        }
 
         if (samples is not null)
         {
@@ -812,6 +957,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool ShouldRefreshSampleHistory() => _currentView == MainViewMode.History;
 
     private bool ShouldRefreshAlarmHistory() => _currentView == MainViewMode.Alarm;
+
+    private bool ShouldRefreshGraphSamples() => _currentView == MainViewMode.Realtime;
 
     private TimeSpan GetRefreshInterval() =>
         TimeSpan.FromSeconds((int)_runtimeOptions.DefaultSamplingMode);
@@ -1062,6 +1209,221 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 referenceTemperature is null ? "미수신" : ToCleanQualityLabel(referenceTemperature.QualityStatus),
                 referenceTemperature is null ? DashboardSeverity.Warning : MapQualitySeverity(referenceTemperature.QualityStatus)),
         ];
+    }
+
+    private IReadOnlyList<GraphSummaryCard> CreateGraphSummaryCards(MonitoringDashboardSnapshot snapshot)
+    {
+        var temperatureSnapshots = snapshot.ChannelSnapshots
+            .Where(item => item.Kind == ChannelKind.Temperature && item.Value.HasValue)
+            .ToArray();
+        var humiditySnapshot = snapshot.ChannelSnapshots
+            .FirstOrDefault(item => item.Kind == ChannelKind.Humidity && item.Value.HasValue);
+        var pressureSnapshot = snapshot.ChannelSnapshots
+            .FirstOrDefault(item => item.Kind == ChannelKind.Pressure && item.Value.HasValue);
+
+        var averageTemperature = temperatureSnapshots.Length == 0
+            ? (double?)null
+            : temperatureSnapshots.Average(item => item.Value!.Value);
+        var maxTemperature = temperatureSnapshots
+            .OrderByDescending(item => item.Value!.Value)
+            .FirstOrDefault();
+        var minTemperature = temperatureSnapshots
+            .OrderBy(item => item.Value!.Value)
+            .FirstOrDefault();
+
+        return
+        [
+            new GraphSummaryCard(
+                "평균온도",
+                FormatMetricNumber(averageTemperature),
+                "°C",
+                "실시간 평균",
+                "T",
+                ResolveMetricSeverity(temperatureSnapshots)),
+            new GraphSummaryCard(
+                "최고온도",
+                FormatMetricNumber(maxTemperature?.Value),
+                "°C",
+                maxTemperature is null ? "미수신" : ToDisplayChannelName(maxTemperature.ChannelCode, maxTemperature.Kind),
+                "MAX",
+                maxTemperature is null ? DashboardSeverity.Warning : MapQualitySeverity(maxTemperature.QualityStatus)),
+            new GraphSummaryCard(
+                "최저온도",
+                FormatMetricNumber(minTemperature?.Value),
+                "°C",
+                minTemperature is null ? "미수신" : ToDisplayChannelName(minTemperature.ChannelCode, minTemperature.Kind),
+                "MIN",
+                minTemperature is null ? DashboardSeverity.Warning : MapQualitySeverity(minTemperature.QualityStatus)),
+            new GraphSummaryCard(
+                "습도",
+                FormatMetricNumber(humiditySnapshot?.Value),
+                "%",
+                humiditySnapshot is null ? "미수신" : ToCleanQualityLabel(humiditySnapshot.QualityStatus),
+                "RH",
+                humiditySnapshot is null ? DashboardSeverity.Warning : MapQualitySeverity(humiditySnapshot.QualityStatus)),
+            new GraphSummaryCard(
+                "대기압",
+                FormatMetricNumber(pressureSnapshot?.Value),
+                "kPa",
+                pressureSnapshot is null ? "미수신" : ToCleanQualityLabel(pressureSnapshot.QualityStatus),
+                "P",
+                pressureSnapshot is null ? DashboardSeverity.Warning : MapQualitySeverity(pressureSnapshot.QualityStatus)),
+        ];
+    }
+
+    private void RefreshGraphSeriesFromCache()
+    {
+        var series = CreateGraphSeriesItems(_graphSamples);
+        GraphSeriesItems = series;
+        GraphLegendItems = series
+            .Select(item => new GraphLegendItem(
+                item.Label,
+                $"{item.LatestValue} {item.Unit}".Trim(),
+                item.Accent))
+            .ToArray();
+    }
+
+    private IReadOnlyList<GraphSeriesItem> CreateGraphSeriesItems(
+        IReadOnlyList<MonitoringSampleRecord> samples)
+    {
+        if (samples.Count == 0 || GraphChannelFilterItems.Count == 0)
+        {
+            return [];
+        }
+
+        var selectedFilters = GraphChannelFilterItems
+            .Where(item => item.IsSelected)
+            .ToArray();
+
+        if (selectedFilters.Length == 0)
+        {
+            return [];
+        }
+
+        var selectedCodes = selectedFilters
+            .Select(item => item.Code)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var channelLookup = _blueprint.Channels
+            .ToDictionary(item => item.Name, StringComparer.OrdinalIgnoreCase);
+        var samplesByChannel = samples
+            .Where(item => selectedCodes.Contains(item.ChannelCode) && item.CorrectedValue.HasValue)
+            .GroupBy(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .OrderBy(item => item.SampledAt)
+                    .TakeLast(80)
+                    .ToArray(),
+                StringComparer.OrdinalIgnoreCase);
+        var rangesByKind = samplesByChannel
+            .SelectMany(item => item.Value)
+            .GroupBy(item => item.Kind)
+            .ToDictionary(
+                group => group.Key,
+                group =>
+                {
+                    var values = group
+                        .Select(item => item.CorrectedValue!.Value)
+                        .ToArray();
+                    var min = values.Min();
+                    var max = values.Max();
+                    var padding = Math.Max(0.5, (max - min) * 0.12);
+                    return (Min: min - padding, Max: max + padding);
+                });
+
+        var series = new List<GraphSeriesItem>();
+
+        for (var index = 0; index < selectedFilters.Length; index++)
+        {
+            var filter = selectedFilters[index];
+
+            if (!samplesByChannel.TryGetValue(filter.Code, out var channelSamples)
+                || channelSamples.Length == 0)
+            {
+                continue;
+            }
+
+            var channel = channelLookup.TryGetValue(filter.Code, out var matchedChannel)
+                ? matchedChannel
+                : null;
+            var values = channelSamples
+                .Select(item => item.CorrectedValue!.Value)
+                .ToArray();
+            var kind = channel?.Kind ?? channelSamples[^1].Kind;
+            var range = rangesByKind[kind];
+            var latestValue = values[^1];
+            var unit = channel?.Unit ?? channelSamples[^1].Unit;
+
+            series.Add(new GraphSeriesItem(
+                filter.Code,
+                filter.Label,
+                BuildPolylinePoints(values, range.Min, range.Max),
+                FormatMetricNumber(latestValue),
+                NormalizeGraphUnit(unit),
+                GraphSeriesBrushes[index % GraphSeriesBrushes.Length]));
+        }
+
+        return series;
+    }
+
+    private static IReadOnlyList<GraphLegendItem> CreateGraphLegendItems(
+        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
+    {
+        var temperatureValues = channelSnapshots
+            .Where(item => item.Kind == ChannelKind.Temperature && item.Value.HasValue)
+            .Select(item => item.Value!.Value)
+            .ToArray();
+        var humiditySnapshot = channelSnapshots
+            .FirstOrDefault(item => item.Kind == ChannelKind.Humidity && item.Value.HasValue);
+
+        var averageTemperature = temperatureValues.Length == 0
+            ? (double?)null
+            : temperatureValues.Average();
+
+        return
+        [
+            new GraphLegendItem(
+                "평균 온도",
+                $"{FormatMetricNumber(averageTemperature)} °C",
+                DashboardPalette.TempLine),
+            new GraphLegendItem(
+                "습도",
+                $"{FormatMetricNumber(humiditySnapshot?.Value)} %",
+                DashboardPalette.HumidityLine),
+        ];
+    }
+
+    private static IReadOnlyList<GraphEventLogItem> CreateGraphEventLogItems(
+        IReadOnlyList<MonitoringEventSnapshot> events)
+    {
+        if (events.Count == 0)
+        {
+            return
+            [
+                new GraphEventLogItem(
+                    DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
+                    "System Core",
+                    "최근 알람/이벤트가 없습니다.",
+                    "--",
+                    "LOG",
+                    DashboardSeverity.Normal),
+            ];
+        }
+
+        return events
+            .Take(8)
+            .Select(item =>
+            {
+                var severity = MapSeverity(item.Severity);
+                return new GraphEventLogItem(
+                    item.OccurredAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
+                    ResolveEventSensor(item.Message),
+                    item.Message,
+                    ResolveEventValue(item.Message),
+                    severity is DashboardSeverity.Critical or DashboardSeverity.Warning ? "ALARM" : "LOG",
+                    severity);
+            })
+            .ToArray();
     }
 
     private IReadOnlyList<SensorFeedItem> CreateSensorFeedItems(
@@ -1373,6 +1735,45 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ? channel.Name
             : channel.DisplayName;
 
+    private static int GetGraphChannelSortKey(MeasurementChannel channel) => channel.Kind switch
+    {
+        ChannelKind.Temperature when string.Equals(channel.Name, "T01", StringComparison.OrdinalIgnoreCase) => 100,
+        ChannelKind.Temperature => 10 + channel.ChannelNumber,
+        ChannelKind.Humidity => 200 + channel.ChannelNumber,
+        ChannelKind.Pressure => 300 + channel.ChannelNumber,
+        _ => 900 + channel.ChannelNumber,
+    };
+
+    private static string ToGraphFilterLabel(MeasurementChannel channel)
+    {
+        if (channel.Kind == ChannelKind.Humidity)
+        {
+            return "습도";
+        }
+
+        if (channel.Kind == ChannelKind.Pressure)
+        {
+            return "대기압";
+        }
+
+        if (channel.Kind == ChannelKind.Temperature
+            && (string.Equals(channel.Name, "T01", StringComparison.OrdinalIgnoreCase)
+                || channel.DisplayName.Contains("Indigo", StringComparison.OrdinalIgnoreCase)
+                || channel.DisplayName.Contains("HMP", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "HMP1 온도";
+        }
+
+        return ToDisplayChannelName(channel);
+    }
+
+    private static string NormalizeGraphUnit(string unit) => unit switch
+    {
+        "%RH" => "%",
+        "hPa" => "hPa",
+        _ => unit,
+    };
+
     private static SolidColorBrush CreateFrozenBrush(string hex)
     {
         var brush = (SolidColorBrush)new BrushConverter().ConvertFromString(hex)!;
@@ -1619,6 +2020,39 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         options.FirstOrDefault(option => string.Equals(option.Value, value, StringComparison.OrdinalIgnoreCase))?.Label
         ?? fallbackLabel;
 
+    private static string ResolveEventSensor(string message)
+    {
+        var firstToken = message
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .FirstOrDefault();
+
+        if (string.IsNullOrWhiteSpace(firstToken))
+        {
+            return "System Core";
+        }
+
+        return firstToken.StartsWith("T", StringComparison.OrdinalIgnoreCase)
+            || firstToken.StartsWith("P", StringComparison.OrdinalIgnoreCase)
+            || firstToken.StartsWith("H", StringComparison.OrdinalIgnoreCase)
+            || firstToken.StartsWith("CH", StringComparison.OrdinalIgnoreCase)
+            || firstToken.Contains("Indigo", StringComparison.OrdinalIgnoreCase)
+                ? firstToken
+                : "System Core";
+    }
+
+    private static string ResolveEventValue(string message)
+    {
+        var openIndex = message.LastIndexOf('(');
+        var closeIndex = message.LastIndexOf(')');
+
+        if (openIndex < 0 || closeIndex <= openIndex)
+        {
+            return "--";
+        }
+
+        return message[(openIndex + 1)..closeIndex];
+    }
+
     private static string BuildPolylinePoints(
         IReadOnlyList<double> values,
         double minValue,
@@ -1632,8 +2066,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return string.Empty;
         }
 
-        var xStep = values.Count == 1 ? 0d : width / (values.Count - 1);
         var valueRange = maxValue - minValue;
+
+        if (values.Count == 1)
+        {
+            var singleNormalized = valueRange <= 0
+                ? 0.5
+                : (values[0] - minValue) / valueRange;
+            var singleY = height - (singleNormalized * height);
+            return FormattableString.Invariant($"0,{singleY:0.##} {width:0.##},{singleY:0.##}");
+        }
+
+        var xStep = width / (values.Count - 1);
 
         var points = values
             .Select((value, index) =>

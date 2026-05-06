@@ -1,4 +1,6 @@
 using EnvironmentalMonitoring.Domain;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Media;
 
 namespace EnvironmentalMonitoring.App;
@@ -71,6 +73,103 @@ public sealed record DashboardMetricCard(
         DashboardSeverity.Warning => DashboardPalette.Warning,
         DashboardSeverity.Notice => DashboardPalette.Notice,
         _ => DashboardPalette.Primary,
+    };
+}
+
+public sealed record GraphSummaryCard(
+    string Title,
+    string Value,
+    string Unit,
+    string Detail,
+    string IconText,
+    DashboardSeverity Severity)
+{
+    public Brush Accent => Severity switch
+    {
+        DashboardSeverity.Critical => DashboardPalette.Critical,
+        DashboardSeverity.Warning => DashboardPalette.Critical,
+        DashboardSeverity.Notice => DashboardPalette.Notice,
+        _ => DashboardPalette.Primary,
+    };
+
+    public Brush IconAccent => Severity switch
+    {
+        DashboardSeverity.Critical => DashboardPalette.Critical,
+        DashboardSeverity.Warning => DashboardPalette.Warning,
+        DashboardSeverity.Notice => DashboardPalette.Notice,
+        _ => DashboardPalette.PrimaryMuted,
+    };
+}
+
+public sealed record GraphLegendItem(
+    string Label,
+    string Value,
+    Brush Accent);
+
+public sealed record GraphSeriesItem(
+    string ChannelCode,
+    string Label,
+    string Points,
+    string LatestValue,
+    string Unit,
+    Brush Accent);
+
+public sealed class GraphChannelFilterItem(
+    string code,
+    string label,
+    ChannelKind kind) : INotifyPropertyChanged
+{
+    private bool _isSelected = true;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public string Code { get; } = code;
+
+    public string Label { get; } = label;
+
+    public ChannelKind Kind { get; } = kind;
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected == value)
+            {
+                return;
+            }
+
+            _isSelected = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+public sealed record GraphEventLogItem(
+    string Time,
+    string Sensor,
+    string Content,
+    string Value,
+    string BadgeText,
+    DashboardSeverity Severity)
+{
+    public Brush Accent => Severity switch
+    {
+        DashboardSeverity.Critical => DashboardPalette.Critical,
+        DashboardSeverity.Warning => DashboardPalette.Warning,
+        DashboardSeverity.Notice => DashboardPalette.Notice,
+        _ => DashboardPalette.Normal,
+    };
+
+    public Brush BadgeBackground => Severity switch
+    {
+        DashboardSeverity.Critical => DashboardPalette.CriticalBadge,
+        DashboardSeverity.Warning => DashboardPalette.WarningBadge,
+        DashboardSeverity.Notice => DashboardPalette.NoticeBadge,
+        _ => DashboardPalette.EventBorder,
     };
 }
 
@@ -192,6 +291,7 @@ internal static class DashboardPalette
     public static Brush Humidity { get; } = Create("#AACBE1");
     public static Brush Pressure { get; } = Create("#D1E4FF");
     public static Brush Primary { get; } = Create("#ABC9EF");
+    public static Brush PrimaryMuted { get; } = Create("#405078");
     public static Brush SelectedMenu { get; } = Create("#262A31");
     public static Brush DarkPanel { get; } = Create("#10141A");
     public static Brush TextPrimary { get; } = Create("#DFE2EB");
@@ -199,6 +299,9 @@ internal static class DashboardPalette
     public static Brush EventBorder { get; } = Create("#31353C");
     public static Brush TempLine { get; } = Create("#ABC9EF");
     public static Brush HumidityLine { get; } = Create("#4AE183");
+    public static Brush CriticalBadge { get; } = Create("#8F1D1D");
+    public static Brush WarningBadge { get; } = Create("#6E4C12");
+    public static Brush NoticeBadge { get; } = Create("#344B63");
 
     private static SolidColorBrush Create(string hex)
     {
