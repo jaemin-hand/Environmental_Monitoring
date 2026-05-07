@@ -13,7 +13,7 @@
         <SolidColorBrush x:Key="DeviceFillBrush" Color="#071015" />
         <SolidColorBrush x:Key="DeviceStrokeBrush" Color="#18B7D6" />
         <SolidColorBrush x:Key="MapTextBrush" Color="#AFC6E8" />
-        <SolidColorBrush x:Key="MutedMapTextBrush" Color="#7D8EA7" />
+        <SolidColorBrush x:Key="MutedMapTextBrush" Color="#7D8EA7" /> <!--10141A -->
         <SolidColorBrush x:Key="OrangeBrush" Color="#FF9F45" />
         <SolidColorBrush x:Key="OrangeSoftBrush" Color="#24140B" />
 

@@ -73,7 +73,8 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
                 + Environment.NewLine;
         }
 
-        command.CommandText += """
+        command.CommandText += Environment.NewLine
+            + """
             ORDER BY b.id DESC, c.code ASC
             LIMIT @Limit;
             """;
@@ -164,7 +165,8 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
                 + Environment.NewLine;
         }
 
-        command.CommandText += """
+        command.CommandText += Environment.NewLine
+            + """
             ORDER BY a.occurred_at DESC, a.id DESC
             LIMIT @Limit;
             """;

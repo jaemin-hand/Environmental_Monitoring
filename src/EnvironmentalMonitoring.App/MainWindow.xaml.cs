@@ -68,6 +68,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private IReadOnlyList<GraphSeriesItem> _graphSeriesItems = [];
     private IReadOnlyList<GraphEventLogItem> _graphEventLogItems = [];
     private IReadOnlyList<MonitoringSampleRecord> _graphSamples = [];
+    private readonly Dictionary<string, bool> _graphChannelSelectionByCode = new(StringComparer.OrdinalIgnoreCase);
     private IReadOnlyList<SensorTile> _sensorTiles = [];
     private IReadOnlyList<SensorFeedItem> _sensorFeedItems = [];
     private IReadOnlyList<RecentEventItem> _recentEvents = [];
@@ -110,6 +111,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _selectedAlarmStatus = string.Empty;
     private string _temperatureTrendPoints = string.Empty;
     private string _humidityTrendPoints = string.Empty;
+    private ChannelKind _selectedGraphKind = ChannelKind.Temperature;
     private bool _graphAllSelected = true;
     private bool _isUpdatingGraphFilterSelection;
     private string _historyCountText = "0";
@@ -287,6 +289,51 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         private set => SetField(ref _graphEventLogItems, value);
     }
 
+    public Brush GraphTemperatureTabForeground =>
+        _selectedGraphKind == ChannelKind.Temperature
+            ? DashboardPalette.Primary
+            : DashboardPalette.TextMuted;
+
+    public Brush GraphHumidityTabForeground =>
+        _selectedGraphKind == ChannelKind.Humidity
+            ? DashboardPalette.Primary
+            : DashboardPalette.TextMuted;
+
+    public Brush GraphPressureTabForeground =>
+        _selectedGraphKind == ChannelKind.Pressure
+            ? DashboardPalette.Primary
+            : DashboardPalette.TextMuted;
+
+    public Brush GraphTemperatureTabUnderline =>
+        _selectedGraphKind == ChannelKind.Temperature
+            ? DashboardPalette.Primary
+            : Brushes.Transparent;
+
+    public Brush GraphHumidityTabUnderline =>
+        _selectedGraphKind == ChannelKind.Humidity
+            ? DashboardPalette.Primary
+            : Brushes.Transparent;
+
+    public Brush GraphPressureTabUnderline =>
+        _selectedGraphKind == ChannelKind.Pressure
+            ? DashboardPalette.Primary
+            : Brushes.Transparent;
+
+    public FontWeight GraphTemperatureTabWeight =>
+        _selectedGraphKind == ChannelKind.Temperature
+            ? FontWeights.SemiBold
+            : FontWeights.Normal;
+
+    public FontWeight GraphHumidityTabWeight =>
+        _selectedGraphKind == ChannelKind.Humidity
+            ? FontWeights.SemiBold
+            : FontWeights.Normal;
+
+    public FontWeight GraphPressureTabWeight =>
+        _selectedGraphKind == ChannelKind.Pressure
+            ? FontWeights.SemiBold
+            : FontWeights.Normal;
+
     public bool GraphAllSelected
     {
         get => _graphAllSelected;
@@ -307,6 +354,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             foreach (var item in GraphChannelFilterItems)
             {
                 item.IsSelected = value;
+                _graphChannelSelectionByCode[item.Code] = value;
             }
 
             _isUpdatingGraphFilterSelection = false;
@@ -736,18 +784,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void UpdateGraphFilterItems()
     {
-        var previousSelection = GraphChannelFilterItems
-            .ToDictionary(item => item.Code, item => item.IsSelected, StringComparer.OrdinalIgnoreCase);
-
         foreach (var item in GraphChannelFilterItems)
         {
+            _graphChannelSelectionByCode[item.Code] = item.IsSelected;
             item.PropertyChanged -= GraphChannelFilterItem_PropertyChanged;
         }
 
         GraphChannelFilterItems.Clear();
 
         var graphChannels = _blueprint.Channels
-            .Where(channel => channel.Kind is ChannelKind.Temperature or ChannelKind.Humidity or ChannelKind.Pressure)
+            .Where(channel => channel.Kind == _selectedGraphKind)
             .OrderBy(channel => GetGraphChannelSortKey(channel))
             .ToArray();
 
@@ -760,8 +806,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ToGraphFilterLabel(channel),
                 channel.Kind)
             {
-                IsSelected = !previousSelection.TryGetValue(channel.Name, out var selected) || selected,
+                IsSelected = !_graphChannelSelectionByCode.TryGetValue(channel.Name, out var selected) || selected,
             };
+            _graphChannelSelectionByCode[channel.Name] = item.IsSelected;
             item.PropertyChanged += GraphChannelFilterItem_PropertyChanged;
             GraphChannelFilterItems.Add(item);
         }
@@ -779,12 +826,43 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        if (sender is GraphChannelFilterItem item)
+        {
+            _graphChannelSelectionByCode[item.Code] = item.IsSelected;
+        }
+
         _isUpdatingGraphFilterSelection = true;
         GraphAllSelected = GraphChannelFilterItems.Count > 0
             && GraphChannelFilterItems.All(item => item.IsSelected);
         _isUpdatingGraphFilterSelection = false;
 
         RefreshGraphSeriesFromCache();
+    }
+
+    private void SetSelectedGraphKind(ChannelKind kind)
+    {
+        if (_selectedGraphKind == kind)
+        {
+            return;
+        }
+
+        _selectedGraphKind = kind;
+        OnGraphTabPropertiesChanged();
+        UpdateGraphFilterItems();
+        FooterStatusMessage = $"{ToKindLabel(kind)} 그래프 표시 중";
+    }
+
+    private void OnGraphTabPropertiesChanged()
+    {
+        OnPropertyChanged(nameof(GraphTemperatureTabForeground));
+        OnPropertyChanged(nameof(GraphHumidityTabForeground));
+        OnPropertyChanged(nameof(GraphPressureTabForeground));
+        OnPropertyChanged(nameof(GraphTemperatureTabUnderline));
+        OnPropertyChanged(nameof(GraphHumidityTabUnderline));
+        OnPropertyChanged(nameof(GraphPressureTabUnderline));
+        OnPropertyChanged(nameof(GraphTemperatureTabWeight));
+        OnPropertyChanged(nameof(GraphHumidityTabWeight));
+        OnPropertyChanged(nameof(GraphPressureTabWeight));
     }
 
     private RuntimeMonitoringSettingsDocument BuildSettingsDocumentFromEditor()
@@ -875,23 +953,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         CancellationToken.None))
                 : Task.FromResult<IReadOnlyList<MonitoringAlarmRecord>?>(null);
 
-            Task<IReadOnlyList<MonitoringSampleRecord>?> graphSamplesTask = ShouldRefreshGraphSamples()
-                ? Task.Run<IReadOnlyList<MonitoringSampleRecord>?>(async () =>
-                    await _recordsQueryService.GetRecentSamplesAsync(
-                        2000,
-                        null,
-                        null,
-                        null,
-                        CancellationToken.None))
-                : Task.FromResult<IReadOnlyList<MonitoringSampleRecord>?>(null);
-
-            await Task.WhenAll(dashboardTask, samplesTask, alarmsTask, graphSamplesTask);
+            await Task.WhenAll(dashboardTask, samplesTask, alarmsTask);
 
             ApplyRefreshState(
                 await dashboardTask,
                 await samplesTask,
-                await alarmsTask,
-                await graphSamplesTask);
+                await alarmsTask);
+
+            await RefreshGraphSamplesSafelyAsync();
         }
         catch (Exception ex)
         {
@@ -901,6 +970,31 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         finally
         {
             _isRefreshing = false;
+        }
+    }
+
+    private async Task RefreshGraphSamplesSafelyAsync()
+    {
+        if (!ShouldRefreshGraphSamples())
+        {
+            return;
+        }
+
+        try
+        {
+            var graphSamples = await _recordsQueryService.GetRecentSamplesAsync(
+                2000,
+                null,
+                null,
+                null,
+                CancellationToken.None);
+
+            _graphSamples = graphSamples;
+            RefreshGraphSeriesFromCache();
+        }
+        catch (Exception ex)
+        {
+            FooterStatusMessage = $"그래프 데이터 갱신 실패: {ex.Message}";
         }
     }
 
@@ -1281,6 +1375,29 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 $"{item.LatestValue} {item.Unit}".Trim(),
                 item.Accent))
             .ToArray();
+        RenderGraphSeries(series);
+    }
+
+    private void RenderGraphSeries(IReadOnlyList<GraphSeriesItem> series)
+    {
+        GraphLineCanvas.Children.Clear();
+
+        foreach (var item in series)
+        {
+            var polyline = new System.Windows.Shapes.Polyline
+            {
+                Points = item.Points,
+                Stroke = item.Accent,
+                StrokeThickness = 3,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                StrokeLineJoin = PenLineJoin.Round,
+                Opacity = 0.9,
+                SnapsToDevicePixels = true,
+            };
+            Panel.SetZIndex(polyline, 10);
+            GraphLineCanvas.Children.Add(polyline);
+        }
     }
 
     private IReadOnlyList<GraphSeriesItem> CreateGraphSeriesItems(
@@ -1306,7 +1423,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var channelLookup = _blueprint.Channels
             .ToDictionary(item => item.Name, StringComparer.OrdinalIgnoreCase);
         var samplesByChannel = samples
-            .Where(item => selectedCodes.Contains(item.ChannelCode) && item.CorrectedValue.HasValue)
+            .Where(item => selectedCodes.Contains(item.ChannelCode)
+                && item.CorrectedValue.HasValue
+                && double.IsFinite(item.CorrectedValue.Value))
             .GroupBy(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
                 group => group.Key,
@@ -1357,7 +1476,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             series.Add(new GraphSeriesItem(
                 filter.Code,
                 filter.Label,
-                BuildPolylinePoints(values, range.Min, range.Max),
+                BuildPolylinePointCollection(values, range.Min, range.Max),
                 FormatMetricNumber(latestValue),
                 NormalizeGraphUnit(unit),
                 GraphSeriesBrushes[index % GraphSeriesBrushes.Length]));
@@ -2093,6 +2212,61 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return string.Join(" ", points);
     }
 
+    private static PointCollection BuildPolylinePointCollection(
+        IReadOnlyList<double> values,
+        double minValue,
+        double maxValue)
+    {
+        const double width = 760d;
+        const double height = 220d;
+
+        var points = new PointCollection();
+
+        if (values.Count == 0)
+        {
+            return points;
+        }
+
+        var valueRange = maxValue - minValue;
+
+        if (values.Count == 1)
+        {
+            if (double.IsNaN(values[0]) || double.IsInfinity(values[0]))
+            {
+                return points;
+            }
+
+            var singleNormalized = valueRange <= 0
+                ? 0.5
+                : (values[0] - minValue) / valueRange;
+            singleNormalized = Math.Clamp(singleNormalized, 0, 1);
+            var singleY = height - (singleNormalized * height);
+            points.Add(new Point(0, singleY));
+            points.Add(new Point(width, singleY));
+            return points;
+        }
+
+        var xStep = width / (values.Count - 1);
+
+        for (var index = 0; index < values.Count; index++)
+        {
+            if (double.IsNaN(values[index]) || double.IsInfinity(values[index]))
+            {
+                continue;
+            }
+
+            var normalized = valueRange <= 0
+                ? 0.5
+                : (values[index] - minValue) / valueRange;
+            normalized = Math.Clamp(normalized, 0, 1);
+            var x = index * xStep;
+            var y = height - (normalized * height);
+            points.Add(new Point(x, y));
+        }
+
+        return points;
+    }
+
     private static MonitoringDashboardSnapshot CreateInitialSnapshot()
     {
         return new MonitoringDashboardSnapshot(
@@ -2152,6 +2326,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
+    private async void GraphKindTabButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button
+            || button.Tag is not string kindText
+            || !Enum.TryParse<ChannelKind>(kindText, out var kind))
+        {
+            return;
+        }
+
+        SetSelectedGraphKind(kind);
+        await RefreshGraphSamplesSafelyAsync();
+    }
+
     private async void NavigationButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.Tag is not string key)
@@ -2184,6 +2371,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _refreshTimer.Interval = GetRefreshInterval();
         UpdateNavigation();
         await RefreshAllAsync();
+
+        if (_currentView == MainViewMode.Realtime)
+        {
+            await RefreshGraphSamplesSafelyAsync();
+        }
     }
 
     private async void SaveSettingsButton_Click(object sender, RoutedEventArgs e)

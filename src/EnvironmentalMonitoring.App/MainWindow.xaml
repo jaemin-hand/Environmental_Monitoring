@@ -16,8 +16,8 @@
         <SolidColorBrush x:Key="AppBackgroundBrush" Color="#10141A" />
         <SolidColorBrush x:Key="SideBarBrush" Color="#181C22" />
         <SolidColorBrush x:Key="CardBrush" Color="#1C2026" />
-        <SolidColorBrush x:Key="CardLowBrush" Color="#0A0E14" />
-        <SolidColorBrush x:Key="CardHighBrush" Color="#262A31" />
+        <SolidColorBrush x:Key="CardLowBrush" Color="#10141A" /> <!--#10141A--> <!--0A0E14-->
+        <SolidColorBrush x:Key="CardHighBrush" Color="#10141A" /> <!--#10141A--> <!--262A31-->
         <SolidColorBrush x:Key="BorderBrush" Color="#31353C" />
         <SolidColorBrush x:Key="PrimaryTextBrush" Color="#DFE2EB" />
         <SolidColorBrush x:Key="MutedTextBrush" Color="#9DA3AF" />
@@ -40,6 +40,23 @@
         <Style x:Key="MutedTextStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
             <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style x:Key="GraphTabButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="NavIconStyle" TargetType="Path">
@@ -614,24 +631,62 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0"
-                                           Margin="32,0,0,0"
-                                           VerticalAlignment="Center"
-                                           Foreground="{StaticResource PrimaryBrush}"
-                                           FontSize="16"
-                                           Text="온도" />
-                                <TextBlock Grid.Column="1"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           Foreground="{StaticResource MutedTextBrush}"
-                                           FontSize="16"
-                                           Text="습도" />
-                                <TextBlock Grid.Column="2"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           Foreground="{StaticResource MutedTextBrush}"
-                                           FontSize="16"
-                                           Text="대기압" />
+                                <Grid Grid.Column="0"
+                                      Margin="32,0,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="2" />
+                                    </Grid.RowDefinitions>
+                                    <Button Style="{StaticResource GraphTabButtonStyle}"
+                                            HorizontalAlignment="Left"
+                                            Click="GraphKindTabButton_Click"
+                                            Tag="Temperature">
+                                        <TextBlock Foreground="{Binding GraphTemperatureTabForeground}"
+                                                   FontSize="16"
+                                                   FontWeight="{Binding GraphTemperatureTabWeight}"
+                                                   Text="온도" />
+                                    </Button>
+                                    <Border Grid.Row="1"
+                                            Width="96"
+                                            HorizontalAlignment="Left"
+                                            Background="{Binding GraphTemperatureTabUnderline}" />
+                                </Grid>
+                                <Grid Grid.Column="1">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="2" />
+                                    </Grid.RowDefinitions>
+                                    <Button Style="{StaticResource GraphTabButtonStyle}"
+                                            Click="GraphKindTabButton_Click"
+                                            Tag="Humidity">
+                                        <TextBlock Foreground="{Binding GraphHumidityTabForeground}"
+                                                   FontSize="16"
+                                                   FontWeight="{Binding GraphHumidityTabWeight}"
+                                                   Text="습도" />
+                                    </Button>
+                                    <Border Grid.Row="1"
+                                            Width="96"
+                                            HorizontalAlignment="Center"
+                                            Background="{Binding GraphHumidityTabUnderline}" />
+                                </Grid>
+                                <Grid Grid.Column="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="2" />
+                                    </Grid.RowDefinitions>
+                                    <Button Style="{StaticResource GraphTabButtonStyle}"
+                                            Click="GraphKindTabButton_Click"
+                                            Tag="Pressure">
+                                        <TextBlock Foreground="{Binding GraphPressureTabForeground}"
+                                                   FontSize="16"
+                                                   FontWeight="{Binding GraphPressureTabWeight}"
+                                                   Text="대기압" />
+                                    </Button>
+                                    <Border Grid.Row="1"
+                                            Width="96"
+                                            HorizontalAlignment="Center"
+                                            Background="{Binding GraphPressureTabUnderline}" />
+                                </Grid>
                                 <StackPanel Grid.Column="3"
                                             Margin="0,0,22,0"
                                             HorizontalAlignment="Right"
@@ -652,13 +707,6 @@
                                         <TextBlock Foreground="{StaticResource PrimaryBrush}" FontSize="12" Text="조회" />
                                     </Border>
                                 </StackPanel>
-                                <Border Grid.Column="0"
-                                        Width="96"
-                                        Height="2"
-                                        Margin="28,0,0,0"
-                                        HorizontalAlignment="Left"
-                                        VerticalAlignment="Bottom"
-                                        Background="{StaticResource PrimaryBrush}" />
                             </Grid>
 
                             <Border Grid.Row="1"
@@ -675,26 +723,10 @@
                                             <Line X1="0" Y1="85" X2="760" Y2="85" Stroke="#2A3038" StrokeThickness="1" />
                                             <Line X1="0" Y1="145" X2="760" Y2="145" Stroke="#2A3038" StrokeThickness="1" />
                                             <Line X1="0" Y1="205" X2="760" Y2="205" Stroke="#2A3038" StrokeThickness="1" />
-                                            <ItemsControl Width="760"
-                                                          Height="220"
-                                                          ItemsSource="{Binding GraphSeriesItems}">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <Canvas />
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Polyline Points="{Binding Points}"
-                                                                  Stroke="{Binding Accent}"
-                                                                  StrokeThickness="3"
-                                                                  StrokeStartLineCap="Round"
-                                                                  StrokeEndLineCap="Round"
-                                                                  StrokeLineJoin="Round"
-                                                                  Opacity="0.9" />
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
+                                            <Canvas x:Name="GraphLineCanvas"
+                                                    Width="760"
+                                                    Height="220"
+                                                    IsHitTestVisible="False" />
                                         </Canvas>
                                     </Viewbox>
 
@@ -1011,7 +1043,7 @@
 
                         <Border Grid.Column="0"
                                 Background="{StaticResource CardBrush}"
-                                BorderBrush="#31353C"
+                                BorderBrush="#10141A"
                                 BorderThickness="1"
                                 CornerRadius="8">
                             <DataGrid ItemsSource="{Binding SampleHistoryItems}"

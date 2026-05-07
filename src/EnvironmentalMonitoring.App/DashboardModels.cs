@@ -109,7 +109,7 @@ public sealed record GraphLegendItem(
 public sealed record GraphSeriesItem(
     string ChannelCode,
     string Label,
-    string Points,
+    PointCollection Points,
     string LatestValue,
     string Unit,
     Brush Accent);
