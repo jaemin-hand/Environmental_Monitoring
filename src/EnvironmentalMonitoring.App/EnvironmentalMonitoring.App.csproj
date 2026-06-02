@@ -6,8 +6,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\top_view_car.png" />
-    <Resource Include="Assets\wind_FAN_icon.png" />
+    <Resource Include="Assets\Fonts\PretendardVariable.ttf" />
+    <Resource Include="Assets\Fonts\Pretendard-Thin.otf" />
+    <Resource Include="Assets\Fonts\Pretendard-ExtraLight.otf" />
+    <Resource Include="Assets\Fonts\Pretendard-Light.otf" />
+    <Resource Include="Assets\Fonts\Pretendard-Regular.otf" />
+    <Resource Include="Assets\Fonts\Pretendard-Medium.otf" />
+    <Resource Include="Assets\Fonts\Pretendard-SemiBold.otf" />
+    <Resource Include="Assets\Fonts\Pretendard-Bold.otf" />
+    <Resource Include="Assets\Fonts\Pretendard-ExtraBold.otf" />
+    <Resource Include="Assets\Fonts\Pretendard-Black.otf" />
   </ItemGroup>
 
   <PropertyGroup>

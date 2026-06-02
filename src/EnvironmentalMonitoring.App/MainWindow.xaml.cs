@@ -55,6 +55,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _footerStatusMessage = string.Empty;
     private string _runtimeSettingsFilePath = string.Empty;
     private string _effectiveDataStoragePath = string.Empty;
+    private string _headerDbStatusText = "DB 확인 중";
+    private string _activeAlarmCountText = "0건";
+    private string _activeAlarmDetailText = "활성 알람 없음";
+    private bool _hasActiveAlarm;
+    private string _samplingIntervalText = "-";
+    private string _storageStateText = "-";
+    private string _storageModeText = "SQLite WAL";
+    private string _diskUsageText = "-";
+    private string _lastStorageWriteText = "-";
+    private string _communicationLatencyText = "-";
     private string _sampleHistorySummary = string.Empty;
     private string _alarmHistorySummary = string.Empty;
     private string _realtimeSummary = string.Empty;
@@ -111,6 +121,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _selectedAlarmStatus = string.Empty;
     private string _temperatureTrendPoints = string.Empty;
     private string _humidityTrendPoints = string.Empty;
+    private string _historyTemperatureTrendPoints = string.Empty;
     private ChannelKind _selectedGraphKind = ChannelKind.Temperature;
     private bool _graphAllSelected = true;
     private bool _isUpdatingGraphFilterSelection;
@@ -152,7 +163,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ApplyRefreshState(CreateInitialSnapshot(), [], []);
         UpdateNavigation();
 
-        CurrentTimeText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+        CurrentTimeText = DateTime.Now.ToString("tt hh:mm:ss", CultureInfo.GetCultureInfo("ko-KR"));
         FooterStatusMessage = "공유 설정 파일을 불러왔습니다.";
 
         _clockTimer = new DispatcherTimer
@@ -161,7 +172,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         };
         _clockTimer.Tick += (_, _) =>
         {
-            CurrentTimeText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+            CurrentTimeText = DateTime.Now.ToString("tt hh:mm:ss", CultureInfo.GetCultureInfo("ko-KR"));
         };
         _clockTimer.Start();
 
@@ -215,6 +226,66 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         get => _effectiveDataStoragePath;
         private set => SetField(ref _effectiveDataStoragePath, value);
+    }
+
+    public string HeaderDbStatusText
+    {
+        get => _headerDbStatusText;
+        private set => SetField(ref _headerDbStatusText, value);
+    }
+
+    public string ActiveAlarmCountText
+    {
+        get => _activeAlarmCountText;
+        private set => SetField(ref _activeAlarmCountText, value);
+    }
+
+    public string ActiveAlarmDetailText
+    {
+        get => _activeAlarmDetailText;
+        private set => SetField(ref _activeAlarmDetailText, value);
+    }
+
+    public bool HasActiveAlarm
+    {
+        get => _hasActiveAlarm;
+        private set => SetField(ref _hasActiveAlarm, value);
+    }
+
+    public string SamplingIntervalText
+    {
+        get => _samplingIntervalText;
+        private set => SetField(ref _samplingIntervalText, value);
+    }
+
+    public string StorageStateText
+    {
+        get => _storageStateText;
+        private set => SetField(ref _storageStateText, value);
+    }
+
+    public string StorageModeText
+    {
+        get => _storageModeText;
+        private set => SetField(ref _storageModeText, value);
+    }
+
+    public string DiskUsageText
+    {
+        get => _diskUsageText;
+        private set => SetField(ref _diskUsageText, value);
+    }
+
+    public string LastStorageWriteText
+    {
+        get => _lastStorageWriteText;
+        private set => SetField(ref _lastStorageWriteText, value);
+    }
+
+    public string CommunicationLatencyText
+    {
+        get => _communicationLatencyText;
+        private set => SetField(ref _communicationLatencyText, value);
     }
 
     public string SampleHistorySummary
@@ -609,6 +680,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         get => _humidityTrendPoints;
         private set => SetField(ref _humidityTrendPoints, value);
+    }
+
+    public string HistoryTemperatureTrendPoints
+    {
+        get => _historyTemperatureTrendPoints;
+        private set => SetField(ref _historyTemperatureTrendPoints, value);
     }
 
     public SamplingMode SelectedSamplingMode
@@ -1019,6 +1096,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         LiveChannelItems = CreateLiveChannelItems(snapshot.ChannelSnapshots);
         RealtimeSummary = BuildRealtimeSummary(snapshot);
         UpdateTrendSeries(snapshot.TrendPoints);
+        UpdateOperationalStatus(snapshot);
 
         if (graphSamples is not null)
         {
@@ -1048,11 +1126,80 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    private void UpdateOperationalStatus(MonitoringDashboardSnapshot snapshot)
+    {
+        HeaderDbStatusText = snapshot.StorageStatus.Health == StorageHealth.Error
+            ? "DB 확인 필요"
+            : "DB 연결됨";
+        HasActiveAlarm = snapshot.ActiveAlarmCount > 0;
+        ActiveAlarmCountText = $"{snapshot.ActiveAlarmCount}건";
+        ActiveAlarmDetailText = snapshot.ActiveAlarmCount == 0
+            ? "활성 알람 없음"
+            : snapshot.RecentEvents.FirstOrDefault()?.Message ?? "알람 발생";
+        SamplingIntervalText = _runtimeOptions.DefaultSamplingMode == SamplingMode.OneSecond
+            ? "1초"
+            : "1분";
+        StorageStateText = snapshot.StorageStatus.Health == StorageHealth.Healthy
+            ? "기록 중"
+            : snapshot.StorageStatus.Summary;
+        StorageModeText = "SQLite WAL";
+        LastStorageWriteText = snapshot.StorageStatus.LastSuccessfulWriteAt?
+            .ToLocalTime()
+            .ToString("HH:mm:ss", CultureInfo.InvariantCulture) ?? "-";
+        CommunicationLatencyText = CalculateCommunicationLatencyText(snapshot.ChannelSnapshots);
+        DiskUsageText = CalculateDiskUsageText();
+    }
+
+    private static string CalculateCommunicationLatencyText(
+        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
+    {
+        var latestSampleAt = channelSnapshots
+            .Select(item => item.SampledAt)
+            .Where(item => item.HasValue)
+            .Select(item => item!.Value)
+            .DefaultIfEmpty()
+            .Max();
+
+        if (latestSampleAt == default)
+        {
+            return "-";
+        }
+
+        var elapsed = DateTimeOffset.Now - latestSampleAt;
+        if (elapsed.TotalMilliseconds < 0)
+        {
+            return "0 ms";
+        }
+
+        return elapsed.TotalSeconds < 1
+            ? $"{Math.Max(0, (int)elapsed.TotalMilliseconds)} ms"
+            : $"{elapsed.TotalSeconds:0.0} s";
+    }
+
+    private string CalculateDiskUsageText()
+    {
+        try
+        {
+            var rootPath = string.IsNullOrWhiteSpace(_storageLayout?.RootDirectory)
+                ? AppContext.BaseDirectory
+                : _storageLayout.RootDirectory;
+            var drive = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(rootPath))!);
+            var totalGb = drive.TotalSize / 1024d / 1024d / 1024d;
+            var usedGb = (drive.TotalSize - drive.AvailableFreeSpace) / 1024d / 1024d / 1024d;
+            return $"{usedGb:0.0} GB / {totalGb:0} GB";
+        }
+        catch
+        {
+            return "-";
+        }
+    }
+
     private bool ShouldRefreshSampleHistory() => _currentView == MainViewMode.History;
 
     private bool ShouldRefreshAlarmHistory() => _currentView == MainViewMode.Alarm;
 
-    private bool ShouldRefreshGraphSamples() => _currentView == MainViewMode.Realtime;
+    private bool ShouldRefreshGraphSamples() =>
+        _currentView is MainViewMode.Dashboard or MainViewMode.Realtime;
 
     private TimeSpan GetRefreshInterval() =>
         TimeSpan.FromSeconds((int)_runtimeOptions.DefaultSamplingMode);
@@ -1552,7 +1699,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         return _blueprint.Channels
             .Where(channel => channel.Kind == ChannelKind.Temperature)
-            .Take(6)
+            .Take(8)
             .Select(channel =>
             {
                 lookup.TryGetValue(channel.Name, out var snapshot);
@@ -1836,27 +1983,37 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (isSelected)
         {
-            button.Background = SelectedNavBackgroundBrush;
+            button.Background = Brushes.Transparent;
             button.Foreground = SelectedNavForegroundBrush;
             button.BorderBrush = SelectedNavBorderBrush;
-            button.BorderThickness = new Thickness(3, 0, 0, 0);
+            button.BorderThickness = new Thickness(0, 0, 0, 3);
             return;
         }
 
-        button.ClearValue(BackgroundProperty);
-        button.ClearValue(ForegroundProperty);
-        button.ClearValue(BorderBrushProperty);
-        button.ClearValue(BorderThicknessProperty);
+        button.Background = Brushes.Transparent;
+        button.Foreground = DashboardPalette.TextMuted;
+        button.BorderBrush = Brushes.Transparent;
+        button.BorderThickness = new Thickness(0, 0, 0, 3);
     }
 
-    private static string ToDisplayChannelName(MeasurementChannel channel) =>
-        string.IsNullOrWhiteSpace(channel.DisplayName)
+    private static string ToDisplayChannelName(MeasurementChannel channel)
+    {
+        if (channel.Kind == ChannelKind.Temperature
+            && channel.Name.Length == 3
+            && channel.Name[0] == 'T'
+            && int.TryParse(channel.Name[1..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var temperatureIndex)
+            && temperatureIndex is >= 1 and <= 8)
+        {
+            return $"T{temperatureIndex}";
+        }
+
+        return string.IsNullOrWhiteSpace(channel.DisplayName)
             ? channel.Name
             : channel.DisplayName;
+    }
 
     private static int GetGraphChannelSortKey(MeasurementChannel channel) => channel.Kind switch
     {
-        ChannelKind.Temperature when string.Equals(channel.Name, "T01", StringComparison.OrdinalIgnoreCase) => 100,
         ChannelKind.Temperature => 10 + channel.ChannelNumber,
         ChannelKind.Humidity => 200 + channel.ChannelNumber,
         ChannelKind.Pressure => 300 + channel.ChannelNumber,
@@ -1873,14 +2030,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (channel.Kind == ChannelKind.Pressure)
         {
             return "대기압";
-        }
-
-        if (channel.Kind == ChannelKind.Temperature
-            && (string.Equals(channel.Name, "T01", StringComparison.OrdinalIgnoreCase)
-                || channel.DisplayName.Contains("Indigo", StringComparison.OrdinalIgnoreCase)
-                || channel.DisplayName.Contains("HMP", StringComparison.OrdinalIgnoreCase)))
-        {
-            return "HMP1 온도";
         }
 
         return ToDisplayChannelName(channel);
@@ -2094,6 +2243,33 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         HistoryAlarmCountText = samples
             .Count(item => item.QualityStatus != SampleQualityStatus.Normal)
             .ToString("N0", CultureInfo.InvariantCulture);
+
+        UpdateHistoryTemperatureTrend(samples);
+    }
+
+    private void UpdateHistoryTemperatureTrend(IReadOnlyList<MonitoringSampleRecord> samples)
+    {
+        var temperatureValues = samples
+            .Where(item => item.Kind == ChannelKind.Temperature && item.CorrectedValue.HasValue)
+            .GroupBy(item => item.SampledAt)
+            .OrderBy(group => group.Key)
+            .Select(group => group.Average(item => item.CorrectedValue!.Value))
+            .ToArray();
+
+        if (temperatureValues.Length > 80)
+        {
+            temperatureValues = temperatureValues[^80..];
+        }
+
+        if (temperatureValues.Length == 0)
+        {
+            HistoryTemperatureTrendPoints = string.Empty;
+            return;
+        }
+
+        var min = temperatureValues.Min() - 1.0;
+        var max = temperatureValues.Max() + 1.0;
+        HistoryTemperatureTrendPoints = BuildPolylinePoints(temperatureValues, min, max);
     }
 
     private static string BuildRealtimeSummary(MonitoringDashboardSnapshot snapshot)

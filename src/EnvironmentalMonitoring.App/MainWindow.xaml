@@ -3,1385 +3,1085 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:EnvironmentalMonitoring.App"
         mc:Ignorable="d"
         Title="Environmental Monitoring"
-        Width="1820"
-        Height="1120"
-        MinWidth="1180"
-        MinHeight="760"
-        Background="{x:Static local:DashboardPalette.WindowBackground}"
-        FontFamily="Malgun Gothic">
+        Width="1920"
+        Height="1080"
+        MinWidth="1280"
+        MinHeight="720"
+        Background="#07101B"
+        FontFamily="{StaticResource PretendardVariable}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
     <Window.Resources>
-        <SolidColorBrush x:Key="AppBackgroundBrush" Color="#10141A" />
-        <SolidColorBrush x:Key="SideBarBrush" Color="#181C22" />
-        <SolidColorBrush x:Key="CardBrush" Color="#1C2026" />
-        <SolidColorBrush x:Key="CardLowBrush" Color="#10141A" /> <!--#10141A--> <!--0A0E14-->
-        <SolidColorBrush x:Key="CardHighBrush" Color="#10141A" /> <!--#10141A--> <!--262A31-->
-        <SolidColorBrush x:Key="BorderBrush" Color="#31353C" />
-        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#DFE2EB" />
-        <SolidColorBrush x:Key="MutedTextBrush" Color="#9DA3AF" />
-        <SolidColorBrush x:Key="PrimaryBrush" Color="#ABC9EF" />
-        <SolidColorBrush x:Key="GoodBrush" Color="#4AE183" />
-        <SolidColorBrush x:Key="WarnBrush" Color="#FFB4AB" />
+        <SolidColorBrush x:Key="BgBrush" Color="#07101B" />
+        <SolidColorBrush x:Key="PanelBrush" Color="#101B2A" />
+        <SolidColorBrush x:Key="PanelDeepBrush" Color="#07101A" />
+        <SolidColorBrush x:Key="HeaderBrush" Color="#0C1625" />
+        <SolidColorBrush x:Key="BorderBrush" Color="#3B516B" />
+        <SolidColorBrush x:Key="SubtleBorderBrush" Color="#1B2B3E" />
+        <SolidColorBrush x:Key="TextBrush" Color="#EFF4FF" />
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#B5BECF" />
+        <SolidColorBrush x:Key="BlueBrush" Color="#55A2FF" />
+        <SolidColorBrush x:Key="CyanBrush" Color="#43D0D0" />
+        <SolidColorBrush x:Key="PurpleBrush" Color="#B482FF" />
+        <SolidColorBrush x:Key="GreenBrush" Color="#65E178" />
+        <SolidColorBrush x:Key="RedBrush" Color="#FF423B" />
+        <SolidColorBrush x:Key="AmberBrush" Color="#FFB02E" />
 
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource CardBrush}" />
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="24" />
+        <LinearGradientBrush x:Key="PanelGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#142236" Offset="0" />
+            <GradientStop Color="#08131F" Offset="1" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="HeaderGradientBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#101D31" Offset="0" />
+            <GradientStop Color="#060D17" Offset="1" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="AlarmGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#2B1620" Offset="0" />
+            <GradientStop Color="#492121" Offset="1" />
+        </LinearGradientBrush>
+
+        <DropShadowEffect x:Key="PanelShadow" BlurRadius="18" ShadowDepth="0" Color="#000000" Opacity="0.28" />
+        <DropShadowEffect x:Key="BlueGlow" BlurRadius="14" ShadowDepth="0" Color="#287BFF" Opacity="0.38" />
+        <DropShadowEffect x:Key="RedGlow" BlurRadius="16" ShadowDepth="0" Color="#FF2F25" Opacity="0.45" />
+
+        <Style x:Key="PanelStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelGradientBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Effect" Value="{StaticResource PanelShadow}" />
         </Style>
 
-        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
-            <Setter Property="FontSize" Value="26" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-
-        <Style x:Key="MutedTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
-            <Setter Property="FontSize" Value="13" />
-        </Style>
-
-        <Style x:Key="GraphTabButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Template">
+        <Style x:Key="AlarmCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelGradientBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Effect" Value="{StaticResource PanelShadow}" />
+            <Setter Property="BorderBrush">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                    </ControlTemplate>
+                    <SolidColorBrush Color="#3B516B" />
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasActiveAlarm}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource AlarmGradientBrush}" />
+                    <Setter Property="Effect" Value="{StaticResource RedGlow}" />
+                    <Setter Property="BorderBrush">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#FF423B" />
+                        </Setter.Value>
+                    </Setter>
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard Name="AlarmCardBlinkStoryboard">
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                                From="#FF423B"
+                                                To="#8A211D"
+                                                Duration="0:0:0.55"
+                                                AutoReverse="True"
+                                                RepeatBehavior="Forever" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <RemoveStoryboard BeginStoryboardName="AlarmCardBlinkStoryboard" />
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
-        <Style x:Key="NavIconStyle" TargetType="Path">
-            <Setter Property="Width" Value="18" />
-            <Setter Property="Height" Value="18" />
-            <Setter Property="Margin" Value="0,0,14,0" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Stretch" Value="Uniform" />
-            <Setter Property="Fill" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+        <Style x:Key="AlarmAccentTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasActiveAlarm}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource RedBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
-        <Style x:Key="NavButtonStyle" TargetType="Button">
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="BorderBrush" Value="Transparent" />
+        <Style x:Key="TopNavButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#77808E" />
-            <Setter Property="Padding" Value="18,14" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0,0,0,3" />
+            <Setter Property="Padding" Value="42,0" />
+            <Setter Property="Margin" Value="0,0,14,0" />
+            <Setter Property="Height" Value="44" />
+            <Setter Property="FontSize" Value="17" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="FontSize" Value="16" />
-            <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="6"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                CornerRadius="6,6,0,0">
+                            <ContentPresenter HorizontalAlignment="Center"
                                               VerticalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#1C2026" />
-                    <Setter Property="Foreground" Value="#DFE2EB" />
-                </Trigger>
-            </Style.Triggers>
         </Style>
 
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="38" />
-            <Setter Property="Padding" Value="18,0" />
-            <Setter Property="Background" Value="#C8D6FF" />
-            <Setter Property="Foreground" Value="#10141A" />
+        <Style x:Key="PeriodButtonStyle" TargetType="Button">
+            <Setter Property="MinWidth" Value="58" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Background" Value="#080C14" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-
-        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="#31353C" />
-            <Setter Property="Foreground" Value="#DFE2EB" />
-        </Style>
-
-        <Style TargetType="TextBox">
-            <Setter Property="Background" Value="#31353C" />
-            <Setter Property="Foreground" Value="#DFE2EB" />
-            <Setter Property="BorderBrush" Value="#45474D" />
-            <Setter Property="Padding" Value="8,5" />
-        </Style>
-
-        <Style TargetType="ComboBox">
-            <Setter Property="Background" Value="#31353C" />
-            <Setter Property="Foreground" Value="#DFE2EB" />
-            <Setter Property="BorderBrush" Value="#45474D" />
-            <Setter Property="Padding" Value="8,5" />
-        </Style>
-
-        <Style TargetType="DataGrid">
-            <Setter Property="Background" Value="#181C22" />
-            <Setter Property="Foreground" Value="#DFE2EB" />
-            <Setter Property="BorderBrush" Value="#31353C" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="HorizontalGridLinesBrush" Value="#31353C" />
-            <Setter Property="RowBackground" Value="#1C2026" />
-            <Setter Property="AlternatingRowBackground" Value="#181C22" />
-            <Setter Property="HeadersVisibility" Value="Column" />
-            <Setter Property="CanUserAddRows" Value="False" />
-            <Setter Property="CanUserDeleteRows" Value="False" />
-            <Setter Property="IsReadOnly" Value="True" />
             <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+
+        <Style x:Key="ActivePeriodButtonStyle" TargetType="Button" BasedOn="{StaticResource PeriodButtonStyle}">
+            <Setter Property="Background" Value="#CBD4EF" />
+            <Setter Property="Foreground" Value="#111827" />
+        </Style>
+
+        <Style x:Key="TinyCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Margin" Value="0,0,14,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="SvgIconPathStyle" TargetType="Path">
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="StrokeStartLineCap" Value="Round" />
+            <Setter Property="StrokeEndLineCap" Value="Round" />
+            <Setter Property="StrokeLineJoin" Value="Round" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="Fill" Value="Transparent" />
+        </Style>
+
+        <DataTemplate x:Key="SensorCardTemplate">
+            <Border Background="#070B12"
+                    BorderBrush="{Binding Border}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="{Binding Title}"
+                               Foreground="{StaticResource TextBrush}"
+                               FontSize="14"
+                               FontWeight="SemiBold" />
+                    <Viewbox Grid.Column="1"
+                             Width="20"
+                             Height="20"
+                             Margin="0,-1,0,0">
+                        <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                              Stroke="{Binding Accent}"
+                              Style="{StaticResource SvgIconPathStyle}" />
+                    </Viewbox>
+
+                    <StackPanel Grid.Row="1"
+                                Grid.ColumnSpan="2"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Bottom">
+                        <TextBlock Text="{Binding Value}"
+                                   Foreground="{Binding Accent}"
+                                   FontSize="25"
+                                   FontWeight="Light" />
+                        <TextBlock Text="{Binding Unit}"
+                                   Foreground="{StaticResource TextBrush}"
+                                   FontSize="12"
+                                   Margin="4,11,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="EventRowTemplate">
+            <Border BorderBrush="#1D2E43"
+                    BorderThickness="0,0,0,1"
+                    Padding="8,6">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="86" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="120" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="!"
+                               Foreground="{Binding Accent}"
+                               FontSize="17"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding TimestampText, Mode=OneWay}"
+                               Foreground="{Binding Accent}"
+                               FontSize="15"
+                               FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding Message, Mode=OneWay}"
+                               Foreground="{StaticResource TextBrush}"
+                               FontSize="15"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="3"
+                               Text="-"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="15"
+                               HorizontalAlignment="Right" />
+                </Grid>
+            </Border>
+        </DataTemplate>
     </Window.Resources>
 
-    <Grid Background="{StaticResource AppBackgroundBrush}">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-
-        <Border Grid.Column="0"
-                Background="{StaticResource SideBarBrush}"
-                BorderBrush="#222832"
-                BorderThickness="0,0,1,0">
-            <DockPanel LastChildFill="True">
-                <StackPanel DockPanel.Dock="Top"
-                            Margin="22,28,22,0">
-                    <TextBlock Foreground="#D7E6FF"
-                               FontSize="14"
-                               FontWeight="SemiBold"
-                               Text="환경 모니터링" />
-                    <TextBlock Margin="0,4,0,34"
-                               Foreground="#8F9097"
-                               FontSize="12"
-                               Text="Dynamo Lab Monitor" />
-
-                    <Button x:Name="DashboardNavButton"
-                            Tag="dashboard"
-                            Margin="0,0,0,8"
-                            Style="{StaticResource NavButtonStyle}"
-                            Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Style="{StaticResource NavIconStyle}"
-                                  Data="M10 6V0H18V6H10ZM0 10V0H8V10H0ZM10 18V8H18V18H10ZM0 18V12H8V18H0Z" />
-                            <TextBlock Text="개요" />
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="HistoryNavButton"
-                            Tag="history"
-                            Margin="0,0,0,8"
-                            Style="{StaticResource NavButtonStyle}"
-                            Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Style="{StaticResource NavIconStyle}"
-                                  Data="M0 8V0H8V8H0ZM0 18V10H8V18H0ZM10 8V0H18V8H10ZM10 18V10H18V18H10ZM2 6H6V2H2V6ZM12 6H16V2H12V6ZM12 16H16V12H12V16ZM2 16H6V12H2V16Z" />
-                            <TextBlock Text="이력 조회" />
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="AlarmNavButton"
-                            Tag="alarm"
-                            Margin="0,0,0,8"
-                            Style="{StaticResource NavButtonStyle}"
-                            Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Style="{StaticResource NavIconStyle}"
-                                  Data="M2.925 14.15C2.025 13.2333 1.3125 12.1708 0.7875 10.9625C0.2625 9.75417 0 8.45833 0 7.075C0 5.675 0.2625 4.37083 0.7875 3.1625C1.3125 1.95417 2.025 0.9 2.925 0L4.35 1.425C3.61667 2.15833 3.04167 3.00833 2.625 3.975C2.20833 4.94167 2 5.975 2 7.075C2 8.19167 2.20833 9.23333 2.625 10.2C3.04167 11.1667 3.61667 12.0083 4.35 12.725L2.925 14.15ZM5.75 11.325C5.21667 10.775 4.79167 10.1375 4.475 9.4125C4.15833 8.6875 4 7.90833 4 7.075C4 6.225 4.15833 5.4375 4.475 4.7125C4.79167 3.9875 5.21667 3.35833 5.75 2.825L7.175 4.25C6.80833 4.61667 6.52083 5.04167 6.3125 5.525C6.10417 6.00833 6 6.525 6 7.075C6 7.625 6.10417 8.14167 6.3125 8.625C6.52083 9.10833 6.80833 9.53333 7.175 9.9L5.75 11.325ZM10 9.075C9.45 9.075 8.97917 8.87917 8.5875 8.4875C8.19583 8.09583 8 7.625 8 7.075C8 6.525 8.19583 6.05417 8.5875 5.6625C8.97917 5.27083 9.45 5.075 10 5.075C10.55 5.075 11.0208 5.27083 11.4125 5.6625C11.8042 6.05417 12 6.525 12 7.075C12 7.625 11.8042 8.09583 11.4125 8.4875C11.0208 8.87917 10.55 9.075 10 9.075ZM14.25 11.325L12.825 9.9C13.1917 9.53333 13.4792 9.10833 13.6875 8.625C13.8958 8.14167 14 7.625 14 7.075C14 6.525 13.8958 6.00833 13.6875 5.525C13.4792 5.04167 13.1917 4.61667 12.825 4.25L14.25 2.825C14.7833 3.35833 15.2083 3.9875 15.525 4.7125C15.8417 5.4375 16 6.225 16 7.075C16 7.90833 15.8417 8.6875 15.525 9.4125C15.2083 10.1375 14.7833 10.775 14.25 11.325ZM17.075 14.15L15.65 12.725C16.3833 11.9917 16.9583 11.1417 17.375 10.175C17.7917 9.20833 18 8.175 18 7.075C18 5.95833 17.7917 4.91667 17.375 3.95C16.9583 2.98333 16.3833 2.14167 15.65 1.425L17.075 0C17.975 0.9 18.6875 1.95417 19.2125 3.1625C19.7375 4.37083 20 5.675 20 7.075C20 8.45833 19.7375 9.75417 19.2125 10.9625C18.6875 12.1708 17.975 13.2333 17.075 14.15Z" />
-                            <TextBlock Text="알람" />
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="RealtimeNavButton"
-                            Tag="realtime"
-                            Margin="0,0,0,8"
-                            Style="{StaticResource NavButtonStyle}"
-                            Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Style="{StaticResource NavIconStyle}"
-                                  Data="M0 18V16L2 14V18H0ZM4 18V12L6 10V18H4ZM8 18V10L10 12.025V18H8ZM12 18V12.025L14 10.025V18H12ZM16 18V8L18 6V18H16ZM0 12.825V10L7 3L11 7L18 0V2.825L11 9.825L7 5.825L0 12.825Z" />
-                            <TextBlock Text="그래프" />
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="LogNavButton"
-                            Tag="log"
-                            Margin="0,0,0,8"
-                            Style="{StaticResource NavButtonStyle}"
-                            Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Style="{StaticResource NavIconStyle}"
-                                  Data="M2 16C1.45 16 0.979167 15.8042 0.5875 15.4125C0.195833 15.0208 0 14.55 0 14V2C0 1.45 0.195833 0.979167 0.5875 0.5875C0.979167 0.195833 1.45 0 2 0H18C18.55 0 19.0208 0.195833 19.4125 0.5875C19.8042 0.979167 20 1.45 20 2V14C20 14.55 19.8042 15.0208 19.4125 15.4125C19.0208 15.8042 18.55 16 18 16H2ZM2 14H18V4H2V14ZM5.5 13L4.1 11.6L6.675 9L4.075 6.4L5.5 5L9.5 9L5.5 13ZM10 13V11H16V13H10Z" />
-                            <TextBlock Text="로그" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
-
-                <StackPanel DockPanel.Dock="Bottom"
-                            Margin="22,0,22,24">
-                    <Border Height="1"
-                            Margin="-22,0,-22,16"
-                            Background="#222832" />
-                    <Button x:Name="SettingsNavButton"
-                            Tag="settings"
-                            Margin="0,0,0,8"
-                            Style="{StaticResource NavButtonStyle}"
-                            Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Style="{StaticResource NavIconStyle}"
-                                  Data="M4.25833 11.6667L4.025 9.8C3.89861 9.75139 3.77951 9.69306 3.66771 9.625C3.5559 9.55694 3.44653 9.48403 3.33958 9.40625L1.60417 10.1354L0 7.36458L1.50208 6.22708C1.49236 6.15903 1.4875 6.0934 1.4875 6.03021C1.4875 5.96701 1.4875 5.90139 1.4875 5.83333C1.4875 5.76528 1.4875 5.69965 1.4875 5.63646C1.4875 5.57326 1.49236 5.50764 1.50208 5.43958L0 4.30208L1.60417 1.53125L3.33958 2.26042C3.44653 2.18264 3.55833 2.10972 3.675 2.04167C3.79167 1.97361 3.90833 1.91528 4.025 1.86667L4.25833 0H7.46667L7.7 1.86667C7.82639 1.91528 7.94549 1.97361 8.05729 2.04167C8.1691 2.10972 8.27847 2.18264 8.38542 2.26042L10.1208 1.53125L11.725 4.30208L10.2229 5.43958C10.2326 5.50764 10.2375 5.57326 10.2375 5.63646C10.2375 5.69965 10.2375 5.76528 10.2375 5.83333C10.2375 5.90139 10.2375 5.96701 10.2375 6.03021C10.2375 6.0934 10.2278 6.15903 10.2083 6.22708L11.7104 7.36458L10.1062 10.1354L8.38542 9.40625C8.27847 9.48403 8.16667 9.55694 8.05 9.625C7.93333 9.69306 7.81667 9.75139 7.7 9.8L7.46667 11.6667H4.25833ZM5.27917 10.5H6.43125L6.63542 8.95417C6.93681 8.87639 7.21632 8.76215 7.47396 8.61146C7.7316 8.46076 7.96736 8.27847 8.18125 8.06458L9.625 8.6625L10.1938 7.67083L8.93958 6.72292C8.98819 6.58681 9.02222 6.4434 9.04167 6.29271C9.06111 6.14201 9.07083 5.98889 9.07083 5.83333C9.07083 5.67778 9.06111 5.52465 9.04167 5.37396C9.02222 5.22326 8.98819 5.07986 8.93958 4.94375L10.1938 3.99583L9.625 3.00417L8.18125 3.61667C7.96736 3.39306 7.7316 3.2059 7.47396 3.05521C7.21632 2.90451 6.93681 2.79028 6.63542 2.7125L6.44583 1.16667H5.29375L5.08958 2.7125C4.78819 2.79028 4.50868 2.90451 4.25104 3.05521C3.9934 3.2059 3.75764 3.38819 3.54375 3.60208L2.1 3.00417L1.53125 3.99583L2.78542 4.92917C2.73681 5.075 2.70278 5.22083 2.68333 5.36667C2.66389 5.5125 2.65417 5.66806 2.65417 5.83333C2.65417 5.98889 2.66389 6.13958 2.68333 6.28542C2.70278 6.43125 2.73681 6.57708 2.78542 6.72292L1.53125 7.67083L2.1 8.6625L3.54375 8.05C3.75764 8.27361 3.9934 8.46076 4.25104 8.61146C4.50868 8.76215 4.78819 8.87639 5.08958 8.95417L5.27917 10.5ZM5.89167 7.875C6.45556 7.875 6.93681 7.67569 7.33542 7.27708C7.73403 6.87847 7.93333 6.39722 7.93333 5.83333C7.93333 5.26944 7.73403 4.78819 7.33542 4.38958C6.93681 3.99097 6.45556 3.79167 5.89167 3.79167C5.31806 3.79167 4.83438 3.99097 4.44063 4.38958C4.04688 4.78819 3.85 5.26944 3.85 5.83333C3.85 6.39722 4.04688 6.87847 4.44063 7.27708C4.83438 7.67569 5.31806 7.875 5.89167 7.875Z" />
-                            <TextBlock Text="설정" />
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="SystemNavButton"
-                            Tag="system"
-                            Style="{StaticResource NavButtonStyle}"
-                            Click="NavigationButton_Click">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Style="{StaticResource NavIconStyle}"
-                                  Data="M5.80417 9.33333C6.00833 9.33333 6.1809 9.26285 6.32188 9.12187C6.46285 8.9809 6.53333 8.80833 6.53333 8.60417C6.53333 8.4 6.46285 8.22743 6.32188 8.08646C6.1809 7.94549 6.00833 7.875 5.80417 7.875C5.6 7.875 5.42743 7.94549 5.28646 8.08646C5.14549 8.22743 5.075 8.4 5.075 8.60417C5.075 8.80833 5.14549 8.9809 5.28646 9.12187C5.42743 9.26285 5.6 9.33333 5.80417 9.33333ZM5.27917 7.0875H6.35833C6.35833 6.76667 6.39479 6.51389 6.46771 6.32917C6.54062 6.14444 6.74722 5.89167 7.0875 5.57083C7.34028 5.31806 7.53958 5.07743 7.68542 4.84896C7.83125 4.62049 7.90417 4.34583 7.90417 4.025C7.90417 3.48056 7.70486 3.0625 7.30625 2.77083C6.90764 2.47917 6.43611 2.33333 5.89167 2.33333C5.3375 2.33333 4.88785 2.47917 4.54271 2.77083C4.19757 3.0625 3.95694 3.4125 3.82083 3.82083L4.78333 4.2C4.83194 4.025 4.94132 3.83542 5.11146 3.63125C5.2816 3.42708 5.54167 3.325 5.89167 3.325C6.20278 3.325 6.43611 3.41007 6.59167 3.58021C6.74722 3.75035 6.825 3.9375 6.825 4.14167C6.825 4.33611 6.76667 4.5184 6.65 4.68854C6.53333 4.85868 6.3875 5.01667 6.2125 5.1625C5.78472 5.54167 5.52222 5.82847 5.425 6.02292C5.32778 6.21736 5.27917 6.57222 5.27917 7.0875ZM5.83333 11.6667C5.02639 11.6667 4.26806 11.5135 3.55833 11.2073C2.84861 10.901 2.23125 10.4854 1.70625 9.96042C1.18125 9.43542 0.765625 8.81806 0.459375 8.10833C0.153125 7.39861 0 6.64028 0 5.83333C0 5.02639 0.153125 4.26806 0.459375 3.55833C0.765625 2.84861 1.18125 2.23125 1.70625 1.70625C2.23125 1.18125 2.84861 0.765625 3.55833 0.459375C4.26806 0.153125 5.02639 0 5.83333 0C6.64028 0 7.39861 0.153125 8.10833 0.459375C8.81806 0.765625 9.43542 1.18125 9.96042 1.70625C10.4854 2.23125 10.901 2.84861 11.2073 3.55833C11.5135 4.26806 11.6667 5.02639 11.6667 5.83333C11.6667 6.64028 11.5135 7.39861 11.2073 8.10833C10.901 8.81806 10.4854 9.43542 9.96042 9.96042C9.43542 10.4854 8.81806 10.901 8.10833 11.2073C7.39861 11.5135 6.64028 11.6667 5.83333 11.6667ZM5.83333 10.5C7.13611 10.5 8.23958 10.0479 9.14375 9.14375C10.0479 8.23958 10.5 7.13611 10.5 5.83333C10.5 4.53056 10.0479 3.42708 9.14375 2.52292C8.23958 1.61875 7.13611 1.16667 5.83333 1.16667C4.53056 1.16667 3.42708 1.61875 2.52292 2.52292C1.61875 3.42708 1.16667 4.53056 1.16667 5.83333C1.16667 7.13611 1.61875 8.23958 2.52292 9.14375C3.42708 10.0479 4.53056 10.5 5.83333 10.5Z" />
-                            <TextBlock Text="시스템" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
-            </DockPanel>
-        </Border>
-
-        <Grid Grid.Column="1"
-              Margin="24">
+    <Viewbox Stretch="Uniform">
+        <Grid Width="1920"
+              Height="1080"
+              Background="{StaticResource BgBrush}">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="26" />
+                <RowDefinition Height="62" />
+                <RowDefinition Height="48" />
+                <RowDefinition Height="128" />
+                <RowDefinition Height="342" />
+                <RowDefinition Height="218" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0"
-                    Background="{StaticResource CardBrush}"
-                    CornerRadius="10">
-                <ItemsControl ItemsSource="{Binding StatusCards}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Columns="3" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Padding="24,14"
-                                    BorderBrush="#31353C"
-                                    BorderThickness="0,0,1,0">
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Foreground="{StaticResource MutedTextBrush}"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"
-                                               Text="{Binding Title}" />
-                                    <StackPanel Orientation="Horizontal"
-                                                Margin="0,6,0,0">
-                                        <TextBlock Foreground="{Binding Accent}"
-                                                   FontSize="22"
-                                                   FontWeight="Bold"
-                                                   VerticalAlignment="Center"
-                                                   Text="{Binding Summary}" />
-                                        <TextBlock Margin="8,0,0,0"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{Binding Accent}"
-                                                   FontSize="16"
-                                                   Text="{Binding IconText}" />
-                                    </StackPanel>
-                                    <TextBlock Margin="0,4,0,0"
-                                               Foreground="{StaticResource MutedTextBrush}"
-                                               FontSize="11"
-                                               Text="{Binding Detail}"
-                                               TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    Background="{StaticResource HeaderGradientBrush}"
+                    BorderBrush="#18263A"
+                    BorderThickness="0,0,0,1"
+                    Padding="24,0">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="샤시 다이나모 환경 모니터링 시스템"
+                                   Foreground="{StaticResource TextBrush}"
+                                   FontSize="27"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                        <Viewbox Width="28"
+                                 Height="28"
+                                 Margin="0,0,10,0"
+                                 VerticalAlignment="Center">
+                            <Path Data="M21 5C21 6.65685 16.9706 8 12 8C7.02944 8 3 6.65685 3 5M21 5C21 3.34315 16.9706 2 12 2C7.02944 2 3 3.34315 3 5M21 5V19C21 20.66 17 22 12 22C7 22 3 20.66 3 19V5M21 12C21 13.66 17 15 12 15C7 15 3 13.66 3 12"
+                                  Stroke="{StaticResource GreenBrush}"
+                                  StrokeThickness="2"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round"
+                                  Stretch="Uniform" />
+                        </Viewbox>
+                        <TextBlock Text="{Binding HeaderDbStatusText}"
+                                   Foreground="{StaticResource TextBrush}"
+                                   FontSize="19"
+                                   VerticalAlignment="Center" />
+                        <Border Width="1"
+                                Height="28"
+                                Background="#314059"
+                                Margin="26,0" />
+                        <TextBlock Text="{Binding CurrentTimeText}"
+                                   Foreground="{StaticResource TextBrush}"
+                                   FontSize="20"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
-            <Grid Grid.Row="2">
-                <Grid Visibility="{Binding DashboardViewVisibility}">
-                    <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="24" />
-                        <ColumnDefinition Width="390" />
-                    </Grid.ColumnDefinitions>
+            <Border Grid.Row="1"
+                    Background="#111823"
+                    BorderBrush="#253246"
+                    BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" Margin="24,0,0,0">
+                    <Button x:Name="DashboardNavButton"
+                            Tag="dashboard"
+                            Content="실시간 대시보드"
+                            Style="{StaticResource TopNavButtonStyle}"
+                            Click="NavigationButton_Click" />
+                    <Button x:Name="HistoryNavButton"
+                            Tag="history"
+                            Content="히스토리 조회"
+                            Style="{StaticResource TopNavButtonStyle}"
+                            Click="NavigationButton_Click" />
+                    <Button x:Name="AlarmNavButton"
+                            Tag="alarm"
+                            Content="알람 관리"
+                            Style="{StaticResource TopNavButtonStyle}"
+                            Click="NavigationButton_Click" />
+                    <Button x:Name="SettingsNavButton"
+                            Tag="settings"
+                            Content="임계값 설정"
+                            Style="{StaticResource TopNavButtonStyle}"
+                            Click="NavigationButton_Click" />
+                </StackPanel>
+            </Border>
 
-                    <Grid Grid.Column="0">
+            <Grid Grid.Row="2"
+                  Margin="24,12,24,0"
+                  Visibility="{Binding DashboardViewVisibility}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Style="{StaticResource PanelStyle}"
+                        BorderBrush="{StaticResource BlueBrush}">
+                    <Grid Margin="24,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="66" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Viewbox Width="54"
+                                 Height="54"
+                                 VerticalAlignment="Center">
+                            <Path Data="M21 3L15 3M21 7L15 7M21 11L15 11M5.5 13.7578V4.5C5.5 3.11929 6.61929 2 8 2C9.38071 2 10.5 3.11929 10.5 4.5V13.7578C11.706 14.565 12.5 15.9398 12.5 17.5C12.5 19.9853 10.4853 22 8 22C5.51472 22 3.5 19.9853 3.5 17.5C3.5 15.9398 4.29401 14.565 5.5 13.7578ZM9 17.5C9 18.0523 8.55228 18.5 8 18.5C7.44772 18.5 7 18.0523 7 17.5C7 16.9477 7.44772 16.5 8 16.5C8.55228 16.5 9 16.9477 9 17.5Z"
+                                  Stroke="{StaticResource BlueBrush}"
+                                  Style="{StaticResource SvgIconPathStyle}" />
+                        </Viewbox>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="평균 온도" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding DashboardMetricCards[0].Value}" Foreground="{StaticResource TextBrush}" FontSize="36" FontWeight="Light" />
+                                <TextBlock Text="°C" Foreground="{StaticResource TextBrush}" FontSize="28" Margin="8,7,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Viewbox Width="24" Height="24" Margin="0,0,8,0">
+                                <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                                      Stroke="{StaticResource GreenBrush}"
+                                      Style="{StaticResource SvgIconPathStyle}" />
+                            </Viewbox>
+                            <TextBlock Text="정상 범위" Foreground="{StaticResource TextBrush}" FontSize="16" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="2"
+                        Style="{StaticResource PanelStyle}"
+                        BorderBrush="{StaticResource CyanBrush}">
+                    <Grid Margin="24,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="66" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Viewbox Width="46"
+                                 Height="46"
+                                 VerticalAlignment="Center">
+                            <Path Data="M5.51667 11.3333C5.65 11.3222 5.76389 11.2694 5.85833 11.175C5.95278 11.0806 6 10.9667 6 10.8333C6 10.6778 5.95 10.5528 5.85 10.4583C5.75 10.3639 5.62222 10.3222 5.46667 10.3333C5.01111 10.3667 4.52778 10.2417 4.01667 9.95833C3.50556 9.675 3.18333 9.16111 3.05 8.41667C3.02778 8.29445 2.96944 8.19444 2.875 8.11667C2.78056 8.03889 2.67222 8 2.55 8C2.39444 8 2.26667 8.05833 2.16667 8.175C2.06667 8.29167 2.03333 8.42778 2.06667 8.58333C2.25556 9.59444 2.7 10.3167 3.4 10.75C4.1 11.1833 4.80556 11.3778 5.51667 11.3333ZM5.33333 13.3333C3.81111 13.3333 2.54167 12.8111 1.525 11.7667C0.508333 10.7222 0 9.42222 0 7.86667C0 6.75556 0.441667 5.54722 1.325 4.24167C2.20833 2.93611 3.54444 1.52222 5.33333 0C7.12222 1.52222 8.45833 2.93611 9.34167 4.24167C10.225 5.54722 10.6667 6.75556 10.6667 7.86667C10.6667 9.42222 10.1583 10.7222 9.14167 11.7667C8.125 12.8111 6.85556 13.3333 5.33333 13.3333ZM5.33333 12C6.48889 12 7.44444 11.6083 8.2 10.825C8.95555 10.0417 9.33333 9.05556 9.33333 7.86667C9.33333 7.05556 8.99722 6.13889 8.325 5.11667C7.65278 4.09444 6.65556 2.97778 5.33333 1.76667C4.01111 2.97778 3.01389 4.09444 2.34167 5.11667C1.66944 6.13889 1.33333 7.05556 1.33333 7.86667C1.33333 9.05556 1.71111 10.0417 2.46667 10.825C3.22222 11.6083 4.17778 12 5.33333 12Z"
+                                  Fill="{StaticResource CyanBrush}"
+                                  Stretch="Uniform" />
+                        </Viewbox>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="평균 습도" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding DashboardMetricCards[1].Value}" Foreground="{StaticResource TextBrush}" FontSize="36" FontWeight="Light" />
+                                <TextBlock Text="%" Foreground="{StaticResource TextBrush}" FontSize="28" Margin="8,7,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Viewbox Width="24" Height="24" Margin="0,0,8,0">
+                                <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                                      Stroke="{StaticResource GreenBrush}"
+                                      Style="{StaticResource SvgIconPathStyle}" />
+                            </Viewbox>
+                            <TextBlock Text="정상 범위" Foreground="{StaticResource TextBrush}" FontSize="16" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="4"
+                        Style="{StaticResource PanelStyle}"
+                        BorderBrush="{StaticResource PurpleBrush}">
+                    <Grid Margin="24,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="66" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Viewbox Width="46"
+                                 Height="46"
+                                 VerticalAlignment="Center">
+                            <Path Data="M0 8.66667V7.33333H10.6667V8.66667H0V8.66667M0 6.66667V5.33333H10.6667V6.66667H0V6.66667M4.66667 14V11.8667L3.6 12.9333L2.66667 12L5.33333 9.33333L8 12L7.06667 12.9333L6 11.9V14H4.66667V14M5.33333 4.66667L2.66667 2L3.6 1.06667L4.66667 2.13333V0H6V2.13333L7.06667 1.06667L8 2L5.33333 4.66667V4.66667"
+                                  Fill="{StaticResource PurpleBrush}"
+                                  Stretch="Uniform" />
+                        </Viewbox>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="평균 대기압" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding DashboardMetricCards[2].Value}" Foreground="{StaticResource TextBrush}" FontSize="36" FontWeight="Light" />
+                                <TextBlock Text="kPa" Foreground="{StaticResource TextBrush}" FontSize="28" Margin="8,7,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Viewbox Width="24" Height="24" Margin="0,0,8,0">
+                                <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                                      Stroke="{StaticResource GreenBrush}"
+                                      Style="{StaticResource SvgIconPathStyle}" />
+                            </Viewbox>
+                            <TextBlock Text="정상 범위" Foreground="{StaticResource TextBrush}" FontSize="16" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="6"
+                        Style="{StaticResource AlarmCardStyle}">
+                    <Grid Margin="24,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="66" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="♢"
+                                   Style="{StaticResource AlarmAccentTextStyle}"
+                                   FontSize="56"
+                                   VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="활성 알람" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                            <TextBlock Text="{Binding ActiveAlarmCountText}" Style="{StaticResource AlarmAccentTextStyle}" FontSize="40" FontWeight="Light" Margin="0,2,0,-4" />
+                            <TextBlock Text="{Binding ActiveAlarmDetailText}" Style="{StaticResource AlarmAccentTextStyle}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="3"
+                  Margin="24,12,24,0"
+                  Visibility="{Binding DashboardViewVisibility}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="468" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Style="{StaticResource PanelStyle}"
+                        Padding="16,10">
+                    <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="26" />
+                            <RowDefinition Height="36" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-
-                        <ItemsControl Grid.Row="0"
-                                      ItemsSource="{Binding DashboardMetricCards}">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <Viewbox Width="22"
+                                         Height="22"
+                                         Margin="0,0,8,0">
+                                    <Path Data="M14.5 4.5C14.5 3.11929 13.3807 2 12 2C10.6193 2 9.5 3.11929 9.5 4.5V13.7578C8.29401 14.565 7.5 15.9398 7.5 17.5C7.5 19.9853 9.51472 22 12 22C14.4853 22 16.5 19.9853 16.5 17.5C16.5 15.9398 15.706 14.565 14.5 13.7578V4.5Z M12 18.5C12.5523 18.5 13 18.0523 13 17.5C13 16.9477 12.5523 16.5 12 16.5C11.4477 16.5 11 16.9477 11 17.5C11 18.0523 11.4477 18.5 12 18.5Z"
+                                          Stroke="{StaticResource BlueBrush}"
+                                          Style="{StaticResource SvgIconPathStyle}" />
+                                </Viewbox>
+                                <TextBlock Text="온도 센서"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Viewbox Width="20" Height="20" Margin="0,0,7,0">
+                                    <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                                          Stroke="{StaticResource GreenBrush}"
+                                          Style="{StaticResource SvgIconPathStyle}" />
+                                </Viewbox>
+                                <TextBlock Text="모든 센서 정상" Foreground="{StaticResource GreenBrush}" FontSize="14" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Grid>
+                        <ItemsControl Grid.Row="1"
+                                      ItemsSource="{Binding SensorFeedItems}"
+                                      ItemTemplate="{StaticResource SensorCardTemplate}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <UniformGrid Columns="4" />
+                                    <UniformGrid Columns="2" Rows="4" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="0,0,14,0"
-                                            Padding="20,18"
-                                            Background="{StaticResource CardBrush}"
-                                            CornerRadius="10">
-                                        <StackPanel>
-                                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
-                                                       FontSize="12"
-                                                       FontWeight="SemiBold"
-                                                       Text="{Binding Title}"
-                                                       TextWrapping="Wrap" />
-                                            <StackPanel Margin="0,10,0,0"
-                                                        Orientation="Horizontal">
-                                                <TextBlock Foreground="{Binding Accent}"
-                                                           FontSize="36"
-                                                           FontWeight="Bold"
-                                                           Text="{Binding Value}" />
-                                                <TextBlock Margin="5,14,0,0"
-                                                           Foreground="{StaticResource MutedTextBrush}"
-                                                           FontSize="16"
-                                                           Text="{Binding Unit}" />
-                                            </StackPanel>
-                                            <TextBlock Margin="0,8,0,0"
-                                                       Foreground="{Binding Accent}"
-                                                       FontSize="12"
-                                                       Text="{Binding Detail}"
-                                                       TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                     <Setter Property="Margin" Value="0,3,14,3" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
                         </ItemsControl>
-
-                        <Border Grid.Row="2"
-                                Style="{StaticResource CardStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                           Text="맵" />
-
-                                <Border Grid.Row="1"
-                                        MinHeight="520"
-                                        Margin="0,24,0,0"
-                                        Background="{StaticResource CardLowBrush}"
-                                        BorderBrush="#222832"
-                                        BorderThickness="1"
-                                        CornerRadius="8"
-                                        ClipToBounds="True">
-                                    <local:DynamometerRoomMapControl />
-                                </Border>
-                            </Grid>
-                        </Border>
                     </Grid>
+                </Border>
 
-                    <Grid Grid.Column="2">
+                <Border Grid.Column="2"
+                        Style="{StaticResource PanelStyle}"
+                        Padding="18,10">
+                    <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="3*" />
-                            <RowDefinition Height="26" />
-                            <RowDefinition Height="2*" />
+                            <RowDefinition Height="44" />
+                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0"
-                                Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                           Text="실시간 센서 피드" />
-                                <ItemsControl Margin="0,16,0,0"
-                                              ItemsSource="{Binding SensorFeedItems}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="온도 추이"
+                                       Foreground="{StaticResource BlueBrush}"
+                                       FontSize="21"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center"
+                                        Margin="26,0,0,0">
+                                <CheckBox Content="전체"
+                                          IsChecked="{Binding GraphAllSelected, Mode=TwoWay}"
+                                          Style="{StaticResource TinyCheckBoxStyle}" />
+                                <ItemsControl ItemsSource="{Binding GraphChannelFilterItems}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <UniformGrid Columns="2" />
+                                            <StackPanel Orientation="Horizontal" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="0,0,6,6"
-                                                    Padding="10,8"
-                                                    Background="{StaticResource CardLowBrush}"
-                                                    BorderBrush="{Binding Border}"
-                                                    BorderThickness="2,0,0,0"
-                                                    CornerRadius="5">
-                                                <StackPanel>
-                                                    <DockPanel>
-                                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                                                   FontSize="11"
-                                                                   FontWeight="SemiBold"
-                                                                   Text="{Binding Title}"
-                                                                   TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock DockPanel.Dock="Right"
-                                                                   Margin="4,0,0,0"
-                                                                   Foreground="{Binding Accent}"
-                                                                   FontSize="10"
-                                                                   Text="{Binding StatusText}" />
-                                                    </DockPanel>
-                                                    <StackPanel Margin="0,4,0,0"
-                                                                Orientation="Horizontal">
-                                                        <TextBlock Foreground="{Binding Accent}"
-                                                                   FontSize="18"
-                                                                   FontWeight="SemiBold"
-                                                                   Text="{Binding Value}" />
-                                                        <TextBlock Margin="3,5,0,0"
-                                                                   Foreground="{StaticResource MutedTextBrush}"
-                                                                   FontSize="10"
-                                                                   Text="{Binding Unit}" />
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Border>
+                                            <CheckBox Content="{Binding Label}"
+                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      Style="{StaticResource TinyCheckBoxStyle}" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </StackPanel>
-                        </Border>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Background="#070B12" VerticalAlignment="Center">
+                                <Button Content="1초" Style="{StaticResource ActivePeriodButtonStyle}" />
+                                <Button Content="1분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="10분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="1시간" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="1일" Style="{StaticResource PeriodButtonStyle}" />
+                            </StackPanel>
+                        </Grid>
 
-                        <Border Grid.Row="2"
-                                Style="{StaticResource CardStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}"
-                                           Text="이벤트 로그" />
-                                <ScrollViewer Grid.Row="1"
-                                              Margin="0,14,0,0"
-                                              HorizontalScrollBarVisibility="Disabled"
-                                              VerticalScrollBarVisibility="Auto">
-                                    <ItemsControl ItemsSource="{Binding RecentEvents}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Margin="0,0,0,8"
-                                                        Padding="12,10"
-                                                        Background="{StaticResource CardLowBrush}"
-                                                        BorderBrush="{Binding Accent}"
-                                                        BorderThickness="2,0,0,0"
-                                                        CornerRadius="5">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="20" />
-                                                            <ColumnDefinition Width="*" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Foreground="{Binding Accent}"
-                                                                   FontWeight="Bold"
-                                                                   Text="!" />
-                                                        <StackPanel Grid.Column="1">
-                                                            <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                                                       FontSize="13"
-                                                                       FontWeight="SemiBold"
-                                                                       Text="{Binding Message}"
-                                                                       TextWrapping="Wrap" />
-                                                            <TextBlock Margin="0,4,0,0"
-                                                                       Foreground="{StaticResource MutedTextBrush}"
-                                                                       FontSize="12"
-                                                                       Text="{Binding TimestampText}" />
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </ScrollViewer>
-                            </Grid>
-                        </Border>
-                    </Grid>
-                    </Grid>
-                </Grid>
-
-                <Grid Visibility="{Binding RealtimeViewVisibility}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="18" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="18" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="24" />
-                        <RowDefinition Height="2.3*" />
-                        <RowDefinition Height="24" />
-                        <RowDefinition Height="1*" />
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0"
-                               Foreground="{StaticResource PrimaryTextBrush}"
-                               FontSize="26"
-                               FontWeight="SemiBold"
-                               Text="그래프 모니터링" />
-
-                    <ItemsControl Grid.Row="2"
-                                  ItemsSource="{Binding GraphSummaryCards}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="5" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Margin="0,0,18,0"
-                                        Padding="22,18"
-                                        Background="{StaticResource CardBrush}"
-                                        BorderBrush="#242A33"
-                                        BorderThickness="1"
-                                        CornerRadius="10">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel>
-                                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
-                                                       FontSize="12"
-                                                       FontWeight="SemiBold"
-                                                       Text="{Binding Title}" />
-                                            <StackPanel Margin="0,12,0,0"
-                                                        Orientation="Horizontal">
-                                                <TextBlock Foreground="{Binding Accent}"
-                                                           FontSize="25"
-                                                           FontWeight="SemiBold"
-                                                           Text="{Binding Value}" />
-                                                <TextBlock Margin="5,7,0,0"
-                                                           Foreground="{StaticResource MutedTextBrush}"
-                                                           FontSize="16"
-                                                           Text="{Binding Unit}" />
-                                            </StackPanel>
-                                            <TextBlock Margin="0,10,0,0"
-                                                       Foreground="{Binding Accent}"
-                                                       FontSize="11"
-                                                       Text="{Binding Detail}"
-                                                       TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1"
-                                                   Margin="12,0,0,0"
-                                                   HorizontalAlignment="Right"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{Binding IconAccent}"
-                                                   FontSize="20"
-                                                   FontWeight="SemiBold"
-                                                   Opacity="0.65"
-                                                   Text="{Binding IconText}" />
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <Border Grid.Row="4"
-                            Padding="18,16"
-                            Background="{StaticResource CardBrush}"
-                            BorderBrush="#242A33"
-                            BorderThickness="1"
-                            CornerRadius="8">
-                        <StackPanel Orientation="Horizontal">
-                            <CheckBox Margin="0,0,24,0"
-                                      VerticalAlignment="Center"
-                                      Content="전체"
-                                      Foreground="{StaticResource PrimaryTextBrush}"
-                                      IsChecked="{Binding GraphAllSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <Border Width="1"
-                                    Height="22"
-                                    Margin="0,0,24,0"
-                                    Background="#2A3038" />
-                            <ItemsControl ItemsSource="{Binding GraphChannelFilterItems}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <CheckBox Margin="0,0,18,0"
-                                                  VerticalAlignment="Center"
-                                                  Content="{Binding Label}"
-                                                  Foreground="{StaticResource MutedTextBrush}"
-                                                  IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Row="6"
-                            Background="{StaticResource CardBrush}"
-                            BorderBrush="#242A33"
-                            BorderThickness="1"
-                            CornerRadius="10"
-                            ClipToBounds="True">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="66" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0"
-                                  Background="{StaticResource CardBrush}">
+                        <Border Grid.Row="1"
+                                Background="{StaticResource PanelDeepBrush}"
+                                BorderBrush="#15253A"
+                                BorderThickness="1">
+                            <Grid Margin="18,8,18,12">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="42" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <Grid Grid.Column="0"
-                                      Margin="32,0,0,0">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="2" />
-                                    </Grid.RowDefinitions>
-                                    <Button Style="{StaticResource GraphTabButtonStyle}"
-                                            HorizontalAlignment="Left"
-                                            Click="GraphKindTabButton_Click"
-                                            Tag="Temperature">
-                                        <TextBlock Foreground="{Binding GraphTemperatureTabForeground}"
-                                                   FontSize="16"
-                                                   FontWeight="{Binding GraphTemperatureTabWeight}"
-                                                   Text="온도" />
-                                    </Button>
-                                    <Border Grid.Row="1"
-                                            Width="96"
-                                            HorizontalAlignment="Left"
-                                            Background="{Binding GraphTemperatureTabUnderline}" />
-                                </Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="22" />
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,2,8,0">
+                                    <TextBlock Text="℃" Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
+                                    <TextBlock Text="23.0" Foreground="{StaticResource MutedTextBrush}" FontSize="13" Margin="0,10,0,0" />
+                                    <TextBlock Text="22.5" Foreground="{StaticResource MutedTextBrush}" FontSize="13" Margin="0,36,0,0" />
+                                    <TextBlock Text="22.0" Foreground="{StaticResource MutedTextBrush}" FontSize="13" Margin="0,36,0,0" />
+                                    <TextBlock Text="21.5" Foreground="{StaticResource MutedTextBrush}" FontSize="13" Margin="0,36,0,0" />
+                                </StackPanel>
                                 <Grid Grid.Column="1">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="*" />
-                                        <RowDefinition Height="2" />
-                                    </Grid.RowDefinitions>
-                                    <Button Style="{StaticResource GraphTabButtonStyle}"
-                                            Click="GraphKindTabButton_Click"
-                                            Tag="Humidity">
-                                        <TextBlock Foreground="{Binding GraphHumidityTabForeground}"
-                                                   FontSize="16"
-                                                   FontWeight="{Binding GraphHumidityTabWeight}"
-                                                   Text="습도" />
-                                    </Button>
-                                    <Border Grid.Row="1"
-                                            Width="96"
-                                            HorizontalAlignment="Center"
-                                            Background="{Binding GraphHumidityTabUnderline}" />
-                                </Grid>
-                                <Grid Grid.Column="2">
-                                    <Grid.RowDefinitions>
                                         <RowDefinition Height="*" />
-                                        <RowDefinition Height="2" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <Button Style="{StaticResource GraphTabButtonStyle}"
-                                            Click="GraphKindTabButton_Click"
-                                            Tag="Pressure">
-                                        <TextBlock Foreground="{Binding GraphPressureTabForeground}"
-                                                   FontSize="16"
-                                                   FontWeight="{Binding GraphPressureTabWeight}"
-                                                   Text="대기압" />
-                                    </Button>
-                                    <Border Grid.Row="1"
-                                            Width="96"
-                                            HorizontalAlignment="Center"
-                                            Background="{Binding GraphPressureTabUnderline}" />
-                                </Grid>
-                                <StackPanel Grid.Column="3"
-                                            Margin="0,0,22,0"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal">
-                                    <Border Padding="14,8"
-                                            Background="#123052"
-                                            CornerRadius="5">
-                                        <TextBlock Foreground="{StaticResource PrimaryBrush}" FontSize="12" Text="1초" />
-                                    </Border>
-                                    <TextBlock Margin="22,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Text="1분" />
-                                    <TextBlock Margin="22,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Text="10분" />
-                                    <TextBlock Margin="22,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Text="일" />
-                                    <Border Width="1" Height="22" Margin="18,0" Background="#2A3038" />
-                                    <Border Padding="14,8"
-                                            Background="#31445C"
-                                            CornerRadius="5">
-                                        <TextBlock Foreground="{StaticResource PrimaryBrush}" FontSize="12" Text="조회" />
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
-
-                            <Border Grid.Row="1"
-                                    Background="{StaticResource CardBrush}"
-                                    BorderBrush="#242A33"
-                                    BorderThickness="0,1,0,0">
-                                <Grid>
-                                    <Viewbox Margin="30,28,30,30"
-                                             Stretch="Fill">
-                                        <Canvas Width="760"
-                                                Height="220"
-                                                ClipToBounds="True">
-                                            <Line X1="0" Y1="25" X2="760" Y2="25" Stroke="#2A3038" StrokeThickness="1" />
-                                            <Line X1="0" Y1="85" X2="760" Y2="85" Stroke="#2A3038" StrokeThickness="1" />
-                                            <Line X1="0" Y1="145" X2="760" Y2="145" Stroke="#2A3038" StrokeThickness="1" />
-                                            <Line X1="0" Y1="205" X2="760" Y2="205" Stroke="#2A3038" StrokeThickness="1" />
-                                            <Canvas x:Name="GraphLineCanvas"
-                                                    Width="760"
-                                                    Height="220"
-                                                    IsHitTestVisible="False" />
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Row="0" Grid.ColumnSpan="6" BorderBrush="#1D2D42" BorderThickness="0,0,0,1" />
+                                    <Border Grid.Row="1" Grid.ColumnSpan="6" BorderBrush="#1D2D42" BorderThickness="0,0,0,1" />
+                                    <Border Grid.Row="2" Grid.ColumnSpan="6" BorderBrush="#1D2D42" BorderThickness="0,0,0,1" />
+                                    <Border Grid.Row="3" Grid.ColumnSpan="6" BorderBrush="#1D2D42" BorderThickness="0,0,0,1" />
+                                    <Border Grid.RowSpan="4" Grid.Column="1" BorderBrush="#17263A" BorderThickness="1,0,0,0" />
+                                    <Border Grid.RowSpan="4" Grid.Column="2" BorderBrush="#17263A" BorderThickness="1,0,0,0" />
+                                    <Border Grid.RowSpan="4" Grid.Column="3" BorderBrush="#17263A" BorderThickness="1,0,0,0" />
+                                    <Border Grid.RowSpan="4" Grid.Column="4" BorderBrush="#17263A" BorderThickness="1,0,0,0" />
+                                    <Border Grid.RowSpan="4" Grid.Column="5" BorderBrush="#17263A" BorderThickness="1,0,0,0" />
+                                    <Viewbox Stretch="Fill">
+                                        <Canvas Width="760" Height="220" ClipToBounds="True">
+                                            <Canvas x:Name="GraphLineCanvas" Width="760" Height="220" />
                                         </Canvas>
                                     </Viewbox>
-
-                                    <ItemsControl Margin="0,28,32,0"
-                                                  HorizontalAlignment="Right"
-                                                  VerticalAlignment="Top"
-                                                  ItemsSource="{Binding GraphLegendItems}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Margin="0,0,0,8"
-                                                        Padding="12,8"
-                                                        Background="#31353C"
-                                                        CornerRadius="5"
-                                                        Opacity="0.92">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Border Width="14"
-                                                                Height="4"
-                                                                Margin="0,0,8,0"
-                                                                VerticalAlignment="Center"
-                                                                Background="{Binding Accent}" />
-                                                        <TextBlock Foreground="{StaticResource MutedTextBrush}"
-                                                                   FontSize="12"
-                                                                   Text="{Binding Label}" />
-                                                        <TextBlock Margin="5,0,0,0"
-                                                                   Foreground="{StaticResource MutedTextBrush}"
-                                                                   FontSize="12"
-                                                                   Text="{Binding Value}" />
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
                                 </Grid>
-                            </Border>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="8"
-                            Background="{StaticResource CardBrush}"
-                            BorderBrush="#242A33"
-                            BorderThickness="1"
-                            CornerRadius="10"
-                            ClipToBounds="True">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="64" />
-                                <RowDefinition Height="38" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <StackPanel Margin="24,0,0,0"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal">
-                                    <TextBlock Foreground="{StaticResource WarnBrush}"
-                                               FontSize="18"
-                                               Text="!" />
-                                    <TextBlock Margin="12,0,0,0"
-                                               Foreground="{StaticResource PrimaryTextBrush}"
-                                               FontSize="18"
-                                               FontWeight="SemiBold"
-                                               Text="알람/이벤트 로그" />
-                                </StackPanel>
-                                <TextBlock Margin="0,0,24,0"
-                                           HorizontalAlignment="Right"
-                                           VerticalAlignment="Center"
-                                           Foreground="{StaticResource PrimaryBrush}"
-                                           FontSize="13"
-                                           Text="모든 로그 보기" />
+                                <Grid Grid.Row="1" Grid.Column="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="09:03:18" Foreground="{StaticResource MutedTextBrush}" FontSize="13" />
+                                    <TextBlock Grid.Column="1" Text="09:03:28" Foreground="{StaticResource MutedTextBrush}" FontSize="13" />
+                                    <TextBlock Grid.Column="2" Text="09:03:38" Foreground="{StaticResource MutedTextBrush}" FontSize="13" />
+                                    <TextBlock Grid.Column="3" Text="09:03:48" Foreground="{StaticResource MutedTextBrush}" FontSize="13" />
+                                    <TextBlock Grid.Column="4" Text="09:03:58" Foreground="{StaticResource MutedTextBrush}" FontSize="13" />
+                                    <TextBlock Grid.Column="5" Text="{Binding CurrentTimeText}" Foreground="{StaticResource MutedTextBrush}" FontSize="13" HorizontalAlignment="Right" />
+                                </Grid>
                             </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
 
-                            <Grid Grid.Row="1"
-                                  Background="#181C22">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="1.1*" />
-                                    <ColumnDefinition Width="1.15*" />
-                                    <ColumnDefinition Width="1.8*" />
-                                    <ColumnDefinition Width="0.7*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Margin="24,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="11" FontStyle="Italic" Text="TIME" />
-                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="11" FontStyle="Italic" Text="SENSOR" />
-                                <TextBlock Grid.Column="2" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="11" FontStyle="Italic" Text="CONTENT" />
-                                <TextBlock Grid.Column="3" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="11" FontStyle="Italic" Text="VALUE" />
-                            </Grid>
+            <Grid Grid.Row="4"
+                  Margin="24,10,24,0"
+                  Visibility="{Binding DashboardViewVisibility}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                            <ScrollViewer Grid.Row="2"
-                                          HorizontalScrollBarVisibility="Disabled"
-                                          VerticalScrollBarVisibility="Auto">
-                                <ItemsControl ItemsSource="{Binding GraphEventLogItems}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid MinHeight="48"
-                                                  Background="{StaticResource CardBrush}">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="1.1*" />
-                                                    <ColumnDefinition Width="1.15*" />
-                                                    <ColumnDefinition Width="1.8*" />
-                                                    <ColumnDefinition Width="0.7*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Margin="24,0,0,0"
-                                                           VerticalAlignment="Center"
-                                                           Foreground="{StaticResource MutedTextBrush}"
-                                                           FontSize="13"
-                                                           Text="{Binding Time}" />
-                                                <TextBlock Grid.Column="1"
-                                                           VerticalAlignment="Center"
-                                                           Foreground="{StaticResource PrimaryTextBrush}"
-                                                           FontSize="13"
-                                                           FontWeight="SemiBold"
-                                                           Text="{Binding Sensor}" />
-                                                <StackPanel Grid.Column="2"
-                                                            VerticalAlignment="Center"
-                                                            Orientation="Horizontal">
-                                                    <Border Padding="10,5"
-                                                            Background="{Binding BadgeBackground}"
-                                                            CornerRadius="4">
-                                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                                                   FontSize="10"
-                                                                   FontStyle="Italic"
-                                                                   Text="{Binding BadgeText}" />
-                                                    </Border>
-                                                    <TextBlock Margin="12,0,0,0"
-                                                               VerticalAlignment="Center"
-                                                               Foreground="{StaticResource PrimaryTextBrush}"
-                                                               FontSize="13"
-                                                               Text="{Binding Content}"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                </StackPanel>
-                                                <TextBlock Grid.Column="3"
-                                                           VerticalAlignment="Center"
-                                                           Foreground="{Binding Accent}"
-                                                           FontSize="13"
-                                                           FontWeight="SemiBold"
-                                                           Text="{Binding Value}" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </Grid>
-                    </Border>
-                </Grid>
-
-                <Grid Visibility="{Binding HistoryViewVisibility}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="18" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="18" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <Border Grid.Row="0"
-                            Padding="24"
-                            Background="{StaticResource CardBrush}"
-                            CornerRadius="8">
+                <Border Grid.Column="0" Style="{StaticResource PanelStyle}" Padding="18,10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="34" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
                         <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="18" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="16" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                            <TextBlock Text="♢  습도 추이" Foreground="{StaticResource BlueBrush}" FontSize="19" FontWeight="SemiBold" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Background="#070B12">
+                                <Button Content="1초" Style="{StaticResource ActivePeriodButtonStyle}" />
+                                <Button Content="1분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="10분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="1시간" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="1일" Style="{StaticResource PeriodButtonStyle}" />
+                            </StackPanel>
+                        </Grid>
+                        <Border Grid.Row="1" Background="{StaticResource PanelDeepBrush}">
+                            <Viewbox Stretch="Fill" Margin="34,12,18,16">
+                                <Canvas Width="760" Height="140">
+                                    <Line X1="0" Y1="24" X2="760" Y2="24" Stroke="#17263A" StrokeThickness="1" />
+                                    <Line X1="0" Y1="70" X2="760" Y2="70" Stroke="#17263A" StrokeThickness="1" />
+                                    <Line X1="0" Y1="116" X2="760" Y2="116" Stroke="#17263A" StrokeThickness="1" />
+                                    <Polyline Points="{Binding HumidityTrendPoints}"
+                                              Stroke="#66A3FF"
+                                              StrokeThickness="3"
+                                              StrokeLineJoin="Round"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round" />
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                    </Grid>
+                </Border>
 
-                            <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                       FontSize="20"
-                                       FontWeight="SemiBold"
-                                       Text="조회 조건" />
+                <Border Grid.Column="2" Style="{StaticResource PanelStyle}" Padding="18,10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="34" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <TextBlock Text="◴  대기압 추이" Foreground="{StaticResource PurpleBrush}" FontSize="19" FontWeight="SemiBold" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Background="#070B12">
+                                <Button Content="1초" Style="{StaticResource ActivePeriodButtonStyle}" />
+                                <Button Content="1분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="10분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="1시간" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="1일" Style="{StaticResource PeriodButtonStyle}" />
+                            </StackPanel>
+                        </Grid>
+                        <Border Grid.Row="1" Background="{StaticResource PanelDeepBrush}">
+                            <Viewbox Stretch="Fill" Margin="34,12,18,16">
+                                <Canvas Width="760" Height="140">
+                                    <Line X1="0" Y1="24" X2="760" Y2="24" Stroke="#17263A" StrokeThickness="1" />
+                                    <Line X1="0" Y1="70" X2="760" Y2="70" Stroke="#17263A" StrokeThickness="1" />
+                                    <Line X1="0" Y1="116" X2="760" Y2="116" Stroke="#17263A" StrokeThickness="1" />
+                                    <Polyline Stroke="#B482FF"
+                                              StrokeThickness="3"
+                                              StrokeLineJoin="Round"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              Points="0,70 48,72 96,69 144,74 192,64 240,67 288,58 336,62 384,56 432,61 480,55 528,63 576,60 624,67 672,62 720,58 760,62" />
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
 
-                            <Grid Grid.Row="2">
+            <Grid Grid.Row="5"
+                  Margin="24,10,24,14"
+                  Visibility="{Binding DashboardViewVisibility}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource PanelStyle}" Padding="18,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="34" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <TextBlock Text="최근 이벤트 로그" Foreground="{StaticResource TextBrush}" FontSize="19" FontWeight="SemiBold" />
+                            <Button Content="전체 로그 보기  ↗"
+                                    HorizontalAlignment="Right"
+                                    Background="#0B1729"
+                                    Foreground="{StaticResource BlueBrush}"
+                                    BorderBrush="#203D60"
+                                    BorderThickness="1"
+                                    Padding="14,4"
+                                    FontSize="13" />
+                        </Grid>
+                        <ItemsControl Grid.Row="1"
+                                      ItemsSource="{Binding RecentEvents}"
+                                      ItemTemplate="{StaticResource EventRowTemplate}" />
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource PanelStyle}" Padding="22,18">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.15*" />
+                            <ColumnDefinition Width="0.8*" />
+                            <ColumnDefinition Width="1.1*" />
+                            <ColumnDefinition Width="1.05*" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="◷  샘플링 주기" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="▣  DB 저장 상태" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="▣  저장 방식" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SamplingIntervalText}" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding StorageStateText}" Foreground="{StaticResource GreenBrush}" FontSize="17" FontWeight="SemiBold" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding StorageModeText}" Foreground="{StaticResource TextBrush}" FontSize="17" />
+
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="▤  디스크 사용량" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="◷  마지막 저장 시간" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="◉  통신 지연" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                        <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding DiskUsageText}" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                        <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding LastStorageWriteText}" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                        <StackPanel Grid.Row="2" Grid.Column="3" Orientation="Horizontal">
+                            <TextBlock Text="{Binding CommunicationLatencyText}" Foreground="{StaticResource TextBrush}" FontSize="17" />
+                            <TextBlock Text=" 정상" Foreground="{StaticResource GreenBrush}" FontSize="17" FontWeight="SemiBold" Margin="28,0,0,0" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="2"
+                  Grid.RowSpan="4"
+                  Margin="24,14,24,14"
+                  Visibility="{Binding HistoryViewVisibility}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="88" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="328" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0"
+                        Style="{StaticResource PanelStyle}"
+                        Padding="24,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="176" />
+                            <ColumnDefinition Width="36" />
+                            <ColumnDefinition Width="176" />
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="210" />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="112" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="160" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="160" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Text="기간"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="18"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,16,0" />
+                        <DatePicker Grid.Column="1"
+                                    SelectedDate="{Binding SelectedReportDate, Mode=TwoWay}"
+                                    Height="42"
+                                    Background="#07101A"
+                                    Foreground="{StaticResource TextBrush}"
+                                    BorderBrush="#2E4C75"
+                                    BorderThickness="1"
+                                    FontSize="16"
+                                    VerticalContentAlignment="Center" />
+                        <TextBlock Grid.Column="2"
+                                   Text="~"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="20"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                        <DatePicker Grid.Column="3"
+                                    SelectedDate="{Binding SelectedHistoryEndDate, Mode=TwoWay}"
+                                    Height="42"
+                                    Background="#07101A"
+                                    Foreground="{StaticResource TextBrush}"
+                                    BorderBrush="#2E4C75"
+                                    BorderThickness="1"
+                                    FontSize="16"
+                                    VerticalContentAlignment="Center" />
+                        <TextBlock Grid.Column="5"
+                                   Text="센서"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="18"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,16,0" />
+                        <ComboBox Grid.Column="6"
+                                  ItemsSource="{Binding HistoryChannelOptions}"
+                                  SelectedValue="{Binding SelectedHistoryChannelCode, Mode=TwoWay}"
+                                  SelectedValuePath="Value"
+                                  DisplayMemberPath="Label"
+                                  Height="42"
+                                  Background="#07101A"
+                                  Foreground="{StaticResource TextBrush}"
+                                  BorderBrush="#2E4C75"
+                                  BorderThickness="1"
+                                  FontSize="16"
+                                  Padding="10,0" />
+                        <Button Grid.Column="8"
+                                Content="⌕  조회"
+                                Click="RefreshHistoryButton_Click"
+                                Height="42"
+                                Background="#0B2346"
+                                Foreground="{StaticResource BlueBrush}"
+                                BorderBrush="{StaticResource BlueBrush}"
+                                BorderThickness="1"
+                                FontSize="16"
+                                FontWeight="SemiBold"
+                                Cursor="Hand" />
+                        <Button Grid.Column="10"
+                                Content="⇩  CSV 내보내기"
+                                Click="ExportReportCsvButton_Click"
+                                Height="42"
+                                Background="#0B1832"
+                                Foreground="{StaticResource BlueBrush}"
+                                BorderBrush="#315BCA"
+                                BorderThickness="1"
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                Cursor="Hand" />
+                        <Button Grid.Column="12"
+                                Content="▣  보고서 생성"
+                                Click="ExportReportTextButton_Click"
+                                Height="42"
+                                Background="#1A1232"
+                                Foreground="{StaticResource PurpleBrush}"
+                                BorderBrush="#6E41B8"
+                                BorderThickness="1"
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                Cursor="Hand" />
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2"
+                        Style="{StaticResource PanelStyle}"
+                        Padding="26,18">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="36" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="⌁  히스토리 그래프"
+                                   Foreground="{StaticResource TextBrush}"
+                                   FontSize="21"
+                                   FontWeight="SemiBold" />
+
+                        <Border Grid.Row="1"
+                                Background="{StaticResource PanelDeepBrush}"
+                                BorderBrush="#203A58"
+                                BorderThickness="1"
+                                Padding="20,12">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="12" />
-                                    <ColumnDefinition Width="0.9*" />
-                                    <ColumnDefinition Width="12" />
-                                    <ColumnDefinition Width="1.2*" />
-                                    <ColumnDefinition Width="12" />
-                                    <ColumnDefinition Width="1.2*" />
-                                    <ColumnDefinition Width="12" />
-                                    <ColumnDefinition Width="0.9*" />
-                                    <ColumnDefinition Width="12" />
-                                    <ColumnDefinition Width="1.2*" />
+                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="조회 기간" />
-                                    <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
-                                        <DatePicker Width="170"
-                                                    SelectedDate="{Binding SelectedReportDate}" />
-                                        <TextBlock Margin="10,8"
-                                                   Foreground="{StaticResource MutedTextBrush}"
-                                                   Text="~" />
-                                        <DatePicker Width="170"
-                                                    SelectedDate="{Binding SelectedHistoryEndDate}" />
-                                    </StackPanel>
+                                    <TextBlock Text="°C" Foreground="{StaticResource MutedTextBrush}" FontSize="14" />
+                                    <TextBlock Text="90" Foreground="{StaticResource MutedTextBrush}" FontSize="14" Margin="0,18,0,0" />
+                                    <TextBlock Text="70" Foreground="{StaticResource MutedTextBrush}" FontSize="14" Margin="0,32,0,0" />
+                                    <TextBlock Text="50" Foreground="{StaticResource MutedTextBrush}" FontSize="14" Margin="0,32,0,0" />
+                                    <TextBlock Text="30" Foreground="{StaticResource MutedTextBrush}" FontSize="14" Margin="0,32,0,0" />
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="저장주기" />
-                                    <ComboBox Margin="0,8,0,0"
-                                              ItemsSource="{Binding SamplingModes}"
-                                              SelectedItem="{Binding SelectedSamplingMode}" />
-                                </StackPanel>
+                                <Viewbox Grid.Column="1"
+                                         Stretch="Fill">
+                                    <Canvas Width="760" Height="220">
+                                        <Line X1="0" Y1="22" X2="760" Y2="22" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
+                                        <Line X1="0" Y1="70" X2="760" Y2="70" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
+                                        <Line X1="0" Y1="118" X2="760" Y2="118" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
+                                        <Line X1="0" Y1="166" X2="760" Y2="166" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
+                                        <Line X1="0" Y1="214" X2="760" Y2="214" Stroke="#324962" StrokeThickness="1" />
+                                        <Line X1="110" Y1="22" X2="110" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
+                                        <Line X1="240" Y1="22" X2="240" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
+                                        <Line X1="380" Y1="22" X2="380" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
+                                        <Line X1="520" Y1="22" X2="520" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
+                                        <Line X1="670" Y1="22" X2="670" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
 
-                                <StackPanel Grid.Column="4">
-                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="채널 선택" />
-                                    <ComboBox Margin="0,8,0,0"
-                                              ItemsSource="{Binding HistoryChannelOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SelectedHistoryChannelCode}" />
-                                </StackPanel>
+                                        <Line X1="0" Y1="74" X2="760" Y2="74" Stroke="{StaticResource RedBrush}" StrokeThickness="1" StrokeDashArray="5,7" />
+                                        <TextBlock Canvas.Left="12"
+                                                   Canvas.Top="44"
+                                                   Text="임계값 75°C"
+                                                   Foreground="{StaticResource RedBrush}"
+                                                   FontSize="15"
+                                                   FontWeight="SemiBold" />
 
-                                <StackPanel Grid.Column="6">
-                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="위치 선택" />
-                                    <ComboBox Margin="0,8,0,0"
-                                              ItemsSource="{Binding HistoryLocationOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SelectedHistoryLocationName}" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="8">
-                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="상태 필터" />
-                                    <ComboBox Margin="0,8,0,0"
-                                              ItemsSource="{Binding HistoryStatusOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SelectedHistoryStatus}" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="10">
-                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="데이터 종류" />
-                                    <ComboBox Margin="0,8,0,0"
-                                              ItemsSource="{Binding HistoryKindOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SelectedHistoryKind}" />
-                                </StackPanel>
+                                        <Polyline Points="{Binding HistoryTemperatureTrendPoints}"
+                                                  Stroke="{StaticResource BlueBrush}"
+                                                  StrokeThickness="3"
+                                                  StrokeLineJoin="Round"
+                                                  StrokeStartLineCap="Round"
+                                                  StrokeEndLineCap="Round" />
+                                    </Canvas>
+                                </Viewbox>
                             </Grid>
-
-                            <Border Grid.Row="3"
-                                    Height="1"
-                                    Background="#31353C" />
-
-                            <StackPanel Grid.Row="4"
-                                        HorizontalAlignment="Right"
-                                        Orientation="Horizontal">
-                                <Button Width="110"
-                                        Margin="0,0,10,0"
-                                        Style="{StaticResource SecondaryButtonStyle}"
-                                        Click="ResetHistoryFiltersButton_Click"
-                                        Content="초기화" />
-                                <Button Width="140"
-                                        Margin="0,0,10,0"
-                                        Style="{StaticResource SecondaryButtonStyle}"
-                                        Click="ExportReportCsvButton_Click"
-                                        Content="CSV 내보내기" />
-                                <Button Width="110"
-                                        Style="{StaticResource PrimaryButtonStyle}"
-                                        Click="RefreshHistoryButton_Click"
-                                        Content="조회" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <UniformGrid Grid.Row="2"
-                                 Columns="6">
-                        <Border Margin="0,0,14,0" Padding="18" Background="{StaticResource CardBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="조회 건수" />
-                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryCountText}" />
-                            </StackPanel>
-                        </Border>
-                        <Border Margin="0,0,14,0" Padding="18" Background="{StaticResource CardBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="최소값" />
-                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryMinText}" />
-                            </StackPanel>
-                        </Border>
-                        <Border Margin="0,0,14,0" Padding="18" Background="{StaticResource CardBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="최대값" />
-                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryMaxText}" />
-                            </StackPanel>
-                        </Border>
-                        <Border Margin="0,0,14,0" Padding="18" Background="{StaticResource CardBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="평균값" />
-                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryAverageText}" />
-                            </StackPanel>
-                        </Border>
-                        <Border Margin="0,0,14,0" Padding="18" Background="{StaticResource CardBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="마지막 수집" />
-                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryLastSampleText}" />
-                            </StackPanel>
-                        </Border>
-                        <Border Padding="18" Background="#211415" BorderBrush="#5C312D" BorderThickness="1" CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Foreground="{StaticResource WarnBrush}" FontSize="13" Text="알람 발생 건수" />
-                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource WarnBrush}" FontSize="24" FontWeight="SemiBold" Text="{Binding HistoryAlarmCountText}" />
-                            </StackPanel>
-                        </Border>
-                    </UniformGrid>
-
-                    <Grid Grid.Row="4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="24" />
-                            <ColumnDefinition Width="340" />
-                        </Grid.ColumnDefinitions>
-
-                        <Border Grid.Column="0"
-                                Background="{StaticResource CardBrush}"
-                                BorderBrush="#10141A"
-                                BorderThickness="1"
-                                CornerRadius="8">
-                            <DataGrid ItemsSource="{Binding SampleHistoryItems}"
-                                      SelectedItem="{Binding SelectedSampleHistoryItem}"
-                                      AutoGenerateColumns="False">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="시각" Binding="{Binding SampledAt}" Width="180" />
-                                    <DataGridTextColumn Header="채널명" Binding="{Binding ChannelCode}" Width="110" />
-                                    <DataGridTextColumn Header="위치명" Binding="{Binding LocationName}" Width="160" />
-                                    <DataGridTextColumn Header="데이터 종류" Binding="{Binding Kind}" Width="120" />
-                                    <DataGridTextColumn Header="RAW 값" Binding="{Binding RawValue}" Width="110" />
-                                    <DataGridTextColumn Header="보정값" Binding="{Binding CorrectedValue}" Width="110" />
-                                    <DataGridTextColumn Header="단위" Binding="{Binding Unit}" Width="80" />
-                                    <DataGridTextColumn Header="상태" Binding="{Binding Quality}" Width="100" />
-                                    <DataGridTextColumn Header="알람 여부" Binding="{Binding AlarmText}" Width="100" />
-                                </DataGrid.Columns>
-                            </DataGrid>
-                        </Border>
-
-                        <Border Grid.Column="2"
-                                Padding="24"
-                                Background="{StaticResource CardBrush}"
-                                BorderBrush="#31353C"
-                                BorderThickness="1"
-                                CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                           FontSize="22"
-                                           FontWeight="SemiBold"
-                                           Text="상세 정보" />
-                                <Border Margin="0,22,0,0"
-                                        Padding="18"
-                                        Background="{StaticResource CardHighBrush}"
-                                        BorderBrush="#3A3F49"
-                                        BorderThickness="1"
-                                        CornerRadius="6">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel>
-                                            <TextBlock Style="{StaticResource MutedTextStyle}" Text="선택 행 데이터" />
-                                            <TextBlock Margin="0,12,0,0" Foreground="{StaticResource PrimaryTextBrush}" FontSize="18" FontWeight="SemiBold" Text="{Binding SelectedSampleHistoryItem.ChannelCode}" />
-                                            <TextBlock Margin="0,8,0,0" Style="{StaticResource MutedTextStyle}" Text="{Binding SelectedSampleHistoryItem.SampledAt}" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Foreground="{StaticResource PrimaryBrush}" FontSize="26" FontWeight="SemiBold" Text="{Binding SelectedSampleHistoryItem.CorrectedValue}" />
-                                            <TextBlock Margin="6,9,0,0" Foreground="{StaticResource MutedTextBrush}" FontSize="13" Text="{Binding SelectedSampleHistoryItem.Unit}" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-
-                                <Border Margin="0,18,0,0" Padding="18" Background="{StaticResource CardLowBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="6">
-                                    <Grid>
-                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}" Text="통신 상태" />
-                                        <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource GoodBrush}" Text="{Binding SelectedSampleHistoryItem.Quality}" />
-                                    </Grid>
-                                </Border>
-
-                                <Border Margin="0,18,0,0" Padding="18" Background="{StaticResource CardLowBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="6">
-                                    <StackPanel>
-                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}" Text="해당 시점 알람" />
-                                        <TextBlock Margin="0,12,0,0" Style="{StaticResource MutedTextStyle}" Text="{Binding SelectedSampleHistoryItem.AlarmText}" />
-                                    </StackPanel>
-                                </Border>
-
-                                <TextBlock Margin="0,24,0,0" Foreground="{StaticResource MutedTextBrush}" FontWeight="SemiBold" Text="비고 / 이벤트 메시지" />
-                                <Border Margin="0,10,0,0" MinHeight="88" Padding="16" Background="{StaticResource CardLowBrush}" BorderBrush="#31353C" BorderThickness="1" CornerRadius="6">
-                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="{Binding ReportExportStatusMessage}" TextWrapping="Wrap" />
-                                </Border>
-                            </StackPanel>
                         </Border>
                     </Grid>
-                </Grid>
-
-                <Border Padding="24"
-                        Background="{StaticResource CardBrush}"
-                        CornerRadius="10"
-                        Visibility="Collapsed">
-                    <StackPanel>
-                        <DockPanel Margin="0,0,0,18">
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <DatePicker Width="150"
-                                            Margin="0,0,10,0"
-                                            SelectedDate="{Binding SelectedReportDate}" />
-                                <ComboBox Width="180"
-                                          Margin="0,0,10,0"
-                                          ItemsSource="{Binding HistoryChannelOptions}"
-                                          DisplayMemberPath="Label"
-                                          SelectedValuePath="Value"
-                                          SelectedValue="{Binding SelectedHistoryChannelCode}" />
-                                <Button Width="150"
-                                        Style="{StaticResource PrimaryButtonStyle}"
-                                        Click="ExportReportCsvButton_Click"
-                                        Content="CSV 내보내기" />
-                            </StackPanel>
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="이력 조회" />
-                                <TextBlock Margin="0,8,0,0"
-                                           Style="{StaticResource MutedTextStyle}"
-                                           Text="{Binding SampleHistorySummary}" />
-                                <TextBlock Margin="0,4,0,0"
-                                           Style="{StaticResource MutedTextStyle}"
-                                           Text="{Binding ReportExportStatusMessage}" />
-                            </StackPanel>
-                        </DockPanel>
-
-                        <DataGrid ItemsSource="{Binding SampleHistoryItems}">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="시각" Binding="{Binding SampledAt}" Width="180" />
-                                <DataGridTextColumn Header="채널" Binding="{Binding ChannelCode}" Width="150" />
-                                <DataGridTextColumn Header="종류" Binding="{Binding Kind}" Width="100" />
-                                <DataGridTextColumn Header="Raw" Binding="{Binding RawValue}" Width="120" />
-                                <DataGridTextColumn Header="보정값" Binding="{Binding CorrectedValue}" Width="120" />
-                                <DataGridTextColumn Header="상태" Binding="{Binding Quality}" Width="120" />
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </StackPanel>
                 </Border>
 
-                <Border Padding="24"
-                        Background="{StaticResource CardBrush}"
-                        CornerRadius="10"
-                        Visibility="{Binding AlarmViewVisibility}">
-                    <StackPanel>
-                        <DockPanel Margin="0,0,0,18">
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <DatePicker Width="150"
-                                            Margin="0,0,10,0"
-                                            SelectedDate="{Binding SelectedAlarmDate}" />
-                                <ComboBox Width="180"
-                                          Margin="0,0,10,0"
-                                          ItemsSource="{Binding AlarmChannelOptions}"
-                                          DisplayMemberPath="Label"
-                                          SelectedValuePath="Value"
-                                          SelectedValue="{Binding SelectedAlarmChannelCode}" />
-                                <ComboBox Width="150"
-                                          Margin="0,0,10,0"
-                                          ItemsSource="{Binding AlarmStatusOptions}"
-                                          DisplayMemberPath="Label"
-                                          SelectedValuePath="Value"
-                                          SelectedValue="{Binding SelectedAlarmStatus}" />
-                                <Button Width="150"
-                                        Margin="0,0,10,0"
-                                        Style="{StaticResource SecondaryButtonStyle}"
-                                        IsEnabled="{Binding CanAcknowledgeSelectedAlarm}"
-                                        Click="AcknowledgeSelectedAlarmButton_Click"
-                                        Content="선택 확인" />
-                                <Button Width="150"
-                                        Style="{StaticResource PrimaryButtonStyle}"
-                                        Click="AcknowledgeAllActiveAlarmsButton_Click"
-                                        Content="전체 확인" />
-                            </StackPanel>
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="알람" />
-                                <TextBlock Margin="0,8,0,0"
-                                           Style="{StaticResource MutedTextStyle}"
-                                           Text="{Binding AlarmHistorySummary}" />
-                            </StackPanel>
-                        </DockPanel>
+                <Border Grid.Row="4"
+                        Style="{StaticResource PanelStyle}"
+                        Padding="24,16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="36" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="34" />
+                        </Grid.RowDefinitions>
 
-                        <DataGrid ItemsSource="{Binding AlarmHistoryItems}"
-                                  SelectedItem="{Binding SelectedAlarmHistoryItem}">
+                        <Grid>
+                            <TextBlock Text="▦  데이터 테이블"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="21"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding HistoryCountText, StringFormat=총 {0}건}"
+                                       HorizontalAlignment="Right"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="16" />
+                        </Grid>
+
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding SampleHistoryItems}"
+                                  SelectedItem="{Binding SelectedSampleHistoryItem, Mode=TwoWay}"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  Background="#07101A"
+                                  Foreground="{StaticResource TextBrush}"
+                                  BorderBrush="#1D344F"
+                                  HorizontalGridLinesBrush="#1A2E45"
+                                  RowBackground="#07101A"
+                                  AlternatingRowBackground="#091726"
+                                  ColumnHeaderHeight="42"
+                                  RowHeight="42"
+                                  FontSize="15">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="#0A192A" />
+                                    <Setter Property="Foreground" Value="{StaticResource BlueBrush}" />
+                                    <Setter Property="BorderBrush" Value="#1D344F" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="Padding" Value="12,0" />
+                                </Style>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                    <Setter Property="Padding" Value="12,0" />
+                                </Style>
+                            </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="발생 시각" Binding="{Binding OccurredAt}" Width="170" />
-                                <DataGridTextColumn Header="확인 시각" Binding="{Binding AcknowledgedAt}" Width="170" />
-                                <DataGridTextColumn Header="해제 시각" Binding="{Binding ResolvedAt}" Width="170" />
-                                <DataGridTextColumn Header="채널" Binding="{Binding ChannelCode}" Width="140" />
-                                <DataGridTextColumn Header="알람 종류" Binding="{Binding AlarmType}" Width="130" />
-                                <DataGridTextColumn Header="심각도" Binding="{Binding Severity}" Width="100" />
-                                <DataGridTextColumn Header="측정값" Binding="{Binding MeasuredValue}" Width="110" />
-                                <DataGridTextColumn Header="메시지" Binding="{Binding Message}" Width="*" />
+                                <DataGridTextColumn Header="타임스탬프" Binding="{Binding SampledAt}" Width="230" />
+                                <DataGridTextColumn Header="센서" Binding="{Binding ChannelCode}" Width="120" />
+                                <DataGridTextColumn Header="위치" Binding="{Binding LocationName}" Width="260" />
+                                <DataGridTextColumn Header="데이터 종류" Binding="{Binding Kind}" Width="160" />
+                                <DataGridTextColumn Header="RAW 값" Binding="{Binding RawValue}" Width="150" />
+                                <DataGridTextColumn Header="보정값" Binding="{Binding CorrectedValue}" Width="150" />
+                                <DataGridTextColumn Header="단위" Binding="{Binding Unit}" Width="110" />
+                                <DataGridTextColumn Header="상태" Binding="{Binding Quality}" Width="140" />
                             </DataGrid.Columns>
                         </DataGrid>
-                    </StackPanel>
-                </Border>
 
-                <Border Padding="24"
-                        Background="{StaticResource CardBrush}"
-                        CornerRadius="10"
-                        Visibility="{Binding SettingsViewVisibility}">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="설정" />
-                            <TextBlock Margin="0,10,0,0"
-                                       Style="{StaticResource MutedTextStyle}"
-                                       Text="{Binding RuntimeSettingsFilePath}" />
-                            <TextBlock Margin="0,4,0,18"
-                                       Style="{StaticResource MutedTextStyle}"
-                                       Text="{Binding EffectiveDataStoragePath}" />
-
-                            <Grid Margin="0,0,0,22">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="160" />
-                                    <ColumnDefinition Width="220" />
-                                    <ColumnDefinition Width="160" />
-                                    <ColumnDefinition Width="220" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
-                                           VerticalAlignment="Center"
-                                           Text="저장주기" />
-                                <ComboBox Grid.Column="1"
-                                          ItemsSource="{Binding SamplingModes}"
-                                          SelectedItem="{Binding SelectedSamplingMode}" />
-                                <TextBlock Grid.Column="2"
-                                           Foreground="{StaticResource PrimaryTextBrush}"
-                                           VerticalAlignment="Center"
-                                           Text="데이터 경로" />
-                                <TextBox Grid.Column="3"
-                                         Text="{Binding SettingsDataRoot}" />
-                            </Grid>
-
-                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="장비 통신 설정" />
-                            <DataGrid Margin="0,12,0,22"
-                                      ItemsSource="{Binding DeviceSettingsItems}"
-                                      IsReadOnly="False">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Key" Binding="{Binding Key}" IsReadOnly="True" Width="140" />
-                                    <DataGridTextColumn Header="표시명" Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                                    <DataGridTextColumn Header="IP" Binding="{Binding IpAddress, UpdateSourceTrigger=PropertyChanged}" Width="220" />
-                                    <DataGridTextColumn Header="Port" Binding="{Binding Port, UpdateSourceTrigger=PropertyChanged}" Width="120" />
-                                </DataGrid.Columns>
-                            </DataGrid>
-
-                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="채널 기준 설정" />
-                            <DataGrid Margin="0,12,0,22"
-                                      ItemsSource="{Binding ChannelSettingsItems}"
-                                      IsReadOnly="False">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="채널" Binding="{Binding Code}" IsReadOnly="True" Width="110" />
-                                    <DataGridTextColumn Header="표시명" Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Width="180" />
-                                    <DataGridTextColumn Header="위치명" Binding="{Binding LocationName, UpdateSourceTrigger=PropertyChanged}" Width="180" />
-                                    <DataGridTextColumn Header="목표값" Binding="{Binding TargetValue, UpdateSourceTrigger=PropertyChanged}" Width="100" />
-                                    <DataGridTextColumn Header="편차" Binding="{Binding DeviationThreshold, UpdateSourceTrigger=PropertyChanged}" Width="100" />
-                                    <DataGridTextColumn Header="하한" Binding="{Binding LowAlarmLimit, UpdateSourceTrigger=PropertyChanged}" Width="100" />
-                                    <DataGridTextColumn Header="상한" Binding="{Binding HighAlarmLimit, UpdateSourceTrigger=PropertyChanged}" Width="100" />
-                                    <DataGridTextColumn Header="Scale" Binding="{Binding CalibrationScale, UpdateSourceTrigger=PropertyChanged}" Width="90" />
-                                    <DataGridTextColumn Header="Offset" Binding="{Binding Offset, UpdateSourceTrigger=PropertyChanged}" Width="90" />
-                                </DataGrid.Columns>
-                            </DataGrid>
-
+                        <Grid Grid.Row="2" Margin="0,10,0,0">
+                            <TextBlock Text="{Binding SampleHistorySummary}"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="14"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" />
                             <StackPanel Orientation="Horizontal"
                                         HorizontalAlignment="Right">
-                                <Button Width="120"
-                                        Margin="0,0,12,0"
-                                        Style="{StaticResource SecondaryButtonStyle}"
-                                        Click="ReloadSettingsButton_Click"
-                                        Content="다시 불러오기" />
-                                <Button Width="120"
-                                        Style="{StaticResource PrimaryButtonStyle}"
-                                        Click="SaveSettingsButton_Click"
-                                        Content="설정 저장" />
+                                <Button Content="◀"
+                                        Width="56"
+                                        Height="28"
+                                        Background="#0B1729"
+                                        Foreground="{StaticResource BlueBrush}"
+                                        BorderBrush="#244C80" />
+                                <Button Content="▶"
+                                        Width="56"
+                                        Height="28"
+                                        Margin="12,0,0,0"
+                                        Background="#0B2346"
+                                        Foreground="{StaticResource BlueBrush}"
+                                        BorderBrush="#315BCA" />
                             </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Border>
-
-                <Border Padding="24"
-                        Background="{StaticResource CardBrush}"
-                        CornerRadius="10"
-                        Visibility="{Binding LogViewVisibility}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="로그" />
-                        <TextBlock Margin="0,8,0,20"
-                                   Style="{StaticResource MutedTextStyle}"
-                                   Text="최근 알람 및 시스템 이벤트를 확인합니다." />
-                        <ItemsControl ItemsSource="{Binding RecentEvents}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="0,0,0,10"
-                                            Padding="16"
-                                            Background="{StaticResource CardLowBrush}"
-                                            BorderBrush="{Binding Accent}"
-                                            BorderThickness="2,0,0,0"
-                                            CornerRadius="5">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="90" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
-                                                       Text="{Binding TimestampText}" />
-                                            <TextBlock Grid.Column="1"
-                                                       Foreground="{StaticResource PrimaryTextBrush}"
-                                                       Text="{Binding Message}" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
-
-                <Border Padding="24"
-                        Background="{StaticResource CardBrush}"
-                        CornerRadius="10"
-                        Visibility="{Binding SystemViewVisibility}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="시스템" />
-                        <TextBlock Margin="0,10,0,0"
-                                   Style="{StaticResource MutedTextStyle}"
-                                   Text="{Binding RuntimeSettingsFilePath}" />
-                        <TextBlock Margin="0,6,0,24"
-                                   Style="{StaticResource MutedTextStyle}"
-                                   Text="{Binding EffectiveDataStoragePath}" />
-                        <ItemsControl ItemsSource="{Binding StatusCards}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <UniformGrid Columns="3" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="0,0,16,0"
-                                            Padding="20"
-                                            Background="{StaticResource CardLowBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel>
-                                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
-                                                       Text="{Binding Title}" />
-                                            <TextBlock Margin="0,8,0,0"
-                                                       Foreground="{Binding Accent}"
-                                                       FontSize="24"
-                                                       FontWeight="SemiBold"
-                                                       Text="{Binding Summary}" />
-                                            <TextBlock Margin="0,8,0,0"
-                                                       Foreground="{StaticResource MutedTextBrush}"
-                                                       Text="{Binding Detail}"
-                                                       TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+                        </Grid>
+                    </Grid>
                 </Border>
             </Grid>
+
+            <StackPanel Visibility="Collapsed">
+                <Button x:Name="RealtimeNavButton" Tag="realtime" Click="NavigationButton_Click" />
+                <Button x:Name="LogNavButton" Tag="log" Click="NavigationButton_Click" />
+                <Button x:Name="SystemNavButton" Tag="system" Click="NavigationButton_Click" />
+            </StackPanel>
         </Grid>
-    </Grid>
+    </Viewbox>
 </Window>
