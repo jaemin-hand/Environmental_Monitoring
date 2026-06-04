@@ -12,11 +12,7 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
         "ADAM6015-B",
     };
 
-    private static readonly HashSet<string> ObsoleteDefaultChannelCodes = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "T07",
-        "T08",
-    };
+    private static readonly HashSet<string> ObsoleteDefaultChannelCodes = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly Dictionary<string, string> PreviousDefaultChannelDisplayNames = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -26,6 +22,8 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
         ["T04"] = "Point 4 (앞단)",
         ["T05"] = "Point 5",
         ["T06"] = "Point 6",
+        ["T07"] = "Point 7",
+        ["T08"] = "Point 8",
         ["H01"] = "H1 Humidity",
         ["P01"] = "P1 Pressure",
     };
@@ -38,6 +36,8 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
         ["T04"] = "배기/환기구 근처",
         ["T05"] = "실험실 구석 A",
         ["T06"] = "실험실 구석 B",
+        ["T07"] = "실험실 구석 C",
+        ["T08"] = "실험실 구석 D",
         ["H01"] = "습도 설치 위치 협의",
         ["P01"] = "압력 설치 위치 협의",
     };
@@ -258,7 +258,34 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
             return true;
         }
 
+        if (string.Equals(currentValue, channelCode, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return previousDefaults.TryGetValue(channelCode, out var previousDefault)
-            && string.Equals(currentValue, previousDefault, StringComparison.Ordinal);
+            && string.Equals(currentValue, previousDefault, StringComparison.Ordinal)
+            || IsKnownLegacyChannelText(channelCode, currentValue);
+    }
+
+    private static bool IsKnownLegacyChannelText(string channelCode, string currentValue)
+    {
+        string[] legacyValues = channelCode.ToUpperInvariant() switch
+        {
+            "T01" => ["Indigo520", "Indigo520 HMP1 온도"],
+            "T02" => ["T1", "좌측 상단", "Point 2 (입구)", "Point 2(입구)", "Point 2 (연구)", "Point 2(연구)"],
+            "T03" => ["T2", "좌측 중단"],
+            "T04" => ["T3", "좌측 하단"],
+            "T05" => ["T4", "하단 우측"],
+            "T06" => ["T5", "전기 패널 하단"],
+            "H01" => ["Indigo520 습도", "Indigo520 HMP1 습도"],
+            "P01" => ["Indigo520 대기압", "Indigo520 내장 대기압"],
+            _ => [],
+        };
+
+        return legacyValues.Any(value => string.Equals(
+            currentValue,
+            value,
+            StringComparison.Ordinal));
     }
 }

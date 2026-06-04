@@ -172,6 +172,17 @@
             <Setter Property="Fill" Value="Transparent" />
         </Style>
 
+        <Style x:Key="GraphGridLineStyle" TargetType="Line">
+            <Setter Property="Stroke" Value="#1A2635" />
+            <Setter Property="StrokeThickness" Value="0.7" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+        </Style>
+
+        <Style x:Key="GraphAxisTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#718096" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+
         <DataTemplate x:Key="SensorCardTemplate">
             <Border Background="#070B12"
                     BorderBrush="{Binding Border}"
@@ -296,7 +307,7 @@
                                   StrokeLineJoin="Round"
                                   Stretch="Uniform" />
                         </Viewbox>
-                        <TextBlock Text="{Binding HeaderDbStatusText}"
+                        <TextBlock Text="{Binding LastStorageWriteText}"
                                    Foreground="{StaticResource TextBrush}"
                                    FontSize="19"
                                    VerticalAlignment="Center" />
@@ -315,7 +326,8 @@
             <Border Grid.Row="1"
                     Background="#111823"
                     BorderBrush="#253246"
-                    BorderThickness="0,0,0,1">
+                    BorderThickness="0,0,0,1"
+                    Visibility="Collapsed">
                 <StackPanel Orientation="Horizontal" Margin="24,0,0,0">
                     <Button x:Name="DashboardNavButton"
                             Tag="dashboard"
@@ -342,7 +354,7 @@
 
             <Grid Grid.Row="2"
                   Margin="24,12,24,0"
-                  Visibility="{Binding DashboardViewVisibility}">
+                  Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="24" />
@@ -477,7 +489,7 @@
 
             <Grid Grid.Row="3"
                   Margin="24,12,24,0"
-                  Visibility="{Binding DashboardViewVisibility}">
+                  Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="468" />
                     <ColumnDefinition Width="16" />
@@ -630,7 +642,7 @@
                                     <Border Grid.RowSpan="4" Grid.Column="5" BorderBrush="#17263A" BorderThickness="1,0,0,0" />
                                     <Viewbox Stretch="Fill">
                                         <Canvas Width="760" Height="220" ClipToBounds="True">
-                                            <Canvas x:Name="GraphLineCanvas" Width="760" Height="220" />
+                                            <Canvas x:Name="LegacyGraphLineCanvas" Width="760" Height="220" />
                                         </Canvas>
                                     </Viewbox>
                                 </Grid>
@@ -658,7 +670,7 @@
 
             <Grid Grid.Row="4"
                   Margin="24,10,24,0"
-                  Visibility="{Binding DashboardViewVisibility}">
+                  Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="18" />
@@ -736,7 +748,7 @@
 
             <Grid Grid.Row="5"
                   Margin="24,10,24,14"
-                  Visibility="{Binding DashboardViewVisibility}">
+                  Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="18" />
@@ -803,7 +815,7 @@
             <Grid Grid.Row="2"
                   Grid.RowSpan="4"
                   Margin="24,14,24,14"
-                  Visibility="{Binding HistoryViewVisibility}">
+                  Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="88" />
                     <RowDefinition Height="14" />
@@ -963,14 +975,6 @@
                                         <Line X1="520" Y1="22" X2="520" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
                                         <Line X1="670" Y1="22" X2="670" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
 
-                                        <Line X1="0" Y1="74" X2="760" Y2="74" Stroke="{StaticResource RedBrush}" StrokeThickness="1" StrokeDashArray="5,7" />
-                                        <TextBlock Canvas.Left="12"
-                                                   Canvas.Top="44"
-                                                   Text="임계값 75°C"
-                                                   Foreground="{StaticResource RedBrush}"
-                                                   FontSize="15"
-                                                   FontWeight="SemiBold" />
-
                                         <Polyline Points="{Binding HistoryTemperatureTrendPoints}"
                                                   Stroke="{StaticResource BlueBrush}"
                                                   StrokeThickness="3"
@@ -1073,6 +1077,804 @@
                                         BorderBrush="#315BCA" />
                             </StackPanel>
                         </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="1"
+                  Grid.RowSpan="5"
+                  Margin="14,14,14,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="440" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left status column -->
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="108" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="104" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="104" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="104" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="288" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            Style="{StaticResource AlarmCardStyle}"
+                            Padding="22,14">
+                        <StackPanel>
+                            <TextBlock Text="활성 알람"
+                                       Style="{StaticResource AlarmAccentTextStyle}"
+                                       FontSize="18" />
+                            <TextBlock Text="{Binding ActiveAlarmCountText}"
+                                       Style="{StaticResource AlarmAccentTextStyle}"
+                                       FontSize="42"
+                                       FontWeight="Light"
+                                       Margin="0,-2,0,-7" />
+                            <TextBlock Text="{Binding ActiveAlarmDetailText}"
+                                       Style="{StaticResource AlarmAccentTextStyle}"
+                                       FontSize="15"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="AverageTemperatureCard"
+                            Grid.Row="2"
+                            Style="{StaticResource PanelStyle}"
+                            Padding="24,13"
+                            Cursor="Hand"
+                            ToolTip="클릭하여 온도 채널 상세 보기"
+                            MouseLeftButtonDown="AverageTemperatureCard_MouseLeftButtonDown">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="평균온도"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="18" />
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding DashboardMetricCards[0].Value}"
+                                               Foreground="{StaticResource TextBrush}"
+                                               FontSize="40"
+                                               FontWeight="Light" />
+                                    <TextBlock Text="°C"
+                                               Foreground="{StaticResource TextBrush}"
+                                               FontSize="30"
+                                               Margin="8,8,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Top">
+                                <TextBlock Text="정상 범위"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="17"
+                                           Margin="0,1,8,0" />
+                                <Viewbox Width="25" Height="25">
+                                    <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                                          Stroke="{StaticResource GreenBrush}"
+                                          Style="{StaticResource SvgIconPathStyle}" />
+                                </Viewbox>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Popup PlacementTarget="{Binding ElementName=AverageTemperatureCard}"
+                           Placement="Right"
+                           HorizontalOffset="10"
+                           VerticalOffset="-2"
+                           AllowsTransparency="True"
+                           PopupAnimation="Fade"
+                           StaysOpen="True"
+                           IsOpen="{Binding IsTemperaturePopoverOpen, Mode=OneWay}">
+                        <Grid Width="660"
+                              Height="430"
+                              Background="Transparent">
+                            <Border
+                                    Background="#101B2A"
+                                    BorderBrush="#A7AFBC"
+                                    BorderThickness="1.2"
+                                    CornerRadius="14"
+                                    Padding="14"
+                                    Effect="{StaticResource PanelShadow}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="34" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <TextBlock Text="온도 채널 상세"
+                                                   Foreground="{StaticResource TextBrush}"
+                                                   FontSize="18"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Text="T1 ~ T8 실시간 온도"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   FontSize="13"
+                                                   HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                    <ItemsControl Grid.Row="1"
+                                                  ItemsSource="{Binding SensorFeedItems}"
+                                                  ItemTemplate="{StaticResource SensorCardTemplate}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Columns="2" Rows="4" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style TargetType="ContentPresenter">
+                                                <Setter Property="Margin" Value="7" />
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                    </ItemsControl>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Popup>
+
+                    <Border Grid.Row="4"
+                            Style="{StaticResource PanelStyle}"
+                            Padding="24,13">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="습도"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="18" />
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding DashboardMetricCards[1].Value}"
+                                               Foreground="{StaticResource TextBrush}"
+                                               FontSize="40"
+                                               FontWeight="Light" />
+                                    <TextBlock Text="%"
+                                               Foreground="{StaticResource TextBrush}"
+                                               FontSize="30"
+                                               Margin="8,8,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Top">
+                                <TextBlock Text="정상 범위"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="17"
+                                           Margin="0,1,8,0" />
+                                <Viewbox Width="25" Height="25">
+                                    <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                                          Stroke="{StaticResource GreenBrush}"
+                                          Style="{StaticResource SvgIconPathStyle}" />
+                                </Viewbox>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="6"
+                            Style="{StaticResource PanelStyle}"
+                            Padding="24,13">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="대기압"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="18" />
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding DashboardMetricCards[2].Value}"
+                                               Foreground="{StaticResource TextBrush}"
+                                               FontSize="40"
+                                               FontWeight="Light" />
+                                    <TextBlock Text="kPa"
+                                               Foreground="{StaticResource TextBrush}"
+                                               FontSize="28"
+                                               Margin="8,9,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Top">
+                                <TextBlock Text="정상 범위"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="17"
+                                           Margin="0,1,8,0" />
+                                <Viewbox Width="25" Height="25">
+                                    <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                                          Stroke="{StaticResource GreenBrush}"
+                                          Style="{StaticResource SvgIconPathStyle}" />
+                                </Viewbox>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="8"
+                            Style="{StaticResource PanelStyle}"
+                            Padding="12,10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="28" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="최근 이벤트 로그"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="18"
+                                       FontWeight="SemiBold" />
+                            <ScrollViewer Grid.Row="1"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding RecentEvents}"
+                                              ItemTemplate="{StaticResource EventRowTemplate}" />
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="10"
+                            Style="{StaticResource PanelStyle}"
+                            Padding="16,14">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.3*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Row="0"
+                                       Text="디스크 사용량"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="16" />
+                            <TextBlock Grid.Row="0"
+                                       Grid.Column="1"
+                                       Text="{Binding DiskUsageText}"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="16"
+                                       HorizontalAlignment="Right" />
+                            <TextBlock Grid.Row="1"
+                                       Text="통신 지연"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="16" />
+                            <StackPanel Grid.Row="1"
+                                        Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right">
+                                <TextBlock Text="정상"
+                                           Foreground="{StaticResource GreenBrush}"
+                                           FontSize="16"
+                                           Margin="0,0,8,0" />
+                                <TextBlock Text="{Binding CommunicationLatencyText}"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="16" />
+                            </StackPanel>
+                            <TextBlock Grid.Row="2"
+                                       Text="마지막 저장시간"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="16" />
+                            <TextBlock Grid.Row="2"
+                                       Grid.Column="1"
+                                       Text="{Binding LastStorageWriteText}"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="16"
+                                       HorizontalAlignment="Right" />
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Right graph workspace -->
+                <Border Grid.Column="2"
+                        Style="{StaticResource PanelStyle}"
+                        Padding="18,10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="42" />
+                            <RowDefinition Height="1.35*" />
+                            <RowDefinition Height="14" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="14" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <CheckBox Content="전체"
+                                          IsChecked="{Binding GraphAllSelected, Mode=TwoWay}"
+                                          Style="{StaticResource TinyCheckBoxStyle}" />
+                                <ItemsControl ItemsSource="{Binding GraphChannelFilterItems}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Content="{Binding Label}"
+                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      Style="{StaticResource TinyCheckBoxStyle}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center">
+                                <Button Content="캘리브레이션"
+                                        Background="Transparent"
+                                        Foreground="{StaticResource TextBrush}"
+                                        BorderThickness="0"
+                                        FontSize="18"
+                                        Padding="10,4" />
+                                <Border Width="1"
+                                        Height="22"
+                                        Background="#536071"
+                                        Margin="4,0" />
+                                <Button Content="히스토리"
+                                        Click="OpenHistoryModalButton_Click"
+                                        Background="Transparent"
+                                        Foreground="{StaticResource TextBrush}"
+                                        BorderThickness="0"
+                                        FontSize="18"
+                                        Padding="10,4" />
+                                <ComboBox ItemsSource="{Binding GraphTimeScaleOptions}"
+                                          SelectedItem="{Binding SelectedGraphTimeScale, Mode=TwoWay}"
+                                          Width="94"
+                                          Height="30"
+                                          Margin="8,0,0,0"
+                                          Padding="8,0"
+                                          Background="#D8DCE7"
+                                          Foreground="#161A22"
+                                          BorderBrush="#8C95A8"
+                                          FontSize="15" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Grid.Row="1"
+                                Background="#020406"
+                                CornerRadius="24"
+                                BorderBrush="#162333"
+                                BorderThickness="1">
+                            <Grid>
+                                <TextBlock Text="온도"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="38"
+                                           Margin="26,18,0,0"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           Panel.ZIndex="2" />
+                                <Viewbox Stretch="Fill" Margin="20,12">
+                                    <Canvas Width="760"
+                                            Height="220"
+                                            ClipToBounds="True">
+                                        <!-- Time/value grid -->
+                                        <Line X1="0" Y1="60" X2="760" Y2="60" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="0" Y1="105" X2="760" Y2="105" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="0" Y1="150" X2="760" Y2="150" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="0" Y1="170" X2="760" Y2="170" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="80" Y1="44" X2="80" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="240" Y1="44" X2="240" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="400" Y1="44" X2="400" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="560" Y1="44" X2="560" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="720" Y1="44" X2="720" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+
+                                        <TextBlock Canvas.Left="8" Canvas.Top="48" Text="25.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="8" Canvas.Top="93" Text="23.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="8" Canvas.Top="138" Text="21.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="8" Canvas.Top="171" Text="20.0 °C" Style="{StaticResource GraphAxisTextStyle}" />
+
+                                        <TextBlock Canvas.Left="54" Canvas.Top="202" Text="{Binding GraphTimeStartText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="214" Canvas.Top="202" Text="{Binding GraphTimeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="374" Canvas.Top="202" Text="{Binding GraphTimeMiddleText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="534" Canvas.Top="202" Text="{Binding GraphTimeThreeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="686" Canvas.Top="202" Text="{Binding GraphTimeEndText}" Style="{StaticResource GraphAxisTextStyle}" />
+
+                                        <Canvas x:Name="GraphLineCanvas"
+                                                Width="760"
+                                                Height="220" />
+                                        <Line X1="0"
+                                              Y1="60"
+                                              X2="760"
+                                              Y2="60"
+                                              Stroke="#E07B79"
+                                              StrokeThickness="1.2"
+                                              StrokeDashArray="5,4" />
+                                        <Line X1="0"
+                                              Y1="170"
+                                              X2="760"
+                                              Y2="170"
+                                              Stroke="#5B89E8"
+                                              StrokeThickness="1.2"
+                                              StrokeDashArray="5,4" />
+                                        <TextBlock Canvas.Left="682"
+                                                   Canvas.Top="36"
+                                                   Text="25°C"
+                                                   Foreground="#E07B79"
+                                                   FontSize="18" />
+                                        <TextBlock Canvas.Left="682"
+                                                   Canvas.Top="176"
+                                                   Text="20°C"
+                                                   Foreground="#5B89E8"
+                                                   FontSize="18" />
+                                    </Canvas>
+                                </Viewbox>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="3"
+                                Background="#020406"
+                                CornerRadius="24"
+                                BorderBrush="#162333"
+                                BorderThickness="1">
+                            <Grid>
+                                <TextBlock Text="습도"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="34"
+                                           Margin="26,14,0,0"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           Panel.ZIndex="2" />
+                                <Viewbox Stretch="Fill" Margin="20,10">
+                                    <Canvas Width="760"
+                                            Height="220"
+                                            ClipToBounds="True">
+                                        <!-- Time/value grid -->
+                                        <Line X1="0" Y1="65" X2="760" Y2="65" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="0" Y1="117" X2="760" Y2="117" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="0" Y1="170" X2="760" Y2="170" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="80" Y1="44" X2="80" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="240" Y1="44" X2="240" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="400" Y1="44" X2="400" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="560" Y1="44" X2="560" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="720" Y1="44" X2="720" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+
+                                        <TextBlock Canvas.Left="8" Canvas.Top="53" Text="60.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="8" Canvas.Top="105" Text="50.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="8" Canvas.Top="171" Text="40.0 %RH" Style="{StaticResource GraphAxisTextStyle}" />
+
+                                        <TextBlock Canvas.Left="54" Canvas.Top="202" Text="{Binding GraphTimeStartText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="214" Canvas.Top="202" Text="{Binding GraphTimeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="374" Canvas.Top="202" Text="{Binding GraphTimeMiddleText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="534" Canvas.Top="202" Text="{Binding GraphTimeThreeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="686" Canvas.Top="202" Text="{Binding GraphTimeEndText}" Style="{StaticResource GraphAxisTextStyle}" />
+
+                                        <Polyline Points="{Binding HumidityTrendPoints}"
+                                                  Stroke="#69A0FF"
+                                                  StrokeThickness="1.5"
+                                                  StrokeLineJoin="Round"
+                                                  StrokeStartLineCap="Round"
+                                                  StrokeEndLineCap="Round" />
+                                        <Line X1="0"
+                                              Y1="65"
+                                              X2="760"
+                                              Y2="65"
+                                              Stroke="#E07B79"
+                                              StrokeThickness="1.2"
+                                              StrokeDashArray="5,4" />
+                                        <Line X1="0"
+                                              Y1="170"
+                                              X2="760"
+                                              Y2="170"
+                                              Stroke="#5B89E8"
+                                              StrokeThickness="1.2"
+                                              StrokeDashArray="5,4" />
+                                        <TextBlock Canvas.Left="680"
+                                                   Canvas.Top="40"
+                                                   Text="60%"
+                                                   Foreground="#E07B79"
+                                                   FontSize="18" />
+                                        <TextBlock Canvas.Left="680"
+                                                   Canvas.Top="176"
+                                                   Text="40%"
+                                                   Foreground="#5B89E8"
+                                                   FontSize="18" />
+                                    </Canvas>
+                                </Viewbox>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="5"
+                                Background="#020406"
+                                CornerRadius="24"
+                                BorderBrush="#162333"
+                                BorderThickness="1">
+                            <Grid>
+                                <TextBlock Text="대기압"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="34"
+                                           Margin="26,14,0,0"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           Panel.ZIndex="2" />
+                                <Viewbox Stretch="Fill" Margin="20,10">
+                                    <Canvas Width="760"
+                                            Height="220"
+                                            ClipToBounds="True">
+                                        <!-- Time/value grid -->
+                                        <Line X1="0" Y1="65" X2="760" Y2="65" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="0" Y1="117" X2="760" Y2="117" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="0" Y1="170" X2="760" Y2="170" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="80" Y1="44" X2="80" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="240" Y1="44" X2="240" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="400" Y1="44" X2="400" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="560" Y1="44" X2="560" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="720" Y1="44" X2="720" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+
+                                        <TextBlock Canvas.Left="8" Canvas.Top="53" Text="105.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="8" Canvas.Top="105" Text="100.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="8" Canvas.Top="171" Text="96.0 kPa" Style="{StaticResource GraphAxisTextStyle}" />
+
+                                        <TextBlock Canvas.Left="54" Canvas.Top="202" Text="{Binding GraphTimeStartText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="214" Canvas.Top="202" Text="{Binding GraphTimeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="374" Canvas.Top="202" Text="{Binding GraphTimeMiddleText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="534" Canvas.Top="202" Text="{Binding GraphTimeThreeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="686" Canvas.Top="202" Text="{Binding GraphTimeEndText}" Style="{StaticResource GraphAxisTextStyle}" />
+
+                                        <Polyline Stroke="#B482FF"
+                                                  StrokeThickness="1.5"
+                                                  StrokeLineJoin="Round"
+                                                  StrokeStartLineCap="Round"
+                                                  StrokeEndLineCap="Round"
+                                                  Points="0,132 48,130 96,133 144,126 192,129 240,124 288,128 336,121 384,126 432,120 480,125 528,118 576,124 624,121 672,126 720,122 760,124" />
+                                        <Line X1="0"
+                                              Y1="65"
+                                              X2="760"
+                                              Y2="65"
+                                              Stroke="#E07B79"
+                                              StrokeThickness="1.2"
+                                              StrokeDashArray="5,4" />
+                                        <Line X1="0"
+                                              Y1="170"
+                                              X2="760"
+                                              Y2="170"
+                                              Stroke="#5B89E8"
+                                              StrokeThickness="1.2"
+                                              StrokeDashArray="5,4" />
+                                        <TextBlock Canvas.Left="664"
+                                                   Canvas.Top="40"
+                                                   Text="105.0 kPa"
+                                                   Foreground="#E07B79"
+                                                   FontSize="18" />
+                                        <TextBlock Canvas.Left="664"
+                                                   Canvas.Top="176"
+                                                   Text="96.0 kPa"
+                                                   Foreground="#5B89E8"
+                                                   FontSize="18" />
+                                    </Canvas>
+                                </Viewbox>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Blocking history modal: query conditions, graph, and CSV export only. -->
+            <Grid Grid.Row="0"
+                  Grid.RowSpan="6"
+                  Panel.ZIndex="100"
+                  Background="#C8000000"
+                  Visibility="{Binding HistoryModalVisibility}">
+                <Border Width="1680"
+                        Height="820"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#0A1422"
+                        BorderBrush="#526A88"
+                        BorderThickness="1.2"
+                        CornerRadius="12"
+                        Padding="26"
+                        Effect="{StaticResource PanelShadow}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="54" />
+                            <RowDefinition Height="104" />
+                            <RowDefinition Height="18" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="히스토리 조회"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="27"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Text="DB 저장 데이터 기준"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="15"
+                                           Margin="16,7,0,0" />
+                            </StackPanel>
+                            <Button Content="×"
+                                    Click="CloseHistoryModalButton_Click"
+                                    Width="42"
+                                    Height="42"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Background="#101D2D"
+                                    Foreground="{StaticResource TextBrush}"
+                                    BorderBrush="#405675"
+                                    BorderThickness="1"
+                                    FontSize="27"
+                                    Cursor="Hand" />
+                        </Grid>
+
+                        <Border Grid.Row="1"
+                                Style="{StaticResource PanelStyle}"
+                                Padding="22,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="190" />
+                                    <ColumnDefinition Width="38" />
+                                    <ColumnDefinition Width="190" />
+                                    <ColumnDefinition Width="34" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="240" />
+                                    <ColumnDefinition Width="24" />
+                                    <ColumnDefinition Width="118" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="176" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           Text="조회 기간"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="17"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,16,0" />
+                                <DatePicker Grid.Column="1"
+                                            SelectedDate="{Binding SelectedReportDate, Mode=TwoWay}"
+                                            Height="42"
+                                            Background="#07101A"
+                                            Foreground="#111827"
+                                            BorderBrush="#2E4C75"
+                                            BorderThickness="1"
+                                            FontSize="16"
+                                            VerticalContentAlignment="Center" />
+                                <TextBlock Grid.Column="2"
+                                           Text="~"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="20"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                                <DatePicker Grid.Column="3"
+                                            SelectedDate="{Binding SelectedHistoryEndDate, Mode=TwoWay}"
+                                            Height="42"
+                                            Background="#07101A"
+                                            Foreground="#111827"
+                                            BorderBrush="#2E4C75"
+                                            BorderThickness="1"
+                                            FontSize="16"
+                                            VerticalContentAlignment="Center" />
+                                <TextBlock Grid.Column="5"
+                                           Text="센서"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="17"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,16,0" />
+                                <ComboBox Grid.Column="6"
+                                          ItemsSource="{Binding HistoryChannelOptions}"
+                                          SelectedValue="{Binding SelectedHistoryChannelCode, Mode=TwoWay}"
+                                          SelectedValuePath="Value"
+                                          DisplayMemberPath="Label"
+                                          Height="42"
+                                          Background="#07101A"
+                                          Foreground="#111827"
+                                          BorderBrush="#2E4C75"
+                                          BorderThickness="1"
+                                          FontSize="16"
+                                          Padding="10,0" />
+                                <Button Grid.Column="8"
+                                        Content="조회"
+                                        Click="RefreshHistoryButton_Click"
+                                        Height="42"
+                                        Background="#0B2346"
+                                        Foreground="{StaticResource BlueBrush}"
+                                        BorderBrush="{StaticResource BlueBrush}"
+                                        BorderThickness="1"
+                                        FontSize="16"
+                                        FontWeight="SemiBold"
+                                        Cursor="Hand" />
+                                <Button Grid.Column="10"
+                                        Content="CSV 내보내기"
+                                        Click="ExportReportCsvButton_Click"
+                                        Height="42"
+                                        Background="#0B1832"
+                                        Foreground="{StaticResource BlueBrush}"
+                                        BorderBrush="#315BCA"
+                                        BorderThickness="1"
+                                        FontSize="16"
+                                        FontWeight="SemiBold"
+                                        Cursor="Hand" />
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="3"
+                                Style="{StaticResource PanelStyle}"
+                                Padding="26,20">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="42" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Text="히스토리 그래프"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="22"
+                                           FontWeight="SemiBold" />
+
+                                <Border Grid.Row="1"
+                                        Background="{StaticResource PanelDeepBrush}"
+                                        BorderBrush="#203A58"
+                                        BorderThickness="1"
+                                        CornerRadius="7"
+                                        Padding="22,16">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="52" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="°C" Foreground="{StaticResource MutedTextBrush}" FontSize="15" />
+                                            <TextBlock Text="90" Foreground="{StaticResource MutedTextBrush}" FontSize="15" Margin="0,52,0,0" />
+                                            <TextBlock Text="70" Foreground="{StaticResource MutedTextBrush}" FontSize="15" Margin="0,68,0,0" />
+                                            <TextBlock Text="50" Foreground="{StaticResource MutedTextBrush}" FontSize="15" Margin="0,68,0,0" />
+                                            <TextBlock Text="30" Foreground="{StaticResource MutedTextBrush}" FontSize="15" Margin="0,68,0,0" />
+                                        </StackPanel>
+
+                                        <Grid Grid.Column="1">
+                                            <Viewbox Stretch="Fill"
+                                                     Margin="0,0,0,30">
+                                                <Canvas Width="760" Height="220">
+                                                    <Line X1="0" Y1="22" X2="760" Y2="22" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
+                                                    <Line X1="0" Y1="70" X2="760" Y2="70" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
+                                                    <Line X1="0" Y1="118" X2="760" Y2="118" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
+                                                    <Line X1="0" Y1="166" X2="760" Y2="166" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
+                                                    <Line X1="0" Y1="214" X2="760" Y2="214" Stroke="#324962" StrokeThickness="1" />
+                                                    <Line X1="110" Y1="22" X2="110" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
+                                                    <Line X1="240" Y1="22" X2="240" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
+                                                    <Line X1="380" Y1="22" X2="380" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
+                                                    <Line X1="520" Y1="22" X2="520" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
+                                                    <Line X1="670" Y1="22" X2="670" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
+
+                                                    <Polyline Points="{Binding HistoryTemperatureTrendPoints}"
+                                                              Stroke="{StaticResource BlueBrush}"
+                                                              StrokeThickness="2"
+                                                              StrokeLineJoin="Round"
+                                                              StrokeStartLineCap="Round"
+                                                              StrokeEndLineCap="Round" />
+                                                </Canvas>
+                                            </Viewbox>
+
+                                            <TextBlock Text="{Binding SelectedReportDate, StringFormat={}{0:yyyy-MM-dd}}"
+                                                       HorizontalAlignment="Left"
+                                                       VerticalAlignment="Bottom"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="15" />
+                                            <TextBlock Text="{Binding SelectedHistoryEndDate, StringFormat={}{0:yyyy-MM-dd}}"
+                                                       HorizontalAlignment="Right"
+                                                       VerticalAlignment="Bottom"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="15" />
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
                     </Grid>
                 </Border>
             </Grid>

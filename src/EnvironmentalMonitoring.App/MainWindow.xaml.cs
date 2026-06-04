@@ -122,6 +122,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _temperatureTrendPoints = string.Empty;
     private string _humidityTrendPoints = string.Empty;
     private string _historyTemperatureTrendPoints = string.Empty;
+    private string _graphTimeStartText = "-";
+    private string _graphTimeQuarterText = "-";
+    private string _graphTimeMiddleText = "-";
+    private string _graphTimeThreeQuarterText = "-";
+    private string _graphTimeEndText = "-";
+    private string _selectedGraphTimeScale = "1초";
+    private bool _isTemperaturePopoverOpen;
+    private bool _isHistoryModalOpen;
     private ChannelKind _selectedGraphKind = ChannelKind.Temperature;
     private bool _graphAllSelected = true;
     private bool _isUpdatingGraphFilterSelection;
@@ -184,6 +192,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _refreshTimer.Start();
 
         PreviewKeyDown += MainWindow_PreviewKeyDown;
+        PreviewMouseDown += MainWindow_PreviewMouseDown;
         Loaded += async (_, _) => await RefreshAllAsync();
         Closed += (_, _) =>
         {
@@ -203,6 +212,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<SettingsChannelItem> ChannelSettingsItems { get; } = [];
 
     public ObservableCollection<GraphChannelFilterItem> GraphChannelFilterItems { get; } = [];
+
+    public IReadOnlyList<string> GraphTimeScaleOptions { get; } =
+    [
+        "1초",
+        "1분",
+        "10분",
+        "1시간",
+        "1일",
+    ];
 
     public string CurrentTimeText
     {
@@ -687,6 +705,57 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         get => _historyTemperatureTrendPoints;
         private set => SetField(ref _historyTemperatureTrendPoints, value);
     }
+
+    public string GraphTimeStartText
+    {
+        get => _graphTimeStartText;
+        private set => SetField(ref _graphTimeStartText, value);
+    }
+
+    public string GraphTimeQuarterText
+    {
+        get => _graphTimeQuarterText;
+        private set => SetField(ref _graphTimeQuarterText, value);
+    }
+
+    public string GraphTimeMiddleText
+    {
+        get => _graphTimeMiddleText;
+        private set => SetField(ref _graphTimeMiddleText, value);
+    }
+
+    public string GraphTimeThreeQuarterText
+    {
+        get => _graphTimeThreeQuarterText;
+        private set => SetField(ref _graphTimeThreeQuarterText, value);
+    }
+
+    public string GraphTimeEndText
+    {
+        get => _graphTimeEndText;
+        private set => SetField(ref _graphTimeEndText, value);
+    }
+
+    public string SelectedGraphTimeScale
+    {
+        get => _selectedGraphTimeScale;
+        set
+        {
+            if (SetField(ref _selectedGraphTimeScale, value))
+            {
+                UpdateGraphTimeAxisLabels();
+            }
+        }
+    }
+
+    public bool IsTemperaturePopoverOpen
+    {
+        get => _isTemperaturePopoverOpen;
+        private set => SetField(ref _isTemperaturePopoverOpen, value);
+    }
+
+    public Visibility HistoryModalVisibility =>
+        _isHistoryModalOpen ? Visibility.Visible : Visibility.Collapsed;
 
     public SamplingMode SelectedSamplingMode
     {
@@ -1206,6 +1275,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && _isHistoryModalOpen)
+        {
+            SetHistoryModalOpen(false);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape && IsTemperaturePopoverOpen)
+        {
+            IsTemperaturePopoverOpen = false;
+            e.Handled = true;
+            return;
+        }
+
         var isAltEnter =
             e.SystemKey == Key.Enter
             || (e.Key == Key.Enter && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt));
@@ -1514,6 +1597,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void RefreshGraphSeriesFromCache()
     {
+        UpdateGraphTimeAxisLabels();
         var series = CreateGraphSeriesItems(_graphSamples);
         GraphSeriesItems = series;
         GraphLegendItems = series
@@ -1535,7 +1619,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 Points = item.Points,
                 Stroke = item.Accent,
-                StrokeThickness = 3,
+                StrokeThickness = 1.5,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round,
                 StrokeLineJoin = PenLineJoin.Round,
@@ -1545,6 +1629,82 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Panel.SetZIndex(polyline, 10);
             GraphLineCanvas.Children.Add(polyline);
         }
+    }
+
+    private void MainWindow_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (IsTemperaturePopoverOpen && !AverageTemperatureCard.IsMouseOver)
+        {
+            IsTemperaturePopoverOpen = false;
+        }
+    }
+
+    private void AverageTemperatureCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        IsTemperaturePopoverOpen = !IsTemperaturePopoverOpen;
+        e.Handled = true;
+    }
+
+    private async void OpenHistoryModalButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetHistoryModalOpen(true);
+        await RefreshAllAsync();
+    }
+
+    private void CloseHistoryModalButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetHistoryModalOpen(false);
+        _ = RefreshAllAsync();
+    }
+
+    private void SetHistoryModalOpen(bool isOpen)
+    {
+        if (_isHistoryModalOpen == isOpen)
+        {
+            return;
+        }
+
+        _isHistoryModalOpen = isOpen;
+        IsTemperaturePopoverOpen = false;
+        _currentView = isOpen ? MainViewMode.History : MainViewMode.Dashboard;
+        FooterStatusMessage = isOpen
+            ? "DB 기준 히스토리 조회 모달 표시 중"
+            : "실시간 대시보드 표시 중";
+        OnPropertyChanged(nameof(HistoryModalVisibility));
+        UpdateNavigation();
+    }
+
+    private void UpdateGraphTimeAxisLabels()
+    {
+        var latestTimestamp = _graphSamples
+            .Select(item => item.SampledAt)
+            .DefaultIfEmpty(DateTimeOffset.Now)
+            .Max();
+        var tickInterval = SelectedGraphTimeScale switch
+        {
+            "1분" => TimeSpan.FromMinutes(5),
+            "10분" => TimeSpan.FromMinutes(50),
+            "1시간" => TimeSpan.FromHours(5),
+            "1일" => TimeSpan.FromDays(5),
+            _ => TimeSpan.FromSeconds(5),
+        };
+        var format = SelectedGraphTimeScale switch
+        {
+            "1초" => "HH:mm:ss",
+            "1분" or "10분" => "HH:mm",
+            "1시간" => "MM-dd HH:mm",
+            "1일" => "MM-dd",
+            _ => "HH:mm:ss",
+        };
+
+        string FormatTimestamp(DateTimeOffset timestamp) =>
+            timestamp.ToLocalTime().ToString(format, CultureInfo.InvariantCulture);
+
+        GraphTimeStartText = FormatTimestamp(latestTimestamp - TimeSpan.FromTicks(tickInterval.Ticks * 4));
+        GraphTimeQuarterText = FormatTimestamp(latestTimestamp - TimeSpan.FromTicks(tickInterval.Ticks * 3));
+        GraphTimeMiddleText = FormatTimestamp(latestTimestamp - TimeSpan.FromTicks(tickInterval.Ticks * 2));
+        GraphTimeThreeQuarterText = FormatTimestamp(latestTimestamp - tickInterval);
+        GraphTimeEndText = FormatTimestamp(latestTimestamp);
     }
 
     private IReadOnlyList<GraphSeriesItem> CreateGraphSeriesItems(
