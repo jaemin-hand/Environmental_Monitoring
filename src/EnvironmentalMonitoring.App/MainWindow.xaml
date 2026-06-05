@@ -1546,11 +1546,11 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="42" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="1.25*" />
                             <RowDefinition Height="14" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="0.875*" />
                             <RowDefinition Height="14" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="0.875*" />
                         </Grid.RowDefinitions>
 
                         <Grid Grid.Row="0">
@@ -1623,60 +1623,58 @@
                                            VerticalAlignment="Top"
                                            Panel.ZIndex="2" />
                                 <Viewbox Stretch="Fill" Margin="20,12">
-                                    <Canvas Width="760"
+                                    <Canvas Width="860"
                                             Height="220"
                                             ClipToBounds="True">
                                         <!-- Time/value grid -->
-                                        <Line X1="0" Y1="60" X2="760" Y2="60" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="0" Y1="105" X2="760" Y2="105" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="0" Y1="150" X2="760" Y2="150" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="0" Y1="170" X2="760" Y2="170" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="80" Y1="44" X2="80" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="240" Y1="44" X2="240" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="400" Y1="44" X2="400" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="560" Y1="44" X2="560" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="720" Y1="44" X2="720" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="0" Y1="44" X2="0" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
-                                        <Line X1="0" Y1="200" X2="760" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
+                                        <Line X1="48" Y1="60" X2="808" Y2="60" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="48" Y1="105" X2="808" Y2="105" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="48" Y1="150" X2="808" Y2="150" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="48" Y1="170" X2="808" Y2="170" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="48" Y1="44" X2="48" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
+                                        <Line X1="48" Y1="200" X2="808" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
 
-                                        <TextBlock Canvas.Left="8" Canvas.Top="48" Text="25.0" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="8" Canvas.Top="93" Text="23.0" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="8" Canvas.Top="138" Text="21.0" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="8" Canvas.Top="171" Text="20.0 °C" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="2" Canvas.Top="48" Text="25.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="2" Canvas.Top="93" Text="23.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="2" Canvas.Top="138" Text="21.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="2" Canvas.Top="171" Text="20.0 °C" Style="{StaticResource GraphAxisTextStyle}" />
 
-                                        <TextBlock Canvas.Left="54" Canvas.Top="202" Text="{Binding GraphTimeStartText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="214" Canvas.Top="202" Text="{Binding GraphTimeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="374" Canvas.Top="202" Text="{Binding GraphTimeMiddleText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="534" Canvas.Top="202" Text="{Binding GraphTimeThreeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="686" Canvas.Top="202" Text="{Binding GraphTimeEndText}" Style="{StaticResource GraphAxisTextStyle}" />
-
-                                        <Canvas x:Name="GraphLineCanvas"
+                                        <Canvas x:Name="GraphTimeGridCanvas"
+                                                Canvas.Left="48"
                                                 Width="760"
                                                 Height="220" />
-                                        <Line X1="0"
+                                        <Canvas x:Name="GraphTimeLabelCanvas"
+                                                Canvas.Left="48"
+                                                Width="760"
+                                                Height="220" />
+                                        <Canvas x:Name="GraphLineCanvas"
+                                                Canvas.Left="48"
+                                                Width="760"
+                                                Height="220" />
+                                        <Line X1="48"
                                               Y1="60"
-                                              X2="760"
+                                              X2="808"
                                               Y2="60"
                                               Stroke="#E07B79"
-                                              StrokeThickness="1.2"
+                                              StrokeThickness="0.6"
                                               StrokeDashArray="5,4" />
-                                        <Line X1="0"
+                                        <Line X1="48"
                                               Y1="170"
-                                              X2="760"
+                                              X2="808"
                                               Y2="170"
                                               Stroke="#5B89E8"
-                                              StrokeThickness="1.2"
+                                              StrokeThickness="0.6"
                                               StrokeDashArray="5,4" />
-                                        <TextBlock Canvas.Left="682"
-                                                   Canvas.Top="36"
+                                        <TextBlock Canvas.Left="812"
+                                                   Canvas.Top="55"
                                                    Text="25°C"
                                                    Foreground="#E07B79"
-                                                   FontSize="18" />
-                                        <TextBlock Canvas.Left="682"
-                                                   Canvas.Top="176"
+                                                   FontSize="9" />
+                                        <TextBlock Canvas.Left="812"
+                                                   Canvas.Top="165"
                                                    Text="20°C"
                                                    Foreground="#5B89E8"
-                                                   FontSize="18" />
+                                                   FontSize="9" />
                                     </Canvas>
                                 </Viewbox>
                             </Grid>
@@ -1696,61 +1694,60 @@
                                            VerticalAlignment="Top"
                                            Panel.ZIndex="2" />
                                 <Viewbox Stretch="Fill" Margin="20,10">
-                                    <Canvas Width="760"
-                                            Height="220"
+                                    <Canvas Width="860"
+                                            Height="140"
                                             ClipToBounds="True">
                                         <!-- Time/value grid -->
-                                        <Line X1="0" Y1="65" X2="760" Y2="65" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="0" Y1="117" X2="760" Y2="117" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="0" Y1="170" X2="760" Y2="170" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="80" Y1="44" X2="80" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="240" Y1="44" X2="240" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="400" Y1="44" X2="400" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="560" Y1="44" X2="560" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="720" Y1="44" X2="720" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="0" Y1="44" X2="0" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
-                                        <Line X1="0" Y1="200" X2="760" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
+                                        <Line X1="48" Y1="41" X2="808" Y2="41" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="48" Y1="74" X2="808" Y2="74" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="48" Y1="108" X2="808" Y2="108" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="48" Y1="28" X2="48" Y2="124" Style="{StaticResource GraphAxisLineStyle}" />
+                                        <Line X1="48" Y1="124" X2="808" Y2="124" Style="{StaticResource GraphAxisLineStyle}" />
 
-                                        <TextBlock Canvas.Left="8" Canvas.Top="53" Text="60.0" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="8" Canvas.Top="105" Text="50.0" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="8" Canvas.Top="171" Text="40.0 %RH" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="2" Canvas.Top="34" Text="60.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="2" Canvas.Top="67" Text="50.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="0" Canvas.Top="109" Text="40.0%RH" Style="{StaticResource GraphAxisTextStyle}" />
 
-                                        <TextBlock Canvas.Left="54" Canvas.Top="202" Text="{Binding GraphTimeStartText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="214" Canvas.Top="202" Text="{Binding GraphTimeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="374" Canvas.Top="202" Text="{Binding GraphTimeMiddleText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="534" Canvas.Top="202" Text="{Binding GraphTimeThreeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="686" Canvas.Top="202" Text="{Binding GraphTimeEndText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <Canvas x:Name="HumidityTimeGridCanvas"
+                                                Canvas.Left="48"
+                                                Width="760"
+                                                Height="140" />
+                                        <Canvas x:Name="HumidityTimeLabelCanvas"
+                                                Canvas.Left="48"
+                                                Width="760"
+                                                Height="140" />
 
-                                        <Polyline Points="{Binding HumidityTrendPoints}"
+                                        <Polyline Canvas.Left="48"
+                                                  Points="{Binding HumidityTrendPoints}"
                                                   Stroke="#69A0FF"
                                                   StrokeThickness="1.5"
                                                   StrokeLineJoin="Round"
                                                   StrokeStartLineCap="Round"
                                                   StrokeEndLineCap="Round" />
-                                        <Line X1="0"
-                                              Y1="65"
-                                              X2="760"
-                                              Y2="65"
+                                        <Line X1="48"
+                                              Y1="41"
+                                              X2="808"
+                                              Y2="41"
                                               Stroke="#E07B79"
-                                              StrokeThickness="1.2"
+                                              StrokeThickness="0.6"
                                               StrokeDashArray="5,4" />
-                                        <Line X1="0"
-                                              Y1="170"
-                                              X2="760"
-                                              Y2="170"
+                                        <Line X1="48"
+                                              Y1="108"
+                                              X2="808"
+                                              Y2="108"
                                               Stroke="#5B89E8"
-                                              StrokeThickness="1.2"
+                                              StrokeThickness="0.6"
                                               StrokeDashArray="5,4" />
-                                        <TextBlock Canvas.Left="680"
-                                                   Canvas.Top="40"
+                                        <TextBlock Canvas.Left="812"
+                                                   Canvas.Top="36"
                                                    Text="60%"
                                                    Foreground="#E07B79"
-                                                   FontSize="18" />
-                                        <TextBlock Canvas.Left="680"
-                                                   Canvas.Top="176"
+                                                   FontSize="9" />
+                                        <TextBlock Canvas.Left="812"
+                                                   Canvas.Top="103"
                                                    Text="40%"
                                                    Foreground="#5B89E8"
-                                                   FontSize="18" />
+                                                   FontSize="9" />
                                     </Canvas>
                                 </Viewbox>
                             </Grid>
@@ -1770,61 +1767,60 @@
                                            VerticalAlignment="Top"
                                            Panel.ZIndex="2" />
                                 <Viewbox Stretch="Fill" Margin="20,10">
-                                    <Canvas Width="760"
-                                            Height="220"
+                                    <Canvas Width="860"
+                                            Height="140"
                                             ClipToBounds="True">
                                         <!-- Time/value grid -->
-                                        <Line X1="0" Y1="65" X2="760" Y2="65" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="0" Y1="117" X2="760" Y2="117" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="0" Y1="170" X2="760" Y2="170" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="80" Y1="44" X2="80" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="240" Y1="44" X2="240" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="400" Y1="44" X2="400" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="560" Y1="44" X2="560" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="720" Y1="44" X2="720" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
-                                        <Line X1="0" Y1="44" X2="0" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
-                                        <Line X1="0" Y1="200" X2="760" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
+                                        <Line X1="48" Y1="41" X2="808" Y2="41" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="48" Y1="74" X2="808" Y2="74" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="48" Y1="108" X2="808" Y2="108" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="48" Y1="28" X2="48" Y2="124" Style="{StaticResource GraphAxisLineStyle}" />
+                                        <Line X1="48" Y1="124" X2="808" Y2="124" Style="{StaticResource GraphAxisLineStyle}" />
 
-                                        <TextBlock Canvas.Left="8" Canvas.Top="53" Text="105.0" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="8" Canvas.Top="105" Text="100.0" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="8" Canvas.Top="171" Text="96.0 kPa" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="2" Canvas.Top="34" Text="105.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="2" Canvas.Top="67" Text="100.0" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <TextBlock Canvas.Left="2" Canvas.Top="109" Text="96.0 kPa" Style="{StaticResource GraphAxisTextStyle}" />
 
-                                        <TextBlock Canvas.Left="54" Canvas.Top="202" Text="{Binding GraphTimeStartText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="214" Canvas.Top="202" Text="{Binding GraphTimeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="374" Canvas.Top="202" Text="{Binding GraphTimeMiddleText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="534" Canvas.Top="202" Text="{Binding GraphTimeThreeQuarterText}" Style="{StaticResource GraphAxisTextStyle}" />
-                                        <TextBlock Canvas.Left="686" Canvas.Top="202" Text="{Binding GraphTimeEndText}" Style="{StaticResource GraphAxisTextStyle}" />
+                                        <Canvas x:Name="PressureTimeGridCanvas"
+                                                Canvas.Left="48"
+                                                Width="760"
+                                                Height="140" />
+                                        <Canvas x:Name="PressureTimeLabelCanvas"
+                                                Canvas.Left="48"
+                                                Width="760"
+                                                Height="140" />
 
-                                        <Polyline Stroke="#B482FF"
+                                        <Polyline Canvas.Left="48"
+                                                  Stroke="#B482FF"
                                                   StrokeThickness="1.5"
                                                   StrokeLineJoin="Round"
                                                   StrokeStartLineCap="Round"
                                                   StrokeEndLineCap="Round"
-                                                  Points="0,132 48,130 96,133 144,126 192,129 240,124 288,128 336,121 384,126 432,120 480,125 528,118 576,124 624,121 672,126 720,122 760,124" />
-                                        <Line X1="0"
-                                              Y1="65"
-                                              X2="760"
-                                              Y2="65"
+                                                  Points="0,84 48,83 96,85 144,80 192,82 240,79 288,82 336,77 384,80 432,76 480,80 528,75 576,79 624,77 672,80 720,78 760,79" />
+                                        <Line X1="48"
+                                              Y1="41"
+                                              X2="808"
+                                              Y2="41"
                                               Stroke="#E07B79"
-                                              StrokeThickness="1.2"
+                                              StrokeThickness="0.6"
                                               StrokeDashArray="5,4" />
-                                        <Line X1="0"
-                                              Y1="170"
-                                              X2="760"
-                                              Y2="170"
+                                        <Line X1="48"
+                                              Y1="108"
+                                              X2="808"
+                                              Y2="108"
                                               Stroke="#5B89E8"
-                                              StrokeThickness="1.2"
+                                              StrokeThickness="0.6"
                                               StrokeDashArray="5,4" />
-                                        <TextBlock Canvas.Left="664"
-                                                   Canvas.Top="40"
+                                        <TextBlock Canvas.Left="812"
+                                                   Canvas.Top="36"
                                                    Text="105.0 kPa"
                                                    Foreground="#E07B79"
-                                                   FontSize="18" />
-                                        <TextBlock Canvas.Left="664"
-                                                   Canvas.Top="176"
+                                                   FontSize="9" />
+                                        <TextBlock Canvas.Left="812"
+                                                   Canvas.Top="103"
                                                    Text="96.0 kPa"
                                                    Foreground="#5B89E8"
-                                                   FontSize="18" />
+                                                   FontSize="9" />
                                     </Canvas>
                                 </Viewbox>
                             </Grid>

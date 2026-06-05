@@ -29,6 +29,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         CreateFrozenBrush("#7CA8FF"),
         CreateFrozenBrush("#6BFE9C"),
     ];
+    private const double MainGraphCanvasWidth = 760d;
+    private const double MainGraphCanvasHeight = 220d;
+    private const double MainGraphPlotTop = 44d;
+    private const double MainGraphPlotBottom = 200d;
+    private const double MainGraphTimeLabelTop = 202d;
+    private const double SmallGraphCanvasHeight = 140d;
+    private const double SmallGraphPlotTop = 28d;
+    private const double SmallGraphPlotBottom = 124d;
+    private const double SmallGraphTimeLabelTop = 126d;
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _refreshTimer;
     private readonly MonitoringSettingsStore _settingsStore;
@@ -733,7 +742,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             if (SetField(ref _selectedGraphTimeScale, value))
             {
-                UpdateGraphTimeAxisLabels();
+                RefreshGraphSeriesFromCache();
             }
         }
     }
@@ -1440,7 +1449,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         HumidityTrendPoints = BuildPolylinePoints(
             points.Select(item => item.Humidity ?? humidityMin).ToArray(),
             humidityMin,
-            humidityMax);
+            humidityMax,
+            SmallGraphCanvasHeight);
     }
 
     private IReadOnlyList<DashboardStatusCard> CreateTopStatusCards(MonitoringDashboardSnapshot snapshot)
@@ -1640,8 +1650,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void RefreshGraphSeriesFromCache()
     {
-        UpdateGraphTimeAxisLabels();
-        var series = CreateGraphSeriesItems(_graphSamples);
+        var latestTimestamp = GetLatestGraphTimestamp();
+        var (visibleStart, visibleEnd) = GetGraphTimeWindow(latestTimestamp);
+
+        UpdateGraphTimeAxisLabels(visibleStart, visibleEnd);
+        RenderGraphTimeGrid(visibleStart, visibleEnd);
+
+        var series = CreateGraphSeriesItems(_graphSamples, visibleStart, visibleEnd);
         GraphSeriesItems = series;
         GraphLegendItems = series
             .Select(item => new GraphLegendItem(
@@ -1851,20 +1866,191 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         UpdateNavigation();
     }
 
-    private void UpdateGraphTimeAxisLabels()
-    {
-        var latestTimestamp = _graphSamples
+    private DateTimeOffset GetLatestGraphTimestamp() =>
+        _graphSamples
             .Select(item => item.SampledAt)
             .DefaultIfEmpty(DateTimeOffset.Now)
             .Max();
-        var tickInterval = SelectedGraphTimeScale switch
+
+    private (DateTimeOffset Start, DateTimeOffset End) GetGraphTimeWindow(DateTimeOffset latestTimestamp)
+    {
+        var duration = GetGraphVisibleDuration();
+        var now = DateTimeOffset.Now;
+        var visibleEnd = string.Equals(SelectedGraphTimeScale, "1초", StringComparison.Ordinal)
+            ? now
+            : latestTimestamp;
+
+        if (visibleEnd < latestTimestamp)
         {
+            visibleEnd = latestTimestamp;
+        }
+
+        return (visibleEnd - duration, visibleEnd);
+    }
+
+    private TimeSpan GetGraphVisibleDuration() =>
+        SelectedGraphTimeScale switch
+        {
+            "1초" => TimeSpan.FromSeconds(60),
+            "1분" => TimeSpan.FromMinutes(20),
+            "10분" => TimeSpan.FromMinutes(200),
+            "1시간" => TimeSpan.FromHours(20),
+            "1일" => TimeSpan.FromDays(20),
+            _ => TimeSpan.FromSeconds(60),
+        };
+
+    private TimeSpan GetGraphGridInterval() =>
+        SelectedGraphTimeScale switch
+        {
+            "1초" => TimeSpan.FromSeconds(10),
             "1분" => TimeSpan.FromMinutes(5),
             "10분" => TimeSpan.FromMinutes(50),
             "1시간" => TimeSpan.FromHours(5),
             "1일" => TimeSpan.FromDays(5),
-            _ => TimeSpan.FromSeconds(5),
+            _ => TimeSpan.FromSeconds(10),
         };
+
+    private string GetGraphTimeLabelFormat() =>
+        SelectedGraphTimeScale switch
+        {
+            "1초" => "HH:mm:ss",
+            "1분" or "10분" => "HH:mm",
+            "1시간" => "MM-dd HH:mm",
+            "1일" => "MM-dd",
+            _ => "HH:mm:ss",
+        };
+
+    private void RenderGraphTimeGrid(DateTimeOffset visibleStart, DateTimeOffset visibleEnd)
+    {
+        RenderGraphTimeGrid(GraphTimeGridCanvas, GraphTimeLabelCanvas, visibleStart, visibleEnd);
+        RenderGraphTimeGrid(
+            HumidityTimeGridCanvas,
+            HumidityTimeLabelCanvas,
+            visibleStart,
+            visibleEnd,
+            SmallGraphPlotTop,
+            SmallGraphPlotBottom,
+            SmallGraphTimeLabelTop);
+        RenderGraphTimeGrid(
+            PressureTimeGridCanvas,
+            PressureTimeLabelCanvas,
+            visibleStart,
+            visibleEnd,
+            SmallGraphPlotTop,
+            SmallGraphPlotBottom,
+            SmallGraphTimeLabelTop);
+    }
+
+    private void RenderGraphTimeGrid(
+        Canvas gridCanvas,
+        Canvas labelCanvas,
+        DateTimeOffset visibleStart,
+        DateTimeOffset visibleEnd) =>
+        RenderGraphTimeGrid(
+            gridCanvas,
+            labelCanvas,
+            visibleStart,
+            visibleEnd,
+            MainGraphPlotTop,
+            MainGraphPlotBottom,
+            MainGraphTimeLabelTop);
+
+    private void RenderGraphTimeGrid(
+        Canvas gridCanvas,
+        Canvas labelCanvas,
+        DateTimeOffset visibleStart,
+        DateTimeOffset visibleEnd,
+        double plotTop,
+        double plotBottom,
+        double labelTop)
+    {
+        if (gridCanvas is null || labelCanvas is null)
+        {
+            return;
+        }
+
+        gridCanvas.Children.Clear();
+        labelCanvas.Children.Clear();
+
+        var interval = GetGraphGridInterval();
+        var format = GetGraphTimeLabelFormat();
+        var tick = AlignUpToInterval(visibleStart, interval);
+
+        while (tick <= visibleEnd)
+        {
+            var x = CalculateGraphX(tick, visibleStart, visibleEnd);
+
+            var line = new System.Windows.Shapes.Line
+            {
+                X1 = x,
+                X2 = x,
+                Y1 = plotTop,
+                Y2 = plotBottom,
+            };
+
+            if (TryFindResource("GraphGridLineStyle") is Style gridStyle)
+            {
+                line.Style = gridStyle;
+            }
+            else
+            {
+                line.Stroke = CreateFrozenBrush("#203047");
+                line.StrokeThickness = 1;
+            }
+
+            gridCanvas.Children.Add(line);
+
+            var label = new TextBlock
+            {
+                Text = tick.ToLocalTime().ToString(format, CultureInfo.InvariantCulture),
+            };
+
+            if (TryFindResource("GraphAxisTextStyle") is Style labelStyle)
+            {
+                label.Style = labelStyle;
+            }
+
+            Canvas.SetLeft(label, x - 28d);
+            Canvas.SetTop(label, labelTop);
+            labelCanvas.Children.Add(label);
+
+            tick += interval;
+        }
+    }
+
+    private static DateTimeOffset AlignUpToInterval(DateTimeOffset timestamp, TimeSpan interval)
+    {
+        if (interval <= TimeSpan.Zero)
+        {
+            return timestamp;
+        }
+
+        var local = timestamp.ToLocalTime();
+        var remainder = local.Ticks % interval.Ticks;
+        if (remainder == 0)
+        {
+            return local;
+        }
+
+        return new DateTimeOffset(local.Ticks + interval.Ticks - remainder, local.Offset);
+    }
+
+    private static double CalculateGraphX(DateTimeOffset timestamp, DateTimeOffset visibleStart, DateTimeOffset visibleEnd)
+    {
+        var totalMilliseconds = Math.Max(1d, (visibleEnd - visibleStart).TotalMilliseconds);
+        var elapsedMilliseconds = (timestamp - visibleStart).TotalMilliseconds;
+        return Math.Clamp(elapsedMilliseconds / totalMilliseconds * MainGraphCanvasWidth, 0d, MainGraphCanvasWidth);
+    }
+
+    private void UpdateGraphTimeAxisLabels()
+    {
+        var latestTimestamp = GetLatestGraphTimestamp();
+        var (visibleStart, visibleEnd) = GetGraphTimeWindow(latestTimestamp);
+        UpdateGraphTimeAxisLabels(visibleStart, visibleEnd);
+    }
+
+    private void UpdateGraphTimeAxisLabels(DateTimeOffset visibleStart, DateTimeOffset visibleEnd)
+    {
         var format = SelectedGraphTimeScale switch
         {
             "1초" => "HH:mm:ss",
@@ -1877,15 +2063,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         string FormatTimestamp(DateTimeOffset timestamp) =>
             timestamp.ToLocalTime().ToString(format, CultureInfo.InvariantCulture);
 
-        GraphTimeStartText = FormatTimestamp(latestTimestamp - TimeSpan.FromTicks(tickInterval.Ticks * 4));
-        GraphTimeQuarterText = FormatTimestamp(latestTimestamp - TimeSpan.FromTicks(tickInterval.Ticks * 3));
-        GraphTimeMiddleText = FormatTimestamp(latestTimestamp - TimeSpan.FromTicks(tickInterval.Ticks * 2));
-        GraphTimeThreeQuarterText = FormatTimestamp(latestTimestamp - tickInterval);
-        GraphTimeEndText = FormatTimestamp(latestTimestamp);
+        var quarter = TimeSpan.FromTicks((visibleEnd - visibleStart).Ticks / 4);
+        GraphTimeStartText = FormatTimestamp(visibleStart);
+        GraphTimeQuarterText = FormatTimestamp(visibleStart + quarter);
+        GraphTimeMiddleText = FormatTimestamp(visibleStart + TimeSpan.FromTicks(quarter.Ticks * 2));
+        GraphTimeThreeQuarterText = FormatTimestamp(visibleStart + TimeSpan.FromTicks(quarter.Ticks * 3));
+        GraphTimeEndText = FormatTimestamp(visibleEnd);
     }
 
     private IReadOnlyList<GraphSeriesItem> CreateGraphSeriesItems(
-        IReadOnlyList<MonitoringSampleRecord> samples)
+        IReadOnlyList<MonitoringSampleRecord> samples,
+        DateTimeOffset visibleStart,
+        DateTimeOffset visibleEnd)
     {
         if (samples.Count == 0 || GraphChannelFilterItems.Count == 0)
         {
@@ -1906,17 +2095,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var channelLookup = _blueprint.Channels
             .ToDictionary(item => item.Name, StringComparer.OrdinalIgnoreCase);
-        var samplesByChannel = samples
-            .Where(item => selectedCodes.Contains(item.ChannelCode)
+        var visibleSamples = samples
+            .Where(item => item.SampledAt >= visibleStart
+                && item.SampledAt <= visibleEnd
+                && selectedCodes.Contains(item.ChannelCode)
                 && item.CorrectedValue.HasValue
                 && double.IsFinite(item.CorrectedValue.Value))
+            .OrderBy(item => item.SampledAt)
+            .ToArray();
+
+        if (visibleSamples.Length == 0)
+        {
+            return [];
+        }
+
+        var samplesByChannel = visibleSamples
             .GroupBy(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
                 group => group.Key,
-                group => group
-                    .OrderBy(item => item.SampledAt)
-                    .TakeLast(80)
-                    .ToArray(),
+                group => group.ToArray(),
                 StringComparer.OrdinalIgnoreCase);
         var rangesByKind = samplesByChannel
             .SelectMany(item => item.Value)
@@ -1960,7 +2157,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             series.Add(new GraphSeriesItem(
                 filter.Code,
                 filter.Label,
-                BuildPolylinePointCollection(values, range.Min, range.Max),
+                BuildTimeBasedPolylinePointCollection(channelSamples, range.Min, range.Max, visibleStart, visibleEnd),
                 FormatMetricNumber(latestValue),
                 NormalizeGraphUnit(unit),
                 GraphSeriesBrushes[index % GraphSeriesBrushes.Length]));
@@ -2685,10 +2882,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private static string BuildPolylinePoints(
         IReadOnlyList<double> values,
         double minValue,
-        double maxValue)
+        double maxValue,
+        double height = MainGraphCanvasHeight)
     {
         const double width = 760d;
-        const double height = 220d;
 
         if (values.Count == 0)
         {
@@ -2771,6 +2968,38 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             normalized = Math.Clamp(normalized, 0, 1);
             var x = index * xStep;
             var y = height - (normalized * height);
+            points.Add(new Point(x, y));
+        }
+
+        return points;
+    }
+
+    private static PointCollection BuildTimeBasedPolylinePointCollection(
+        IReadOnlyList<MonitoringSampleRecord> samples,
+        double minValue,
+        double maxValue,
+        DateTimeOffset visibleStart,
+        DateTimeOffset visibleEnd)
+    {
+        var points = new PointCollection();
+        var valueRange = maxValue - minValue;
+
+        foreach (var sample in samples)
+        {
+            if (!sample.CorrectedValue.HasValue
+                || double.IsNaN(sample.CorrectedValue.Value)
+                || double.IsInfinity(sample.CorrectedValue.Value))
+            {
+                continue;
+            }
+
+            var normalized = valueRange <= 0
+                ? 0.5
+                : (sample.CorrectedValue.Value - minValue) / valueRange;
+            normalized = Math.Clamp(normalized, 0, 1);
+
+            var x = CalculateGraphX(sample.SampledAt, visibleStart, visibleEnd);
+            var y = MainGraphCanvasHeight - (normalized * MainGraphCanvasHeight);
             points.Add(new Point(x, y));
         }
 
