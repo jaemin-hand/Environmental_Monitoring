@@ -178,10 +178,107 @@
             <Setter Property="SnapsToDevicePixels" Value="True" />
         </Style>
 
+        <Style x:Key="GraphAxisLineStyle" TargetType="Line">
+            <Setter Property="Stroke" Value="#54677E" />
+            <Setter Property="StrokeThickness" Value="1.1" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+        </Style>
+
         <Style x:Key="GraphAxisTextStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#718096" />
             <Setter Property="FontSize" Value="11" />
         </Style>
+
+        <Style x:Key="TableHeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#718096" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <DataTemplate x:Key="CalibrationRowTemplate">
+            <Border Background="#070B12"
+                    BorderBrush="#1E334C"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,0,0,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="82" />
+                        <ColumnDefinition Width="98" />
+                        <ColumnDefinition Width="190" />
+                        <ColumnDefinition Width="142" />
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="134" />
+                        <ColumnDefinition Width="134" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="{Binding DisplayName}"
+                               Foreground="{StaticResource TextBrush}"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding KindText}"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="14"
+                               VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding LocationName}"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="14"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="3"
+                               Text="{Binding CurrentValueText}"
+                               Foreground="{StaticResource TextBrush}"
+                               FontSize="15"
+                               VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="4"
+                               Text="{Binding ExistingOffsetText}"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="15"
+                               VerticalAlignment="Center" />
+                    <TextBox Grid.Column="5"
+                             Text="{Binding ReferenceValueText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Height="34"
+                             Margin="0,0,16,0"
+                             Padding="10,0"
+                             Background="#D8DCE7"
+                             Foreground="#111827"
+                             BorderBrush="#8C95A8"
+                             BorderThickness="1"
+                             FontSize="15"
+                             VerticalContentAlignment="Center" />
+                    <TextBlock Grid.Column="6"
+                               Text="{Binding NewOffsetText}"
+                               Foreground="{StaticResource BlueBrush}"
+                               FontSize="15"
+                               VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="7"
+                               Text="{Binding PreviewValueText}"
+                               Foreground="{StaticResource GreenBrush}"
+                               FontSize="15"
+                               VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="8"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{Binding QualityText}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="13"
+                                   Margin="0,0,12,0" />
+                        <TextBlock Text="{Binding StatusText}"
+                                   Foreground="{Binding StatusBrush}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
 
         <DataTemplate x:Key="SensorCardTemplate">
             <Border Background="#070B12"
@@ -318,6 +415,9 @@
                         <TextBlock Text="{Binding CurrentTimeText}"
                                    Foreground="{StaticResource TextBrush}"
                                    FontSize="20"
+                                   Width="138"
+                                   TextAlignment="Right"
+                                   Typography.NumeralAlignment="Tabular"
                                    VerticalAlignment="Center" />
                     </StackPanel>
                 </Grid>
@@ -640,6 +740,11 @@
                                     <Border Grid.RowSpan="4" Grid.Column="3" BorderBrush="#17263A" BorderThickness="1,0,0,0" />
                                     <Border Grid.RowSpan="4" Grid.Column="4" BorderBrush="#17263A" BorderThickness="1,0,0,0" />
                                     <Border Grid.RowSpan="4" Grid.Column="5" BorderBrush="#17263A" BorderThickness="1,0,0,0" />
+                                    <Border Grid.RowSpan="4"
+                                            Grid.ColumnSpan="6"
+                                            BorderBrush="#54677E"
+                                            BorderThickness="1,0,0,1"
+                                            SnapsToDevicePixels="True" />
                                     <Viewbox Stretch="Fill">
                                         <Canvas Width="760" Height="220" ClipToBounds="True">
                                             <Canvas x:Name="LegacyGraphLineCanvas" Width="760" Height="220" />
@@ -699,6 +804,8 @@
                                     <Line X1="0" Y1="24" X2="760" Y2="24" Stroke="#17263A" StrokeThickness="1" />
                                     <Line X1="0" Y1="70" X2="760" Y2="70" Stroke="#17263A" StrokeThickness="1" />
                                     <Line X1="0" Y1="116" X2="760" Y2="116" Stroke="#17263A" StrokeThickness="1" />
+                                    <Line X1="0" Y1="0" X2="0" Y2="138" Style="{StaticResource GraphAxisLineStyle}" />
+                                    <Line X1="0" Y1="138" X2="760" Y2="138" Style="{StaticResource GraphAxisLineStyle}" />
                                     <Polyline Points="{Binding HumidityTrendPoints}"
                                               Stroke="#66A3FF"
                                               StrokeThickness="3"
@@ -733,6 +840,8 @@
                                     <Line X1="0" Y1="24" X2="760" Y2="24" Stroke="#17263A" StrokeThickness="1" />
                                     <Line X1="0" Y1="70" X2="760" Y2="70" Stroke="#17263A" StrokeThickness="1" />
                                     <Line X1="0" Y1="116" X2="760" Y2="116" Stroke="#17263A" StrokeThickness="1" />
+                                    <Line X1="0" Y1="0" X2="0" Y2="138" Style="{StaticResource GraphAxisLineStyle}" />
+                                    <Line X1="0" Y1="138" X2="760" Y2="138" Style="{StaticResource GraphAxisLineStyle}" />
                                     <Polyline Stroke="#B482FF"
                                               StrokeThickness="3"
                                               StrokeLineJoin="Round"
@@ -852,21 +961,6 @@
                                    Margin="0,0,16,0" />
                         <DatePicker Grid.Column="1"
                                     SelectedDate="{Binding SelectedReportDate, Mode=TwoWay}"
-                                    Height="42"
-                                    Background="#07101A"
-                                    Foreground="{StaticResource TextBrush}"
-                                    BorderBrush="#2E4C75"
-                                    BorderThickness="1"
-                                    FontSize="16"
-                                    VerticalContentAlignment="Center" />
-                        <TextBlock Grid.Column="2"
-                                   Text="~"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   FontSize="20"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center" />
-                        <DatePicker Grid.Column="3"
-                                    SelectedDate="{Binding SelectedHistoryEndDate, Mode=TwoWay}"
                                     Height="42"
                                     Background="#07101A"
                                     Foreground="{StaticResource TextBrush}"
@@ -1381,7 +1475,7 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="42" />
-                            <RowDefinition Height="1.35*" />
+                            <RowDefinition Height="*" />
                             <RowDefinition Height="14" />
                             <RowDefinition Height="*" />
                             <RowDefinition Height="14" />
@@ -1414,6 +1508,7 @@
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Center">
                                 <Button Content="캘리브레이션"
+                                        Click="OpenCalibrationModalButton_Click"
                                         Background="Transparent"
                                         Foreground="{StaticResource TextBrush}"
                                         BorderThickness="0"
@@ -1470,6 +1565,8 @@
                                         <Line X1="400" Y1="44" X2="400" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
                                         <Line X1="560" Y1="44" X2="560" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
                                         <Line X1="720" Y1="44" X2="720" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="0" Y1="44" X2="0" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
+                                        <Line X1="0" Y1="200" X2="760" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
 
                                         <TextBlock Canvas.Left="8" Canvas.Top="48" Text="25.0" Style="{StaticResource GraphAxisTextStyle}" />
                                         <TextBlock Canvas.Left="8" Canvas.Top="93" Text="23.0" Style="{StaticResource GraphAxisTextStyle}" />
@@ -1540,6 +1637,8 @@
                                         <Line X1="400" Y1="44" X2="400" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
                                         <Line X1="560" Y1="44" X2="560" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
                                         <Line X1="720" Y1="44" X2="720" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="0" Y1="44" X2="0" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
+                                        <Line X1="0" Y1="200" X2="760" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
 
                                         <TextBlock Canvas.Left="8" Canvas.Top="53" Text="60.0" Style="{StaticResource GraphAxisTextStyle}" />
                                         <TextBlock Canvas.Left="8" Canvas.Top="105" Text="50.0" Style="{StaticResource GraphAxisTextStyle}" />
@@ -1612,6 +1711,8 @@
                                         <Line X1="400" Y1="44" X2="400" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
                                         <Line X1="560" Y1="44" X2="560" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
                                         <Line X1="720" Y1="44" X2="720" Y2="200" Style="{StaticResource GraphGridLineStyle}" />
+                                        <Line X1="0" Y1="44" X2="0" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
+                                        <Line X1="0" Y1="200" X2="760" Y2="200" Style="{StaticResource GraphAxisLineStyle}" />
 
                                         <TextBlock Canvas.Left="8" Canvas.Top="53" Text="105.0" Style="{StaticResource GraphAxisTextStyle}" />
                                         <TextBlock Canvas.Left="8" Canvas.Top="105" Text="100.0" Style="{StaticResource GraphAxisTextStyle}" />
@@ -1657,6 +1758,187 @@
                                 </Viewbox>
                             </Grid>
                         </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Blocking calibration modal: first-stage one-point offset calibration. -->
+            <Grid Grid.Row="0"
+                  Grid.RowSpan="6"
+                  Panel.ZIndex="110"
+                  Background="#C8000000"
+                  Visibility="{Binding CalibrationModalVisibility}">
+                <Border Width="1640"
+                        Height="820"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#0A1422"
+                        BorderBrush="#526A88"
+                        BorderThickness="1.2"
+                        CornerRadius="12"
+                        Padding="28,24">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="58" />
+                            <RowDefinition Height="58" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="64" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="캘리브레이션 설정"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="28"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Text="1점 Offset 보정"
+                                           Foreground="{StaticResource BlueBrush}"
+                                           FontSize="17"
+                                           Margin="18,10,0,0" />
+                            </StackPanel>
+                            <Button Content="×"
+                                    Click="CloseCalibrationModalButton_Click"
+                                    Width="42"
+                                    Height="42"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    Foreground="{StaticResource TextBrush}"
+                                    BorderThickness="0"
+                                    FontSize="32"
+                                    Cursor="Hand" />
+                        </Grid>
+
+                        <Border Grid.Row="1"
+                                Background="#07111E"
+                                BorderBrush="#203A58"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="18,10"
+                                Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="현재 측정값과 기준 장비값을 비교해 채널별 Offset을 계산합니다."
+                                               Foreground="{StaticResource TextBrush}"
+                                               FontSize="16"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="계산식: 신규 Offset = 기존 Offset + 기준값 - 현재값 / 기준값을 입력한 채널만 저장됩니다."
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="14"
+                                               Margin="0,5,0,0" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1"
+                                           Text="Scale/Span 교정은 2차 단계에서 분리 적용"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="14"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="2"
+                                Background="{StaticResource PanelBrush}"
+                                BorderBrush="#2A4360"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="16">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="42" />
+                                    <RowDefinition Height="38" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0"
+                                           Text="전체 센서 Offset 교정"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="22"
+                                           FontWeight="SemiBold" />
+
+                                <Border Grid.Row="1"
+                                        Background="#101824"
+                                        BorderBrush="#1E334C"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="12,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="82" />
+                                            <ColumnDefinition Width="98" />
+                                            <ColumnDefinition Width="190" />
+                                            <ColumnDefinition Width="142" />
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="150" />
+                                            <ColumnDefinition Width="134" />
+                                            <ColumnDefinition Width="134" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="채널" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="1" Text="종류" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="2" Text="위치" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="3" Text="현재값" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="4" Text="기존 Offset" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="5" Text="기준값 입력" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="6" Text="신규 Offset" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="7" Text="보정 후 값" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="8" Text="상태" Style="{StaticResource TableHeaderTextStyle}" />
+                                    </Grid>
+                                </Border>
+
+                                <ScrollViewer Grid.Row="2"
+                                              VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              Margin="0,8,0,0">
+                                    <ItemsControl ItemsSource="{Binding CalibrationItems}"
+                                                  ItemTemplate="{StaticResource CalibrationRowTemplate}" />
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="3"
+                              Margin="0,16,0,0">
+                            <TextBlock Text="검교정 성적서 또는 기준 계측기 값을 기준값 입력란에 넣은 뒤 Offset 저장을 실행합니다."
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="14"
+                                       VerticalAlignment="Center" />
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center">
+                                <Button Content="입력 초기화"
+                                        Click="ResetCalibrationInputsButton_Click"
+                                        Width="130"
+                                        Height="40"
+                                        Background="#293241"
+                                        Foreground="{StaticResource TextBrush}"
+                                        BorderBrush="#3A4658"
+                                        BorderThickness="1"
+                                        Margin="0,0,10,0"
+                                        Cursor="Hand" />
+                                <Button Content="닫기"
+                                        Click="CloseCalibrationModalButton_Click"
+                                        Width="110"
+                                        Height="40"
+                                        Background="#111827"
+                                        Foreground="{StaticResource TextBrush}"
+                                        BorderBrush="#526A88"
+                                        BorderThickness="1"
+                                        Margin="0,0,10,0"
+                                        Cursor="Hand" />
+                                <Button Content="Offset 저장"
+                                        Click="SaveCalibrationButton_Click"
+                                        Width="140"
+                                        Height="40"
+                                        Background="#0B2346"
+                                        Foreground="{StaticResource BlueBrush}"
+                                        BorderBrush="#2D64A0"
+                                        BorderThickness="1"
+                                        Cursor="Hand" />
+                            </StackPanel>
+                        </Grid>
                     </Grid>
                 </Border>
             </Grid>
@@ -1737,21 +2019,6 @@
                                            Margin="0,0,16,0" />
                                 <DatePicker Grid.Column="1"
                                             SelectedDate="{Binding SelectedReportDate, Mode=TwoWay}"
-                                            Height="42"
-                                            Background="#07101A"
-                                            Foreground="#111827"
-                                            BorderBrush="#2E4C75"
-                                            BorderThickness="1"
-                                            FontSize="16"
-                                            VerticalContentAlignment="Center" />
-                                <TextBlock Grid.Column="2"
-                                           Text="~"
-                                           Foreground="{StaticResource MutedTextBrush}"
-                                           FontSize="20"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center" />
-                                <DatePicker Grid.Column="3"
-                                            SelectedDate="{Binding SelectedHistoryEndDate, Mode=TwoWay}"
                                             Height="42"
                                             Background="#07101A"
                                             Foreground="#111827"
@@ -1844,7 +2111,8 @@
                                                     <Line X1="0" Y1="70" X2="760" Y2="70" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
                                                     <Line X1="0" Y1="118" X2="760" Y2="118" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
                                                     <Line X1="0" Y1="166" X2="760" Y2="166" Stroke="#19304A" StrokeThickness="1" StrokeDashArray="3,4" />
-                                                    <Line X1="0" Y1="214" X2="760" Y2="214" Stroke="#324962" StrokeThickness="1" />
+                                                    <Line X1="0" Y1="22" X2="0" Y2="214" Style="{StaticResource GraphAxisLineStyle}" />
+                                                    <Line X1="0" Y1="214" X2="760" Y2="214" Style="{StaticResource GraphAxisLineStyle}" />
                                                     <Line X1="110" Y1="22" X2="110" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
                                                     <Line X1="240" Y1="22" X2="240" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
                                                     <Line X1="380" Y1="22" X2="380" Y2="214" Stroke="#162B43" StrokeThickness="1" StrokeDashArray="3,4" />
@@ -1865,11 +2133,6 @@
                                                        VerticalAlignment="Bottom"
                                                        Foreground="{StaticResource MutedTextBrush}"
                                                        FontSize="15" />
-                                            <TextBlock Text="{Binding SelectedHistoryEndDate, StringFormat={}{0:yyyy-MM-dd}}"
-                                                       HorizontalAlignment="Right"
-                                                       VerticalAlignment="Bottom"
-                                                       Foreground="{StaticResource MutedTextBrush}"
-                                                       FontSize="15" />
                                         </Grid>
                                     </Grid>
                                 </Border>
@@ -1880,9 +2143,9 @@
             </Grid>
 
             <StackPanel Visibility="Collapsed">
-                <Button x:Name="RealtimeNavButton" Tag="realtime" Click="NavigationButton_Click" />
-                <Button x:Name="LogNavButton" Tag="log" Click="NavigationButton_Click" />
-                <Button x:Name="SystemNavButton" Tag="system" Click="NavigationButton_Click" />
+                <Button Tag="realtime" Click="NavigationButton_Click" />
+                <Button Tag="log" Click="NavigationButton_Click" />
+                <Button Tag="system" Click="NavigationButton_Click" />
             </StackPanel>
         </Grid>
     </Viewbox>

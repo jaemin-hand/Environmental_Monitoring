@@ -1,5 +1,6 @@
 using EnvironmentalMonitoring.Domain;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 
@@ -142,6 +143,184 @@ public sealed class GraphChannelFilterItem(
             _isSelected = value;
             OnPropertyChanged();
         }
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+public sealed class CalibrationChannelItem : INotifyPropertyChanged
+{
+    private double? _currentValue;
+    private decimal _existingOffset;
+    private string _qualityText = "미수신";
+    private string _referenceValueText = string.Empty;
+
+    public CalibrationChannelItem(
+        string code,
+        string displayName,
+        string locationName,
+        ChannelKind kind,
+        string unit,
+        decimal existingOffset)
+    {
+        Code = code;
+        DisplayName = displayName;
+        LocationName = locationName;
+        Kind = kind;
+        Unit = unit;
+        _existingOffset = existingOffset;
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public string Code { get; }
+
+    public string DisplayName { get; }
+
+    public string LocationName { get; }
+
+    public ChannelKind Kind { get; }
+
+    public string Unit { get; }
+
+    public string KindText => Kind switch
+    {
+        ChannelKind.Temperature => "온도",
+        ChannelKind.Humidity => "습도",
+        ChannelKind.Pressure => "대기압",
+        _ => Kind.ToString(),
+    };
+
+    public string CurrentValueText => _currentValue.HasValue
+        ? $"{_currentValue.Value:0.###} {Unit}"
+        : "-";
+
+    public string ExistingOffsetText => $"{_existingOffset:0.######}";
+
+    public string ReferenceValueText
+    {
+        get => _referenceValueText;
+        set
+        {
+            if (_referenceValueText == value)
+            {
+                return;
+            }
+
+            _referenceValueText = value;
+            OnPropertyChanged();
+            OnCalculatedPropertiesChanged();
+        }
+    }
+
+    public string NewOffsetText => TryGetNewOffset(out var newOffset)
+        ? $"{newOffset:0.######}"
+        : "-";
+
+    public string PreviewValueText => TryGetReferenceValue(out var referenceValue)
+        ? $"{referenceValue:0.###} {Unit}"
+        : "-";
+
+    public string QualityText => _qualityText;
+
+    public string StatusText
+    {
+        get
+        {
+            if (HasInvalidReference)
+            {
+                return "숫자 확인";
+            }
+
+            if (!_currentValue.HasValue)
+            {
+                return "현재값 없음";
+            }
+
+            return HasPendingReference ? "저장 대기" : "대기";
+        }
+    }
+
+    public Brush StatusBrush
+    {
+        get
+        {
+            if (HasInvalidReference)
+            {
+                return DashboardPalette.Critical;
+            }
+
+            if (!_currentValue.HasValue)
+            {
+                return DashboardPalette.Warning;
+            }
+
+            return HasPendingReference ? DashboardPalette.Primary : DashboardPalette.TextMuted;
+        }
+    }
+
+    public bool HasPendingReference =>
+        !string.IsNullOrWhiteSpace(ReferenceValueText) && !HasInvalidReference && _currentValue.HasValue;
+
+    public bool HasInvalidReference =>
+        !string.IsNullOrWhiteSpace(ReferenceValueText) && !TryGetReferenceValue(out _);
+
+    public void UpdateCurrentValue(double? value, string qualityText)
+    {
+        _currentValue = value;
+        _qualityText = qualityText;
+        OnPropertyChanged(nameof(CurrentValueText));
+        OnPropertyChanged(nameof(QualityText));
+        OnCalculatedPropertiesChanged();
+    }
+
+    public void UpdateExistingOffset(decimal offset)
+    {
+        _existingOffset = offset;
+        OnPropertyChanged(nameof(ExistingOffsetText));
+        OnCalculatedPropertiesChanged();
+    }
+
+    public void ClearReference()
+    {
+        ReferenceValueText = string.Empty;
+    }
+
+    public bool TryGetNewOffset(out decimal newOffset)
+    {
+        newOffset = _existingOffset;
+        if (!_currentValue.HasValue || !TryGetReferenceValue(out var referenceValue))
+        {
+            return false;
+        }
+
+        newOffset = _existingOffset + referenceValue - Convert.ToDecimal(_currentValue.Value);
+        return true;
+    }
+
+    private bool TryGetReferenceValue(out decimal referenceValue)
+    {
+        return decimal.TryParse(
+                ReferenceValueText,
+                NumberStyles.Float,
+                CultureInfo.CurrentCulture,
+                out referenceValue)
+            || decimal.TryParse(
+                ReferenceValueText,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out referenceValue);
+    }
+
+    private void OnCalculatedPropertiesChanged()
+    {
+        OnPropertyChanged(nameof(NewOffsetText));
+        OnPropertyChanged(nameof(PreviewValueText));
+        OnPropertyChanged(nameof(StatusText));
+        OnPropertyChanged(nameof(StatusBrush));
+        OnPropertyChanged(nameof(HasPendingReference));
+        OnPropertyChanged(nameof(HasInvalidReference));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>

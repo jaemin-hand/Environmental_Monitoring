@@ -111,7 +111,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private AlarmHistoryItem? _selectedAlarmHistoryItem;
     private SampleHistoryItem? _selectedSampleHistoryItem;
     private DateTime? _selectedReportDate = DateTime.Today;
-    private DateTime? _selectedHistoryEndDate = DateTime.Today;
     private DateTime? _selectedAlarmDate;
     private string _selectedHistoryChannelCode = string.Empty;
     private string _selectedHistoryLocationName = string.Empty;
@@ -130,6 +129,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _selectedGraphTimeScale = "1초";
     private bool _isTemperaturePopoverOpen;
     private bool _isHistoryModalOpen;
+    private bool _isCalibrationModalOpen;
     private ChannelKind _selectedGraphKind = ChannelKind.Temperature;
     private bool _graphAllSelected = true;
     private bool _isUpdatingGraphFilterSelection;
@@ -212,6 +212,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<SettingsChannelItem> ChannelSettingsItems { get; } = [];
 
     public ObservableCollection<GraphChannelFilterItem> GraphChannelFilterItems { get; } = [];
+
+    public ObservableCollection<CalibrationChannelItem> CalibrationItems { get; } = [];
 
     public IReadOnlyList<string> GraphTimeScaleOptions { get; } =
     [
@@ -592,18 +594,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    public DateTime? SelectedHistoryEndDate
-    {
-        get => _selectedHistoryEndDate;
-        set
-        {
-            if (SetField(ref _selectedHistoryEndDate, value))
-            {
-                TriggerRefreshForView(MainViewMode.History);
-            }
-        }
-    }
-
     public DateTime? SelectedAlarmDate
     {
         get => _selectedAlarmDate;
@@ -757,6 +747,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public Visibility HistoryModalVisibility =>
         _isHistoryModalOpen ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility CalibrationModalVisibility =>
+        _isCalibrationModalOpen ? Visibility.Visible : Visibility.Collapsed;
+
     public SamplingMode SelectedSamplingMode
     {
         get => _selectedSamplingMode;
@@ -821,6 +814,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _reportExportService = new MonitoringReportExportService(_storageLayout);
         UpdateFilterOptions();
         UpdateGraphFilterItems();
+        RebuildCalibrationItems();
 
         RuntimeSettingsFilePath = $"설정 파일: {_settingsStore.SettingsFilePath}";
         EffectiveDataStoragePath = $"데이터 경로: {_storageLayout.RootDirectory}";
@@ -965,6 +959,47 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         RefreshGraphSeriesFromCache();
     }
 
+    private void RebuildCalibrationItems()
+    {
+        CalibrationItems.Clear();
+
+        var settingsLookup = ChannelSettingsItems
+            .ToDictionary(item => item.Code, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var channel in _blueprint.Channels.OrderBy(GetGraphChannelSortKey))
+        {
+            var offset = settingsLookup.TryGetValue(channel.Name, out var setting)
+                ? setting.Offset
+                : channel.CalibrationOffset;
+
+            CalibrationItems.Add(new CalibrationChannelItem(
+                channel.Name,
+                ToDisplayChannelName(channel),
+                string.IsNullOrWhiteSpace(channel.LocationName) ? "-" : channel.LocationName,
+                channel.Kind,
+                channel.Unit,
+                offset));
+        }
+    }
+
+    private void UpdateCalibrationCurrentValues(
+        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
+    {
+        var snapshotLookup = channelSnapshots
+            .ToDictionary(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in CalibrationItems)
+        {
+            if (snapshotLookup.TryGetValue(item.Code, out var snapshot))
+            {
+                item.UpdateCurrentValue(snapshot.Value, ToCleanQualityLabel(snapshot.QualityStatus));
+                continue;
+            }
+
+            item.UpdateCurrentValue(null, "미수신");
+        }
+    }
+
     private void GraphChannelFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(GraphChannelFilterItem.IsSelected) || _isUpdatingGraphFilterSelection)
@@ -1064,9 +1099,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             DateOnly? historyStartDate = SelectedReportDate.HasValue
                 ? DateOnly.FromDateTime(SelectedReportDate.Value.Date)
                 : null;
-            DateOnly? historyEndDate = SelectedHistoryEndDate.HasValue
-                ? DateOnly.FromDateTime(SelectedHistoryEndDate.Value.Date)
-                : historyStartDate;
+            DateOnly? historyEndDate = historyStartDate;
             DateOnly? alarmDate = SelectedAlarmDate.HasValue
                 ? DateOnly.FromDateTime(SelectedAlarmDate.Value.Date)
                 : null;
@@ -1164,6 +1197,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         GraphEventLogItems = CreateGraphEventLogItems(snapshot.RecentEvents);
         LiveChannelItems = CreateLiveChannelItems(snapshot.ChannelSnapshots);
         RealtimeSummary = BuildRealtimeSummary(snapshot);
+        UpdateCalibrationCurrentValues(snapshot.ChannelSnapshots);
         UpdateTrendSeries(snapshot.TrendPoints);
         UpdateOperationalStatus(snapshot);
 
@@ -1214,7 +1248,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         StorageModeText = "SQLite WAL";
         LastStorageWriteText = snapshot.StorageStatus.LastSuccessfulWriteAt?
             .ToLocalTime()
-            .ToString("HH:mm:ss", CultureInfo.InvariantCulture) ?? "-";
+            .ToString("tt h:mm:ss", CultureInfo.GetCultureInfo("ko-KR")) ?? "-";
         CommunicationLatencyText = CalculateCommunicationLatencyText(snapshot.ChannelSnapshots);
         DiskUsageText = CalculateDiskUsageText();
     }
@@ -1275,6 +1309,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && _isCalibrationModalOpen)
+        {
+            SetCalibrationModalOpen(false);
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Escape && _isHistoryModalOpen)
         {
             SetHistoryModalOpen(false);
@@ -1645,6 +1686,83 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         e.Handled = true;
     }
 
+    private async void OpenCalibrationModalButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetCalibrationModalOpen(true);
+        await RefreshAllAsync();
+    }
+
+    private void CloseCalibrationModalButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetCalibrationModalOpen(false);
+    }
+
+    private void ResetCalibrationInputsButton_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var item in CalibrationItems)
+        {
+            item.ClearReference();
+        }
+
+        FooterStatusMessage = "캘리브레이션 입력값을 초기화했습니다.";
+    }
+
+    private async void SaveCalibrationButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (CalibrationItems.Any(item => item.HasInvalidReference))
+        {
+            FooterStatusMessage = "캘리브레이션 기준값을 숫자로 입력했는지 확인하세요.";
+            return;
+        }
+
+        var pendingItems = CalibrationItems
+            .Where(item => item.HasPendingReference)
+            .ToArray();
+
+        if (pendingItems.Length == 0)
+        {
+            FooterStatusMessage = "저장할 캘리브레이션 변경사항이 없습니다.";
+            return;
+        }
+
+        foreach (var item in pendingItems)
+        {
+            if (!item.TryGetNewOffset(out var newOffset))
+            {
+                continue;
+            }
+
+            var channelSetting = ChannelSettingsItems
+                .FirstOrDefault(channel => string.Equals(
+                    channel.Code,
+                    item.Code,
+                    StringComparison.OrdinalIgnoreCase));
+
+            if (channelSetting is null)
+            {
+                continue;
+            }
+
+            channelSetting.Offset = Math.Round(newOffset, 6);
+            item.UpdateExistingOffset(channelSetting.Offset);
+        }
+
+        try
+        {
+            _settingsDocument = BuildSettingsDocumentFromEditor();
+            _settingsStore.Save(_settingsDocument);
+            ApplyRuntimeState();
+            _refreshTimer.Interval = GetRefreshInterval();
+            FooterStatusMessage = $"캘리브레이션 Offset 저장 완료: {pendingItems.Length}개 채널";
+            SetCalibrationModalOpen(false);
+            await RefreshAllAsync();
+        }
+        catch (Exception ex)
+        {
+            FooterStatusMessage = $"캘리브레이션 저장 실패: {ex.Message}";
+        }
+    }
+
     private async void OpenHistoryModalButton_Click(object sender, RoutedEventArgs e)
     {
         SetHistoryModalOpen(true);
@@ -1657,6 +1775,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _ = RefreshAllAsync();
     }
 
+    private void SetCalibrationModalOpen(bool isOpen)
+    {
+        if (_isCalibrationModalOpen == isOpen)
+        {
+            return;
+        }
+
+        _isCalibrationModalOpen = isOpen;
+        if (isOpen && _isHistoryModalOpen)
+        {
+            _isHistoryModalOpen = false;
+            OnPropertyChanged(nameof(HistoryModalVisibility));
+        }
+
+        IsTemperaturePopoverOpen = false;
+        FooterStatusMessage = isOpen
+            ? "1점 Offset 캘리브레이션 모달 표시 중"
+            : "실시간 대시보드 표시 중";
+        OnPropertyChanged(nameof(CalibrationModalVisibility));
+    }
+
     private void SetHistoryModalOpen(bool isOpen)
     {
         if (_isHistoryModalOpen == isOpen)
@@ -1665,6 +1804,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         _isHistoryModalOpen = isOpen;
+        if (isOpen && _isCalibrationModalOpen)
+        {
+            _isCalibrationModalOpen = false;
+            OnPropertyChanged(nameof(CalibrationModalVisibility));
+        }
+
         IsTemperaturePopoverOpen = false;
         _currentView = isOpen ? MainViewMode.History : MainViewMode.Dashboard;
         FooterStatusMessage = isOpen
@@ -2128,10 +2273,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ApplySidebarButtonState(DashboardNavButton, _currentView == MainViewMode.Dashboard);
         ApplySidebarButtonState(HistoryNavButton, _currentView == MainViewMode.History);
         ApplySidebarButtonState(AlarmNavButton, _currentView == MainViewMode.Alarm);
-        ApplySidebarButtonState(RealtimeNavButton, _currentView == MainViewMode.Realtime);
-        ApplySidebarButtonState(LogNavButton, _currentView == MainViewMode.Log);
         ApplySidebarButtonState(SettingsNavButton, _currentView == MainViewMode.Settings);
-        ApplySidebarButtonState(SystemNavButton, _currentView == MainViewMode.System);
     }
 
     private static void ApplySidebarButtonState(Button? button, bool isSelected)
@@ -2802,7 +2944,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private async void ResetHistoryFiltersButton_Click(object sender, RoutedEventArgs e)
     {
         SelectedReportDate = DateTime.Today;
-        SelectedHistoryEndDate = DateTime.Today;
         SelectedHistoryChannelCode = string.Empty;
         SelectedHistoryLocationName = string.Empty;
         SelectedHistoryStatus = string.Empty;
