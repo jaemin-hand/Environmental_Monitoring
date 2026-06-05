@@ -15,4 +15,5 @@ public sealed record MeasurementChannel(
     decimal? LowAlarmLimit,
     decimal? HighAlarmLimit,
     decimal CalibrationScale,
-    decimal CalibrationOffset);
+    decimal CalibrationOffset,
+    IReadOnlyList<CalibrationPoint> CalibrationPoints);

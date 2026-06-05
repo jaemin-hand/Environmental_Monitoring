@@ -1,4 +1,5 @@
 using EnvironmentalMonitoring.Domain;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -149,54 +150,31 @@ public sealed class GraphChannelFilterItem(
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
 
-public sealed class CalibrationChannelItem : INotifyPropertyChanged
+public sealed class CalibrationPointEditorItem : INotifyPropertyChanged
 {
-    private double? _currentValue;
-    private decimal _existingOffset;
-    private string _qualityText = "미수신";
+    private readonly CalibrationChannelItem _owner;
+    private decimal? _rawValue;
     private string _referenceValueText = string.Empty;
 
-    public CalibrationChannelItem(
-        string code,
-        string displayName,
-        string locationName,
-        ChannelKind kind,
-        string unit,
-        decimal existingOffset)
+    public CalibrationPointEditorItem(CalibrationChannelItem owner, int pointNumber)
     {
-        Code = code;
-        DisplayName = displayName;
-        LocationName = locationName;
-        Kind = kind;
-        Unit = unit;
-        _existingOffset = existingOffset;
+        _owner = owner;
+        PointNumber = pointNumber;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public string Code { get; }
+    public int PointNumber { get; }
 
-    public string DisplayName { get; }
+    public string Title => $"P{PointNumber}";
 
-    public string LocationName { get; }
+    public string RawValueText => _rawValue.HasValue
+        ? $"{_rawValue.Value:0.###}"
+        : "미캡처";
 
-    public ChannelKind Kind { get; }
-
-    public string Unit { get; }
-
-    public string KindText => Kind switch
-    {
-        ChannelKind.Temperature => "온도",
-        ChannelKind.Humidity => "습도",
-        ChannelKind.Pressure => "대기압",
-        _ => Kind.ToString(),
-    };
-
-    public string CurrentValueText => _currentValue.HasValue
-        ? $"{_currentValue.Value:0.###} {Unit}"
-        : "-";
-
-    public string ExistingOffsetText => $"{_existingOffset:0.######}";
+    public string RawValueDetailText => _rawValue.HasValue
+        ? $"Raw {_rawValue.Value:0.###} {_owner.Unit}"
+        : "현재값 캡처 필요";
 
     public string ReferenceValueText
     {
@@ -211,18 +189,9 @@ public sealed class CalibrationChannelItem : INotifyPropertyChanged
             _referenceValueText = value;
             OnPropertyChanged();
             OnCalculatedPropertiesChanged();
+            _owner.NotifyPointStateChanged();
         }
     }
-
-    public string NewOffsetText => TryGetNewOffset(out var newOffset)
-        ? $"{newOffset:0.######}"
-        : "-";
-
-    public string PreviewValueText => TryGetReferenceValue(out var referenceValue)
-        ? $"{referenceValue:0.###} {Unit}"
-        : "-";
-
-    public string QualityText => _qualityText;
 
     public string StatusText
     {
@@ -233,12 +202,12 @@ public sealed class CalibrationChannelItem : INotifyPropertyChanged
                 return "숫자 확인";
             }
 
-            if (!_currentValue.HasValue)
+            if (!_rawValue.HasValue && string.IsNullOrWhiteSpace(ReferenceValueText))
             {
-                return "현재값 없음";
+                return "대기";
             }
 
-            return HasPendingReference ? "저장 대기" : "대기";
+            return IsComplete ? "완료" : "미완성";
         }
     }
 
@@ -251,51 +220,68 @@ public sealed class CalibrationChannelItem : INotifyPropertyChanged
                 return DashboardPalette.Critical;
             }
 
-            if (!_currentValue.HasValue)
+            if (IsComplete)
             {
-                return DashboardPalette.Warning;
+                return DashboardPalette.Normal;
             }
 
-            return HasPendingReference ? DashboardPalette.Primary : DashboardPalette.TextMuted;
+            return HasAnyInput ? DashboardPalette.Warning : DashboardPalette.TextMuted;
         }
     }
 
-    public bool HasPendingReference =>
-        !string.IsNullOrWhiteSpace(ReferenceValueText) && !HasInvalidReference && _currentValue.HasValue;
+    public bool HasAnyInput =>
+        _rawValue.HasValue || !string.IsNullOrWhiteSpace(ReferenceValueText);
+
+    public bool IsComplete =>
+        _rawValue.HasValue && TryGetReferenceValue(out _);
 
     public bool HasInvalidReference =>
         !string.IsNullOrWhiteSpace(ReferenceValueText) && !TryGetReferenceValue(out _);
 
-    public void UpdateCurrentValue(double? value, string qualityText)
+    public void CaptureCurrentValue()
     {
-        _currentValue = value;
-        _qualityText = qualityText;
-        OnPropertyChanged(nameof(CurrentValueText));
-        OnPropertyChanged(nameof(QualityText));
+        if (!_owner.CurrentValue.HasValue)
+        {
+            return;
+        }
+
+        _rawValue = Convert.ToDecimal(_owner.CurrentValue.Value);
+        OnPropertyChanged(nameof(RawValueText));
+        OnPropertyChanged(nameof(RawValueDetailText));
+        OnCalculatedPropertiesChanged();
+        _owner.NotifyPointStateChanged();
+    }
+
+    public void Load(CalibrationPoint point)
+    {
+        _rawValue = point.RawValue;
+        _referenceValueText = point.ReferenceValue.ToString("0.######", CultureInfo.InvariantCulture);
+        OnPropertyChanged(nameof(RawValueText));
+        OnPropertyChanged(nameof(RawValueDetailText));
+        OnPropertyChanged(nameof(ReferenceValueText));
         OnCalculatedPropertiesChanged();
     }
 
-    public void UpdateExistingOffset(decimal offset)
+    public void Clear()
     {
-        _existingOffset = offset;
-        OnPropertyChanged(nameof(ExistingOffsetText));
+        _rawValue = null;
+        _referenceValueText = string.Empty;
+        OnPropertyChanged(nameof(RawValueText));
+        OnPropertyChanged(nameof(RawValueDetailText));
+        OnPropertyChanged(nameof(ReferenceValueText));
         OnCalculatedPropertiesChanged();
+        _owner.NotifyPointStateChanged();
     }
 
-    public void ClearReference()
+    public bool TryCreatePoint(out CalibrationPoint point)
     {
-        ReferenceValueText = string.Empty;
-    }
-
-    public bool TryGetNewOffset(out decimal newOffset)
-    {
-        newOffset = _existingOffset;
-        if (!_currentValue.HasValue || !TryGetReferenceValue(out var referenceValue))
+        point = new CalibrationPoint(PointNumber, 0m, 0m);
+        if (!_rawValue.HasValue || !TryGetReferenceValue(out var referenceValue))
         {
             return false;
         }
 
-        newOffset = _existingOffset + referenceValue - Convert.ToDecimal(_currentValue.Value);
+        point = new CalibrationPoint(PointNumber, _rawValue.Value, referenceValue);
         return true;
     }
 
@@ -315,12 +301,210 @@ public sealed class CalibrationChannelItem : INotifyPropertyChanged
 
     private void OnCalculatedPropertiesChanged()
     {
-        OnPropertyChanged(nameof(NewOffsetText));
+        OnPropertyChanged(nameof(StatusText));
+        OnPropertyChanged(nameof(StatusBrush));
+        OnPropertyChanged(nameof(HasAnyInput));
+        OnPropertyChanged(nameof(IsComplete));
+        OnPropertyChanged(nameof(HasInvalidReference));
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+public sealed class CalibrationChannelItem : INotifyPropertyChanged
+{
+    private double? _currentValue;
+    private string _qualityText = "미수신";
+
+    public CalibrationChannelItem(
+        string code,
+        string displayName,
+        string locationName,
+        ChannelKind kind,
+        string unit,
+        IReadOnlyList<CalibrationPoint> calibrationPoints)
+    {
+        Code = code;
+        DisplayName = displayName;
+        LocationName = locationName;
+        Kind = kind;
+        Unit = unit;
+        Points =
+        [
+            new CalibrationPointEditorItem(this, 1),
+            new CalibrationPointEditorItem(this, 2),
+            new CalibrationPointEditorItem(this, 3),
+        ];
+
+        foreach (var point in calibrationPoints.OrderBy(item => item.PointNumber).Take(3))
+        {
+            var editor = Points.FirstOrDefault(item => item.PointNumber == point.PointNumber);
+            editor?.Load(point);
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public string Code { get; }
+
+    public string DisplayName { get; }
+
+    public string LocationName { get; }
+
+    public ChannelKind Kind { get; }
+
+    public string Unit { get; }
+
+    public ObservableCollection<CalibrationPointEditorItem> Points { get; }
+
+    public double? CurrentValue => _currentValue;
+
+    public string KindText => Kind switch
+    {
+        ChannelKind.Temperature => "온도",
+        ChannelKind.Humidity => "습도",
+        ChannelKind.Pressure => "대기압",
+        _ => Kind.ToString(),
+    };
+
+    public string CurrentValueText => _currentValue.HasValue
+        ? $"{_currentValue.Value:0.###} {Unit}"
+        : "-";
+
+    public string PreviewValueText
+    {
+        get
+        {
+            if (!_currentValue.HasValue || !TryGetCalibrationPoints(out var points))
+            {
+                return "-";
+            }
+
+            var preview = CalibrationCalculator.Apply(_currentValue.Value, 1m, 0m, points);
+            return $"{preview:0.###} {Unit}";
+        }
+    }
+
+    public string QualityText => _qualityText;
+
+    public string StatusText
+    {
+        get
+        {
+            if (HasInvalidReference)
+            {
+                return "숫자 확인";
+            }
+
+            if (HasDuplicateRawValues)
+            {
+                return "Raw 중복";
+            }
+
+            if (HasCompleteThreePoint)
+            {
+                return "3점 저장 가능";
+            }
+
+            return HasAnyPointInput ? $"{CompletedPointCount}/3 입력" : "미설정";
+        }
+    }
+
+    public Brush StatusBrush
+    {
+        get
+        {
+            if (HasInvalidReference || HasDuplicateRawValues)
+            {
+                return DashboardPalette.Critical;
+            }
+
+            if (HasCompleteThreePoint)
+            {
+                return DashboardPalette.Normal;
+            }
+
+            return HasAnyPointInput ? DashboardPalette.Warning : DashboardPalette.TextMuted;
+        }
+    }
+
+    public bool HasAnyPointInput => Points.Any(point => point.HasAnyInput);
+
+    public bool HasInvalidReference => Points.Any(point => point.HasInvalidReference);
+
+    public int CompletedPointCount => Points.Count(point => point.IsComplete);
+
+    public bool HasCompleteThreePoint =>
+        CompletedPointCount == 3 && !HasDuplicateRawValues;
+
+    public bool HasPartialPointInput =>
+        HasAnyPointInput && !HasCompleteThreePoint;
+
+    public bool HasDuplicateRawValues
+    {
+        get
+        {
+            var rawValues = Points
+                .Where(point => point.TryCreatePoint(out _))
+                .Select(point =>
+                {
+                    point.TryCreatePoint(out var calibrationPoint);
+                    return calibrationPoint.RawValue;
+                })
+                .ToArray();
+
+            return rawValues.Length != rawValues.Distinct().Count();
+        }
+    }
+
+    public void UpdateCurrentValue(double? value, string qualityText)
+    {
+        _currentValue = value;
+        _qualityText = qualityText;
+        OnPropertyChanged(nameof(CurrentValue));
+        OnPropertyChanged(nameof(CurrentValueText));
+        OnPropertyChanged(nameof(QualityText));
+        NotifyPointStateChanged();
+    }
+
+    public void ClearReference()
+    {
+        foreach (var point in Points)
+        {
+            point.Clear();
+        }
+    }
+
+    public bool TryGetCalibrationPoints(out IReadOnlyList<CalibrationPoint> calibrationPoints)
+    {
+        var points = new List<CalibrationPoint>(3);
+        foreach (var point in Points)
+        {
+            if (!point.TryCreatePoint(out var calibrationPoint))
+            {
+                calibrationPoints = [];
+                return false;
+            }
+
+            points.Add(calibrationPoint);
+        }
+
+        calibrationPoints = points;
+        return !HasDuplicateRawValues;
+    }
+
+    public void NotifyPointStateChanged()
+    {
         OnPropertyChanged(nameof(PreviewValueText));
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(StatusBrush));
-        OnPropertyChanged(nameof(HasPendingReference));
+        OnPropertyChanged(nameof(HasAnyPointInput));
         OnPropertyChanged(nameof(HasInvalidReference));
+        OnPropertyChanged(nameof(CompletedPointCount));
+        OnPropertyChanged(nameof(HasCompleteThreePoint));
+        OnPropertyChanged(nameof(HasPartialPointInput));
+        OnPropertyChanged(nameof(HasDuplicateRawValues));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
@@ -418,6 +602,8 @@ public sealed class SettingsChannelItem
     public decimal CalibrationScale { get; set; } = 1m;
 
     public decimal Offset { get; set; }
+
+    public List<CalibrationPoint> CalibrationPoints { get; set; } = [];
 }
 
 public sealed record LookupOption(

@@ -200,81 +200,152 @@
             <Border Background="#070B12"
                     BorderBrush="#1E334C"
                     BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="12,8"
-                    Margin="0,0,0,8">
+                    CornerRadius="8"
+                    Padding="14,10"
+                    Margin="0,0,0,10">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="82" />
-                        <ColumnDefinition Width="98" />
-                        <ColumnDefinition Width="190" />
-                        <ColumnDefinition Width="142" />
-                        <ColumnDefinition Width="130" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="134" />
-                        <ColumnDefinition Width="134" />
+                        <ColumnDefinition Width="170" />
+                        <ColumnDefinition Width="145" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="160" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Text="{Binding DisplayName}"
-                               Foreground="{StaticResource TextBrush}"
-                               FontSize="15"
-                               FontWeight="SemiBold"
-                               VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding KindText}"
-                               Foreground="{StaticResource MutedTextBrush}"
-                               FontSize="14"
-                               VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="2"
-                               Text="{Binding LocationName}"
-                               Foreground="{StaticResource MutedTextBrush}"
-                               FontSize="14"
-                               VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis" />
-                    <TextBlock Grid.Column="3"
-                               Text="{Binding CurrentValueText}"
-                               Foreground="{StaticResource TextBrush}"
-                               FontSize="15"
-                               VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="4"
-                               Text="{Binding ExistingOffsetText}"
-                               Foreground="{StaticResource MutedTextBrush}"
-                               FontSize="15"
-                               VerticalAlignment="Center" />
-                    <TextBox Grid.Column="5"
-                             Text="{Binding ReferenceValueText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                             Height="34"
-                             Margin="0,0,16,0"
-                             Padding="10,0"
-                             Background="#D8DCE7"
-                             Foreground="#111827"
-                             BorderBrush="#8C95A8"
-                             BorderThickness="1"
-                             FontSize="15"
-                             VerticalContentAlignment="Center" />
-                    <TextBlock Grid.Column="6"
-                               Text="{Binding NewOffsetText}"
-                               Foreground="{StaticResource BlueBrush}"
-                               FontSize="15"
-                               VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="7"
-                               Text="{Binding PreviewValueText}"
-                               Foreground="{StaticResource GreenBrush}"
-                               FontSize="15"
-                               VerticalAlignment="Center" />
-                    <StackPanel Grid.Column="8"
-                                Orientation="Horizontal"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center">
-                        <TextBlock Text="{Binding QualityText}"
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DisplayName}"
+                                   Foreground="{StaticResource TextBrush}"
+                                   FontSize="17"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding KindText}"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="13"
-                                   Margin="0,0,12,0" />
+                                   Margin="0,4,0,0" />
+                        <TextBlock Text="{Binding LocationName}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="13"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="현재값"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="12" />
+                        <TextBlock Text="{Binding CurrentValueText}"
+                                   Foreground="{StaticResource BlueBrush}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Margin="0,3,0,0" />
+                        <TextBlock Text="{Binding QualityText}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="12"
+                                   Margin="0,4,0,0" />
+                    </StackPanel>
+
+                    <ItemsControl Grid.Column="2"
+                                  ItemsSource="{Binding Points}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="250"
+                                        Background="#0B111B"
+                                        BorderBrush="#243B58"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="10"
+                                        Margin="0,0,10,0">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="24" />
+                                            <RowDefinition Height="26" />
+                                            <RowDefinition Height="34" />
+                                            <RowDefinition Height="30" />
+                                        </Grid.RowDefinitions>
+
+                                        <Grid Grid.Row="0">
+                                            <TextBlock Text="{Binding Title}"
+                                                       Foreground="{StaticResource TextBrush}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="14" />
+                                            <TextBlock Text="{Binding StatusText}"
+                                                       Foreground="{Binding StatusBrush}"
+                                                       HorizontalAlignment="Right"
+                                                       FontSize="12"
+                                                       FontWeight="SemiBold" />
+                                        </Grid>
+
+                                        <TextBlock Grid.Row="1"
+                                                   Text="{Binding RawValueDetailText}"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   FontSize="12"
+                                                   VerticalAlignment="Center" />
+
+                                        <TextBox Grid.Row="2"
+                                                 Text="{Binding ReferenceValueText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Height="30"
+                                                 Padding="8,0"
+                                                 Background="#D8DCE7"
+                                                 Foreground="#111827"
+                                                 BorderBrush="#8C95A8"
+                                                 BorderThickness="1"
+                                                 FontSize="14"
+                                                 VerticalContentAlignment="Center" />
+
+                                        <StackPanel Grid.Row="3"
+                                                    Orientation="Horizontal"
+                                                    HorizontalAlignment="Right"
+                                                    Margin="0,6,0,0">
+                                            <Button Content="캡처"
+                                                    Click="CaptureCalibrationPointButton_Click"
+                                                    Width="56"
+                                                    Height="24"
+                                                    Background="#0B2346"
+                                                    Foreground="{StaticResource BlueBrush}"
+                                                    BorderBrush="#2D64A0"
+                                                    BorderThickness="1"
+                                                    FontSize="12"
+                                                    Cursor="Hand" />
+                                            <Button Content="삭제"
+                                                    Click="ClearCalibrationPointButton_Click"
+                                                    Width="56"
+                                                    Height="24"
+                                                    Margin="6,0,0,0"
+                                                    Background="#1C2026"
+                                                    Foreground="{StaticResource MutedTextBrush}"
+                                                    BorderBrush="#3A4658"
+                                                    BorderThickness="1"
+                                                    FontSize="12"
+                                                    Cursor="Hand" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <StackPanel Grid.Column="3"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Right">
+                        <TextBlock Text="보정 후 현재값"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="12"
+                                   HorizontalAlignment="Right" />
+                        <TextBlock Text="{Binding PreviewValueText}"
+                                   Foreground="{StaticResource GreenBrush}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Right"
+                                   Margin="0,3,0,0" />
                         <TextBlock Text="{Binding StatusText}"
                                    Foreground="{Binding StatusBrush}"
                                    FontSize="13"
-                                   FontWeight="SemiBold" />
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Right"
+                                   Margin="0,6,0,0" />
                     </StackPanel>
                 </Grid>
             </Border>
@@ -1792,7 +1863,7 @@
                                            Foreground="{StaticResource TextBrush}"
                                            FontSize="28"
                                            FontWeight="SemiBold" />
-                                <TextBlock Text="1점 Offset 보정"
+                                <TextBlock Text="3점 구간 선형 보정"
                                            Foreground="{StaticResource BlueBrush}"
                                            FontSize="17"
                                            Margin="18,10,0,0" />
@@ -1823,17 +1894,17 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
-                                    <TextBlock Text="현재 측정값과 기준 장비값을 비교해 채널별 Offset을 계산합니다."
+                                    <TextBlock Text="각 포인트에서 현재 센서값을 Raw 값으로 캡처하고, 기준 장비값을 입력합니다."
                                                Foreground="{StaticResource TextBrush}"
                                                FontSize="16"
                                                FontWeight="SemiBold" />
-                                    <TextBlock Text="계산식: 신규 Offset = 기존 Offset + 기준값 - 현재값 / 기준값을 입력한 채널만 저장됩니다."
+                                    <TextBlock Text="P1/P2/P3 세 점이 모두 완성된 채널만 저장되며, 수집 시 구간별 선형 보정으로 적용됩니다."
                                                Foreground="{StaticResource MutedTextBrush}"
                                                FontSize="14"
                                                Margin="0,5,0,0" />
                                 </StackPanel>
                                 <TextBlock Grid.Column="1"
-                                           Text="Scale/Span 교정은 2차 단계에서 분리 적용"
+                                           Text="3점 미설정 채널은 기존 Scale/Offset 방식 유지"
                                            Foreground="{StaticResource MutedTextBrush}"
                                            FontSize="14"
                                            VerticalAlignment="Center" />
@@ -1854,7 +1925,7 @@
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0"
-                                           Text="전체 센서 Offset 교정"
+                                           Text="전체 센서 3점 교정"
                                            Foreground="{StaticResource TextBrush}"
                                            FontSize="22"
                                            FontWeight="SemiBold" />
@@ -1867,25 +1938,15 @@
                                         Padding="12,0">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="82" />
-                                            <ColumnDefinition Width="98" />
-                                            <ColumnDefinition Width="190" />
-                                            <ColumnDefinition Width="142" />
-                                            <ColumnDefinition Width="130" />
-                                            <ColumnDefinition Width="150" />
-                                            <ColumnDefinition Width="134" />
-                                            <ColumnDefinition Width="134" />
+                                            <ColumnDefinition Width="170" />
+                                            <ColumnDefinition Width="145" />
                                             <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="160" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="채널" Style="{StaticResource TableHeaderTextStyle}" />
-                                        <TextBlock Grid.Column="1" Text="종류" Style="{StaticResource TableHeaderTextStyle}" />
-                                        <TextBlock Grid.Column="2" Text="위치" Style="{StaticResource TableHeaderTextStyle}" />
-                                        <TextBlock Grid.Column="3" Text="현재값" Style="{StaticResource TableHeaderTextStyle}" />
-                                        <TextBlock Grid.Column="4" Text="기존 Offset" Style="{StaticResource TableHeaderTextStyle}" />
-                                        <TextBlock Grid.Column="5" Text="기준값 입력" Style="{StaticResource TableHeaderTextStyle}" />
-                                        <TextBlock Grid.Column="6" Text="신규 Offset" Style="{StaticResource TableHeaderTextStyle}" />
-                                        <TextBlock Grid.Column="7" Text="보정 후 값" Style="{StaticResource TableHeaderTextStyle}" />
-                                        <TextBlock Grid.Column="8" Text="상태" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="1" Text="현재 수신값" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="2" Text="3점 교정 포인트 - 현재값 캡처 후 기준값 입력" Style="{StaticResource TableHeaderTextStyle}" />
+                                        <TextBlock Grid.Column="3" Text="적용 상태" Style="{StaticResource TableHeaderTextStyle}" HorizontalAlignment="Right" />
                                     </Grid>
                                 </Border>
 
@@ -1901,7 +1962,7 @@
 
                         <Grid Grid.Row="3"
                               Margin="0,16,0,0">
-                            <TextBlock Text="검교정 성적서 또는 기준 계측기 값을 기준값 입력란에 넣은 뒤 Offset 저장을 실행합니다."
+                            <TextBlock Text="현장 기준 장비값을 기준값 입력란에 넣고, P1/P2/P3가 모두 완료된 채널만 저장합니다."
                                        Foreground="{StaticResource MutedTextBrush}"
                                        FontSize="14"
                                        VerticalAlignment="Center" />
@@ -1928,9 +1989,9 @@
                                         BorderThickness="1"
                                         Margin="0,0,10,0"
                                         Cursor="Hand" />
-                                <Button Content="Offset 저장"
+                                <Button Content="3점 교정 저장"
                                         Click="SaveCalibrationButton_Click"
-                                        Width="140"
+                                        Width="150"
                                         Height="40"
                                         Background="#0B2346"
                                         Foreground="{StaticResource BlueBrush}"

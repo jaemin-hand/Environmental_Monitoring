@@ -1,3 +1,5 @@
+using EnvironmentalMonitoring.Domain;
+
 namespace EnvironmentalMonitoring.Infrastructure;
 
 public sealed class RuntimeMonitoringSettingsDocument
@@ -39,4 +41,6 @@ public sealed class RuntimeChannelSetting
     public decimal CalibrationScale { get; set; } = 1m;
 
     public decimal Offset { get; set; }
+
+    public List<CalibrationPoint> CalibrationPoints { get; set; } = [];
 }

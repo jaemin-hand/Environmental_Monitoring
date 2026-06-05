@@ -32,7 +32,11 @@ public sealed class ModbusTcpMonitoringAcquisitionGateway(
                     cancellationToken);
 
                 var rawValue = ModbusRegisterDecoder.Decode(registers, map);
-                var correctedValue = (rawValue * (double)channel.CalibrationScale) + (double)channel.CalibrationOffset;
+                var correctedValue = CalibrationCalculator.Apply(
+                    rawValue,
+                    channel.CalibrationScale,
+                    channel.CalibrationOffset,
+                    channel.CalibrationPoints);
 
                 measurements.Add(new CapturedMeasurement(
                     channel,

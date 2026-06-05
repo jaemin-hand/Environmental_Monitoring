@@ -60,6 +60,11 @@ public static class MonitoringBlueprintComposer
                         ? channel.CalibrationScale
                         : overrideItem.CalibrationScale,
                     CalibrationOffset = overrideItem.Offset,
+                    CalibrationPoints = overrideItem.CalibrationPoints is { Count: > 0 }
+                        ? overrideItem.CalibrationPoints
+                            .OrderBy(point => point.PointNumber)
+                            .ToArray()
+                        : channel.CalibrationPoints,
                 };
             })
             .ToArray();

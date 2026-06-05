@@ -124,6 +124,7 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
                     HighAlarmLimit = channel.HighAlarmLimit,
                     CalibrationScale = channel.CalibrationScale,
                     Offset = channel.CalibrationOffset,
+                    CalibrationPoints = channel.CalibrationPoints.ToList(),
                 })
                 .ToList(),
         };
@@ -195,6 +196,7 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
                     HighAlarmLimit = channel.HighAlarmLimit,
                     CalibrationScale = channel.CalibrationScale,
                     Offset = channel.CalibrationOffset,
+                    CalibrationPoints = channel.CalibrationPoints.ToList(),
                 });
                 changed = true;
             }

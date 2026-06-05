@@ -854,6 +854,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 HighAlarmLimit = channel.HighAlarmLimit,
                 CalibrationScale = channel.CalibrationScale,
                 Offset = channel.Offset,
+                CalibrationPoints = channel.CalibrationPoints.ToList(),
             });
         }
     }
@@ -968,9 +969,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         foreach (var channel in _blueprint.Channels.OrderBy(GetGraphChannelSortKey))
         {
-            var offset = settingsLookup.TryGetValue(channel.Name, out var setting)
-                ? setting.Offset
-                : channel.CalibrationOffset;
+            var calibrationPoints = settingsLookup.TryGetValue(channel.Name, out var setting)
+                ? setting.CalibrationPoints
+                : channel.CalibrationPoints;
 
             CalibrationItems.Add(new CalibrationChannelItem(
                 channel.Name,
@@ -978,7 +979,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 string.IsNullOrWhiteSpace(channel.LocationName) ? "-" : channel.LocationName,
                 channel.Kind,
                 channel.Unit,
-                offset));
+                calibrationPoints));
         }
     }
 
@@ -1080,6 +1081,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     HighAlarmLimit = item.HighAlarmLimit,
                     CalibrationScale = item.CalibrationScale == 0m ? 1m : item.CalibrationScale,
                     Offset = item.Offset,
+                    CalibrationPoints = item.CalibrationPoints.ToList(),
                 })
                 .ToList(),
         };
@@ -1707,6 +1709,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         FooterStatusMessage = "캘리브레이션 입력값을 초기화했습니다.";
     }
 
+    private void CaptureCalibrationPointButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not CalibrationPointEditorItem point)
+        {
+            return;
+        }
+
+        point.CaptureCurrentValue();
+        FooterStatusMessage = "현재 센서값을 교정 Raw 값으로 캡처했습니다.";
+    }
+
+    private void ClearCalibrationPointButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not CalibrationPointEditorItem point)
+        {
+            return;
+        }
+
+        point.Clear();
+        FooterStatusMessage = "선택한 교정 포인트를 초기화했습니다.";
+    }
+
     private async void SaveCalibrationButton_Click(object sender, RoutedEventArgs e)
     {
         if (CalibrationItems.Any(item => item.HasInvalidReference))
@@ -1715,8 +1739,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        var partialItems = CalibrationItems
+            .Where(item => item.HasPartialPointInput)
+            .ToArray();
+        if (partialItems.Length > 0)
+        {
+            FooterStatusMessage = $"3점 교정이 미완성된 채널이 있습니다: {partialItems[0].DisplayName}";
+            return;
+        }
+
         var pendingItems = CalibrationItems
-            .Where(item => item.HasPendingReference)
+            .Where(item => item.HasCompleteThreePoint)
             .ToArray();
 
         if (pendingItems.Length == 0)
@@ -1727,7 +1760,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         foreach (var item in pendingItems)
         {
-            if (!item.TryGetNewOffset(out var newOffset))
+            if (!item.TryGetCalibrationPoints(out var calibrationPoints))
             {
                 continue;
             }
@@ -1743,8 +1776,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 continue;
             }
 
-            channelSetting.Offset = Math.Round(newOffset, 6);
-            item.UpdateExistingOffset(channelSetting.Offset);
+            channelSetting.CalibrationPoints = calibrationPoints.ToList();
         }
 
         try
@@ -1753,7 +1785,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _settingsStore.Save(_settingsDocument);
             ApplyRuntimeState();
             _refreshTimer.Interval = GetRefreshInterval();
-            FooterStatusMessage = $"캘리브레이션 Offset 저장 완료: {pendingItems.Length}개 채널";
+            FooterStatusMessage = $"3점 캘리브레이션 저장 완료: {pendingItems.Length}개 채널";
             SetCalibrationModalOpen(false);
             await RefreshAllAsync();
         }
@@ -1791,7 +1823,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         IsTemperaturePopoverOpen = false;
         FooterStatusMessage = isOpen
-            ? "1점 Offset 캘리브레이션 모달 표시 중"
+            ? "3점 캘리브레이션 모달 표시 중"
             : "실시간 대시보드 표시 중";
         OnPropertyChanged(nameof(CalibrationModalVisibility));
     }
