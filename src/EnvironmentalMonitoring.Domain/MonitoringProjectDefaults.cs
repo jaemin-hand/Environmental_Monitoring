@@ -8,12 +8,19 @@ public static class MonitoringProjectDefaults
         var devices = new[]
         {
             new DeviceEndpoint(
-                Key: "INDIGO520",
-                DisplayName: "Vaisala Indigo520 + HMP1 + Barometer",
-                Protocol: "Modbus TCP",
-                IpAddress: "192.168.0.10",
-                Port: 502,
-                Notes: "HMP1 humidity and built-in barometer over LAN"),
+                Key: "HCD-S-MOD",
+                DisplayName: "HCD-S-MOD 습도 센서",
+                Protocol: "RS-485 Modbus RTU",
+                IpAddress: "COM2",
+                Port: 9600,
+                Notes: "Humidity sensor over RS-485 Modbus"),
+            new DeviceEndpoint(
+                Key: "PBS83M00L",
+                DisplayName: "PBS83M00L 대기압 센서",
+                Protocol: "RS-485 Modbus RTU",
+                IpAddress: "COM3",
+                Port: 9600,
+                Notes: "Barometric pressure sensor over RS-485 Modbus"),
             new DeviceEndpoint(
                 Key: "TMW110-RS485",
                 DisplayName: "Vaisala TMW110 RS-485 Daisy Chain",
@@ -33,8 +40,8 @@ public static class MonitoringProjectDefaults
             new MeasurementChannel(6, "T06", "T6", "온도 포인트 6", ChannelKind.Temperature, "degC", "TMW110-RS485", 6, true, 5m, 23m, null, null, 1m, 0m, []),
             new MeasurementChannel(7, "T07", "T7", "온도 포인트 7", ChannelKind.Temperature, "degC", "TMW110-RS485", 7, true, 5m, 23m, null, null, 1m, 0m, []),
             new MeasurementChannel(8, "T08", "T8", "온도 포인트 8", ChannelKind.Temperature, "degC", "TMW110-RS485", 8, true, 5m, 23m, null, null, 1m, 0m, []),
-            new MeasurementChannel(9, "H01", "습도", "Indigo520 HMP1 습도", ChannelKind.Humidity, "%RH", "INDIGO520", 1, false, null, null, null, null, 1m, 0m, []),
-            new MeasurementChannel(10, "P01", "대기압", "Indigo520 내장 대기압", ChannelKind.Pressure, "kPa", "INDIGO520", 2, false, null, null, null, null, 1m, 0m, []),
+            new MeasurementChannel(9, "H01", "습도", "HCD-S-MOD 습도", ChannelKind.Humidity, "%RH", "HCD-S-MOD", 1, false, null, null, null, null, 1m, 0m, []),
+            new MeasurementChannel(10, "P01", "대기압", "PBS83M00L 대기압", ChannelKind.Pressure, "kPa", "PBS83M00L", 1, false, null, null, null, null, 1m, 0m, []),
         };
 
         return new MonitoringBlueprint(

@@ -16,7 +16,7 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
 
     private static readonly Dictionary<string, string> PreviousDefaultChannelDisplayNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["T01"] = "Point 1 (HMP1 기준)",
+        ["T01"] = "T1",
         ["T02"] = "Point 2 (입구)",
         ["T03"] = "Point 3 (센터)",
         ["T04"] = "Point 4 (앞단)",
@@ -274,14 +274,14 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
     {
         string[] legacyValues = channelCode.ToUpperInvariant() switch
         {
-            "T01" => ["Indigo520", "Indigo520 HMP1 온도"],
+            "T01" => ["T1"],
             "T02" => ["T1", "좌측 상단", "Point 2 (입구)", "Point 2(입구)", "Point 2 (연구)", "Point 2(연구)"],
             "T03" => ["T2", "좌측 중단"],
             "T04" => ["T3", "좌측 하단"],
             "T05" => ["T4", "하단 우측"],
             "T06" => ["T5", "전기 패널 하단"],
-            "H01" => ["Indigo520 습도", "Indigo520 HMP1 습도"],
-            "P01" => ["Indigo520 대기압", "Indigo520 내장 대기압"],
+            "H01" => ["H1 Humidity"],
+            "P01" => ["P1 Pressure"],
             _ => [],
         };
 

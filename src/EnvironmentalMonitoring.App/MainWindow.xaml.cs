@@ -38,6 +38,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private const double SmallGraphPlotTop = 28d;
     private const double SmallGraphPlotBottom = 124d;
     private const double SmallGraphTimeLabelTop = 126d;
+    private readonly record struct GraphAxisScale(
+        double LowValue,
+        double HighValue,
+        double LowY,
+        double HighY,
+        double Height);
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _refreshTimer;
     private readonly MonitoringSettingsStore _settingsStore;
@@ -1436,20 +1442,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             .Select(item => item.Humidity!.Value)
             .ToArray();
 
-        var temperatureMin = temperatureValues.Min() - 1.0;
-        var temperatureMax = temperatureValues.Max() + 1.0;
-        var humidityMin = humidityValues.Length == 0 ? 0.0 : humidityValues.Min() - 5.0;
-        var humidityMax = humidityValues.Length == 0 ? 100.0 : humidityValues.Max() + 5.0;
-
-        TemperatureTrendPoints = BuildPolylinePoints(
+        TemperatureTrendPoints = BuildFixedAxisPolylinePoints(
             temperatureValues,
-            temperatureMin,
-            temperatureMax);
+            ChannelKind.Temperature,
+            MainGraphCanvasHeight);
 
-        HumidityTrendPoints = BuildPolylinePoints(
-            points.Select(item => item.Humidity ?? humidityMin).ToArray(),
-            humidityMin,
-            humidityMax,
+        HumidityTrendPoints = BuildFixedAxisPolylinePoints(
+            points
+                .Where(item => item.Humidity.HasValue)
+                .Select(item => item.Humidity!.Value)
+                .ToArray(),
+            ChannelKind.Humidity,
             SmallGraphCanvasHeight);
     }
 
@@ -1580,7 +1583,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 pressureSnapshot is null ? "미수신" : ToCleanQualityLabel(pressureSnapshot.QualityStatus),
                 pressureSnapshot is null ? DashboardSeverity.Warning : MapQualitySeverity(pressureSnapshot.QualityStatus)),
             new DashboardMetricCard(
-                "HMP1 기준온도",
+                "기준온도",
                 FormatMetricNumber(referenceTemperature?.Value),
                 "°C",
                 referenceTemperature is null ? "미수신" : ToCleanQualityLabel(referenceTemperature.QualityStatus),
@@ -2115,22 +2118,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 group => group.Key,
                 group => group.ToArray(),
                 StringComparer.OrdinalIgnoreCase);
-        var rangesByKind = samplesByChannel
-            .SelectMany(item => item.Value)
-            .GroupBy(item => item.Kind)
-            .ToDictionary(
-                group => group.Key,
-                group =>
-                {
-                    var values = group
-                        .Select(item => item.CorrectedValue!.Value)
-                        .ToArray();
-                    var min = values.Min();
-                    var max = values.Max();
-                    var padding = Math.Max(0.5, (max - min) * 0.12);
-                    return (Min: min - padding, Max: max + padding);
-                });
-
         var series = new List<GraphSeriesItem>();
 
         for (var index = 0; index < selectedFilters.Length; index++)
@@ -2150,14 +2137,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 .Select(item => item.CorrectedValue!.Value)
                 .ToArray();
             var kind = channel?.Kind ?? channelSamples[^1].Kind;
-            var range = rangesByKind[kind];
             var latestValue = values[^1];
             var unit = channel?.Unit ?? channelSamples[^1].Unit;
 
             series.Add(new GraphSeriesItem(
                 filter.Code,
                 filter.Label,
-                BuildTimeBasedPolylinePointCollection(channelSamples, range.Min, range.Max, visibleStart, visibleEnd),
+                BuildTimeBasedPolylinePointCollection(channelSamples, kind, visibleStart, visibleEnd),
                 FormatMetricNumber(latestValue),
                 NormalizeGraphUnit(unit),
                 GraphSeriesBrushes[index % GraphSeriesBrushes.Length]));
@@ -2861,7 +2847,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             || firstToken.StartsWith("P", StringComparison.OrdinalIgnoreCase)
             || firstToken.StartsWith("H", StringComparison.OrdinalIgnoreCase)
             || firstToken.StartsWith("CH", StringComparison.OrdinalIgnoreCase)
-            || firstToken.Contains("Indigo", StringComparison.OrdinalIgnoreCase)
                 ? firstToken
                 : "System Core";
     }
@@ -2915,6 +2900,49 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var y = height - (normalized * height);
                 return FormattableString.Invariant($"{x:0.##},{y:0.##}");
             });
+
+        return string.Join(" ", points);
+    }
+
+    private static string BuildFixedAxisPolylinePoints(
+        IReadOnlyList<double> values,
+        ChannelKind kind,
+        double height)
+    {
+        const double width = 760d;
+
+        if (values.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var axis = GetGraphAxisScale(kind, height);
+
+        if (values.Count == 1)
+        {
+            if (!double.IsFinite(values[0]))
+            {
+                return string.Empty;
+            }
+
+            var singleY = CalculateGraphY(values[0], axis);
+            return FormattableString.Invariant($"0,{singleY:0.##} {width:0.##},{singleY:0.##}");
+        }
+
+        var xStep = width / (values.Count - 1);
+        var points = values
+            .Select((value, index) =>
+            {
+                if (!double.IsFinite(value))
+                {
+                    return null;
+                }
+
+                var x = index * xStep;
+                var y = CalculateGraphY(value, axis);
+                return FormattableString.Invariant($"{x:0.##},{y:0.##}");
+            })
+            .Where(point => point is not null);
 
         return string.Join(" ", points);
     }
@@ -2976,13 +3004,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private static PointCollection BuildTimeBasedPolylinePointCollection(
         IReadOnlyList<MonitoringSampleRecord> samples,
-        double minValue,
-        double maxValue,
+        ChannelKind kind,
         DateTimeOffset visibleStart,
         DateTimeOffset visibleEnd)
     {
         var points = new PointCollection();
-        var valueRange = maxValue - minValue;
+        var axis = GetGraphAxisScale(kind, MainGraphCanvasHeight);
 
         foreach (var sample in samples)
         {
@@ -2993,17 +3020,39 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 continue;
             }
 
-            var normalized = valueRange <= 0
-                ? 0.5
-                : (sample.CorrectedValue.Value - minValue) / valueRange;
-            normalized = Math.Clamp(normalized, 0, 1);
-
             var x = CalculateGraphX(sample.SampledAt, visibleStart, visibleEnd);
-            var y = MainGraphCanvasHeight - (normalized * MainGraphCanvasHeight);
+            var y = CalculateGraphY(sample.CorrectedValue.Value, axis);
             points.Add(new Point(x, y));
         }
 
         return points;
+    }
+
+    private static GraphAxisScale GetGraphAxisScale(ChannelKind kind, double height)
+    {
+        var isSmallGraph = Math.Abs(height - SmallGraphCanvasHeight) < 0.1d;
+        var highY = isSmallGraph ? 41d : 60d;
+        var lowY = isSmallGraph ? 108d : 170d;
+
+        return kind switch
+        {
+            ChannelKind.Humidity => new GraphAxisScale(40d, 60d, lowY, highY, height),
+            ChannelKind.Pressure => new GraphAxisScale(96d, 105d, lowY, highY, height),
+            _ => new GraphAxisScale(20d, 25d, lowY, highY, height),
+        };
+    }
+
+    private static double CalculateGraphY(double value, GraphAxisScale axis)
+    {
+        var range = axis.HighValue - axis.LowValue;
+        if (range <= 0)
+        {
+            return axis.LowY + ((axis.HighY - axis.LowY) / 2d);
+        }
+
+        var normalized = (value - axis.LowValue) / range;
+        var y = axis.LowY - (normalized * (axis.LowY - axis.HighY));
+        return Math.Clamp(y, 0d, axis.Height);
     }
 
     private static MonitoringDashboardSnapshot CreateInitialSnapshot()
