@@ -658,7 +658,10 @@
                 </Border>
 
                 <Border Grid.Column="6"
-                        Style="{StaticResource AlarmCardStyle}">
+                        Style="{StaticResource AlarmCardStyle}"
+                        Cursor="Hand"
+                        ToolTip="활성 알람 조치 완료"
+                        MouseLeftButtonDown="ActiveAlarmCard_MouseLeftButtonDown">
                     <Grid Margin="24,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="66" />
@@ -1292,7 +1295,10 @@
 
                     <Border Grid.Row="0"
                             Style="{StaticResource AlarmCardStyle}"
-                            Padding="22,14">
+                            Padding="22,14"
+                            Cursor="Hand"
+                            ToolTip="활성 알람 조치 완료"
+                            MouseLeftButtonDown="ActiveAlarmCard_MouseLeftButtonDown">
                         <StackPanel>
                             <TextBlock Text="활성 알람"
                                        Style="{StaticResource AlarmAccentTextStyle}"
@@ -2214,6 +2220,156 @@
                                 </Border>
                             </Grid>
                         </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Blocking alarm action modal: records who handled the active alarm and what action was taken. -->
+            <Grid Grid.Row="0"
+                  Grid.RowSpan="6"
+                  Panel.ZIndex="130"
+                  Background="#B0000000"
+                  Visibility="{Binding AlarmActionModalVisibility}">
+                <Border Width="640"
+                        Height="468"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#0A1422"
+                        BorderBrush="#FF4B3E"
+                        BorderThickness="1.2"
+                        CornerRadius="14"
+                        Padding="26"
+                        Effect="{StaticResource PanelShadow}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="58" />
+                            <RowDefinition Height="76" />
+                            <RowDefinition Height="86" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="56" />
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="알람 조치 완료"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="28"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Text="활성 알람 해지 전 처리자와 조치 내용을 기록합니다."
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="14"
+                                           Margin="0,5,0,0" />
+                            </StackPanel>
+                            <Button Content="×"
+                                    Click="CloseAlarmActionModalButton_Click"
+                                    Width="40"
+                                    Height="40"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Background="#121A26"
+                                    Foreground="{StaticResource TextBrush}"
+                                    BorderBrush="#526A88"
+                                    BorderThickness="1"
+                                    FontSize="24"
+                                    Cursor="Hand" />
+                        </Grid>
+
+                        <Border Grid.Row="1"
+                                Background="#1A1012"
+                                BorderBrush="#66322E"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16,10"
+                                Margin="0,8,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="현재 활성 알람"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="14" />
+                                    <TextBlock Text="{Binding ActiveAlarmDetailText}"
+                                               Style="{StaticResource AlarmAccentTextStyle}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Margin="0,5,0,0"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding ActiveAlarmCountText}"
+                                           Style="{StaticResource AlarmAccentTextStyle}"
+                                           FontSize="36"
+                                           FontWeight="Light"
+                                           VerticalAlignment="Center"
+                                           Margin="18,0,0,0" />
+                            </Grid>
+                        </Border>
+
+                        <StackPanel Grid.Row="2">
+                            <TextBlock Text="처리자"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="14"
+                                       Margin="0,0,0,7" />
+                            <TextBox Text="{Binding AlarmActionOperatorName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="42"
+                                     Background="#07101A"
+                                     Foreground="{StaticResource TextBrush}"
+                                     BorderBrush="#405675"
+                                     BorderThickness="1"
+                                     FontSize="17"
+                                     Padding="12,0"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3">
+                            <TextBlock Text="조치 메모"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="14"
+                                       Margin="0,0,0,7" />
+                            <TextBox Text="{Binding AlarmActionNote, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="112"
+                                     Background="#07101A"
+                                     Foreground="{StaticResource TextBrush}"
+                                     BorderBrush="#405675"
+                                     BorderThickness="1"
+                                     FontSize="16"
+                                     Padding="12,10"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto" />
+                            <TextBlock Text="예: 원인 확인 후 환기 상태 점검, 센서값 정상화 확인"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="12"
+                                       Margin="2,7,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="4"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Bottom">
+                            <Button Content="취소"
+                                    Click="CloseAlarmActionModalButton_Click"
+                                    Width="110"
+                                    Height="42"
+                                    Background="#111827"
+                                    Foreground="{StaticResource TextBrush}"
+                                    BorderBrush="#526A88"
+                                    BorderThickness="1"
+                                    Margin="0,0,12,0"
+                                    Cursor="Hand" />
+                            <Button Content="조치 완료"
+                                    Click="CompleteAlarmActionButton_Click"
+                                    Width="136"
+                                    Height="42"
+                                    Background="#4A1717"
+                                    Foreground="#FFE3DF"
+                                    BorderBrush="#FF4B3E"
+                                    BorderThickness="1"
+                                    FontWeight="SemiBold"
+                                    Cursor="Hand" />
+                        </StackPanel>
                     </Grid>
                 </Border>
             </Grid>

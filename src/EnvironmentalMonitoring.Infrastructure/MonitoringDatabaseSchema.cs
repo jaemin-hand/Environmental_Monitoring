@@ -56,6 +56,8 @@ internal static class MonitoringDatabaseSchema
             message TEXT NOT NULL,
             occurred_at TEXT NOT NULL,
             acknowledged_at TEXT,
+            acknowledged_by TEXT,
+            action_note TEXT,
             resolved_at TEXT,
             FOREIGN KEY (channel_id) REFERENCES channels(id),
             FOREIGN KEY (batch_id) REFERENCES acquisition_batches(id)

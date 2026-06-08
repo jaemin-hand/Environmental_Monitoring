@@ -23,6 +23,7 @@ public sealed class SqliteMonitoringStorageService(
         await using var connection = await OpenConnectionAsync(cancellationToken);
         await ApplyPragmasAsync(connection, cancellationToken);
         await ExecuteNonQueryAsync(connection, MonitoringDatabaseSchema.Sql, cancellationToken);
+        await EnsureAlarmActionColumnsAsync(connection, cancellationToken);
         await SeedBlueprintAsync(connection, cancellationToken);
     }
 
@@ -162,6 +163,38 @@ public sealed class SqliteMonitoringStorageService(
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task EnsureAlarmActionColumnsAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA table_info(alarm_events);";
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                columns.Add(reader.GetString(1));
+            }
+        }
+
+        if (!columns.Contains("acknowledged_by"))
+        {
+            await ExecuteNonQueryAsync(
+                connection,
+                "ALTER TABLE alarm_events ADD COLUMN acknowledged_by TEXT;",
+                cancellationToken);
+        }
+
+        if (!columns.Contains("action_note"))
+        {
+            await ExecuteNonQueryAsync(
+                connection,
+                "ALTER TABLE alarm_events ADD COLUMN action_note TEXT;",
+                cancellationToken);
+        }
     }
 
     private async Task SeedBlueprintAsync(

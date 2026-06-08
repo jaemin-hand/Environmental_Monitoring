@@ -147,6 +147,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _isTemperaturePopoverOpen;
     private bool _isHistoryModalOpen;
     private bool _isCalibrationModalOpen;
+    private bool _isAlarmActionModalOpen;
+    private string _alarmActionOperatorName = string.Empty;
+    private string _alarmActionNote = string.Empty;
     private ChannelKind _selectedGraphKind = ChannelKind.Temperature;
     private bool _graphAllSelected = true;
     private bool _isUpdatingGraphFilterSelection;
@@ -773,6 +776,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public Visibility CalibrationModalVisibility =>
         _isCalibrationModalOpen ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility AlarmActionModalVisibility =>
+        _isAlarmActionModalOpen ? Visibility.Visible : Visibility.Collapsed;
+
+    public string AlarmActionOperatorName
+    {
+        get => _alarmActionOperatorName;
+        set => SetField(ref _alarmActionOperatorName, value);
+    }
+
+    public string AlarmActionNote
+    {
+        get => _alarmActionNote;
+        set => SetField(ref _alarmActionNote, value);
+    }
+
     public SamplingMode SelectedSamplingMode
     {
         get => _selectedSamplingMode;
@@ -1340,6 +1358,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && _isAlarmActionModalOpen)
+        {
+            SetAlarmActionModalOpen(false);
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Escape && _isCalibrationModalOpen)
         {
             SetCalibrationModalOpen(false);
@@ -1858,6 +1883,70 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _ = RefreshAllAsync();
     }
 
+    private void ActiveAlarmCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!HasActiveAlarm)
+        {
+            FooterStatusMessage = "활성 알람이 없습니다.";
+            e.Handled = true;
+            return;
+        }
+
+        AlarmActionOperatorName = string.IsNullOrWhiteSpace(AlarmActionOperatorName)
+            ? Environment.UserName
+            : AlarmActionOperatorName;
+        AlarmActionNote = string.Empty;
+        SetAlarmActionModalOpen(true);
+        e.Handled = true;
+    }
+
+    private void CloseAlarmActionModalButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetAlarmActionModalOpen(false);
+    }
+
+    private async void CompleteAlarmActionButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!HasActiveAlarm)
+        {
+            FooterStatusMessage = "처리할 활성 알람이 없습니다.";
+            SetAlarmActionModalOpen(false);
+            return;
+        }
+
+        var operatorName = AlarmActionOperatorName.Trim();
+        var actionNote = AlarmActionNote.Trim();
+        if (string.IsNullOrWhiteSpace(operatorName))
+        {
+            FooterStatusMessage = "알람 처리자를 입력해야 합니다.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(actionNote))
+        {
+            FooterStatusMessage = "알람 조치 메모를 입력해야 합니다.";
+            return;
+        }
+
+        try
+        {
+            var handledAt = DateTimeOffset.Now;
+            var affected = await _alarmCommandService.ResolveActiveAlarmsWithActionAsync(
+                handledAt,
+                operatorName,
+                actionNote,
+                CancellationToken.None);
+
+            FooterStatusMessage = $"활성 알람 조치 완료: {affected}건 / 처리자 {operatorName} / {handledAt:HH:mm:ss}";
+            SetAlarmActionModalOpen(false);
+            await RefreshAllAsync();
+        }
+        catch (Exception ex)
+        {
+            FooterStatusMessage = $"알람 조치 완료 처리 실패: {ex.Message}";
+        }
+    }
+
     private void SetCalibrationModalOpen(bool isOpen)
     {
         if (_isCalibrationModalOpen == isOpen)
@@ -1900,6 +1989,37 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             : "실시간 대시보드 표시 중";
         OnPropertyChanged(nameof(HistoryModalVisibility));
         UpdateNavigation();
+    }
+
+    private void SetAlarmActionModalOpen(bool isOpen)
+    {
+        if (_isAlarmActionModalOpen == isOpen)
+        {
+            return;
+        }
+
+        _isAlarmActionModalOpen = isOpen;
+        if (isOpen)
+        {
+            if (_isHistoryModalOpen)
+            {
+                _isHistoryModalOpen = false;
+                OnPropertyChanged(nameof(HistoryModalVisibility));
+            }
+
+            if (_isCalibrationModalOpen)
+            {
+                _isCalibrationModalOpen = false;
+                OnPropertyChanged(nameof(CalibrationModalVisibility));
+            }
+
+            IsTemperaturePopoverOpen = false;
+        }
+
+        FooterStatusMessage = isOpen
+            ? "활성 알람 조치 완료 정보를 입력 중입니다."
+            : "실시간 대시보드 표시 중";
+        OnPropertyChanged(nameof(AlarmActionModalVisibility));
     }
 
     private DateTimeOffset GetLatestGraphTimestamp() =>
