@@ -16,4 +16,5 @@ public sealed record MeasurementChannel(
     decimal? HighAlarmLimit,
     decimal CalibrationScale,
     decimal CalibrationOffset,
-    IReadOnlyList<CalibrationPoint> CalibrationPoints);
+    IReadOnlyList<CalibrationPoint> CalibrationPoints,
+    bool IsActive = true);

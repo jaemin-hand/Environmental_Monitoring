@@ -60,6 +60,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private MonitoringRecordsQueryService _recordsQueryService = null!;
     private MonitoringAlarmCommandService _alarmCommandService = null!;
     private MonitoringReportExportService _reportExportService = null!;
+    private CommunicationStatusFileService _communicationStatusFileService = null!;
     private MonitoringStorageLayout _storageLayout = null!;
     private MonitoringBlueprint _blueprint = null!;
     private MonitoringRuntimeOptions _runtimeOptions = null!;
@@ -135,6 +136,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _selectedAlarmStatus = string.Empty;
     private string _temperatureTrendPoints = string.Empty;
     private string _humidityTrendPoints = string.Empty;
+    private string _pressureTrendPoints = string.Empty;
     private string _historyTemperatureTrendPoints = string.Empty;
     private string _graphTimeStartText = "-";
     private string _graphTimeQuarterText = "-";
@@ -705,6 +707,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         private set => SetField(ref _humidityTrendPoints, value);
     }
 
+    public string PressureTrendPoints
+    {
+        get => _pressureTrendPoints;
+        private set => SetField(ref _pressureTrendPoints, value);
+    }
+
     public string HistoryTemperatureTrendPoints
     {
         get => _historyTemperatureTrendPoints;
@@ -827,6 +835,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _recordsQueryService = new MonitoringRecordsQueryService(_storageLayout);
         _alarmCommandService = new MonitoringAlarmCommandService(_storageLayout);
         _reportExportService = new MonitoringReportExportService(_storageLayout);
+        _communicationStatusFileService = new CommunicationStatusFileService(_storageLayout);
         UpdateFilterOptions();
         UpdateGraphFilterItems();
         RebuildCalibrationItems();
@@ -870,6 +879,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 CalibrationScale = channel.CalibrationScale,
                 Offset = channel.Offset,
                 CalibrationPoints = channel.CalibrationPoints.ToList(),
+                IsActive = channel.IsActive ?? true,
             });
         }
     }
@@ -949,7 +959,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         GraphChannelFilterItems.Clear();
 
         var graphChannels = _blueprint.Channels
-            .Where(channel => channel.Kind == _selectedGraphKind)
+            .Where(channel => channel.Kind == _selectedGraphKind && channel.IsActive)
             .OrderBy(channel => GetGraphChannelSortKey(channel))
             .ToArray();
 
@@ -1097,6 +1107,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     CalibrationScale = item.CalibrationScale == 0m ? 1m : item.CalibrationScale,
                     Offset = item.Offset,
                     CalibrationPoints = item.CalibrationPoints.ToList(),
+                    IsActive = item.IsActive,
                 })
                 .ToList(),
         };
@@ -1266,13 +1277,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         LastStorageWriteText = snapshot.StorageStatus.LastSuccessfulWriteAt?
             .ToLocalTime()
             .ToString("tt h:mm:ss", CultureInfo.GetCultureInfo("ko-KR")) ?? "-";
-        CommunicationLatencyText = CalculateCommunicationLatencyText(snapshot.ChannelSnapshots);
+        CommunicationLatencyText = CalculateCommunicationLatencyText(
+            _communicationStatusFileService.TryReadLatest(),
+            snapshot.ChannelSnapshots);
         DiskUsageText = CalculateDiskUsageText();
     }
 
     private static string CalculateCommunicationLatencyText(
+        CommunicationStatusSnapshot? communicationStatus,
         IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
     {
+        if (communicationStatus?.MaxResponseMilliseconds is not { } responseMilliseconds)
+        {
+            return "-";
+        }
+
         var latestSampleAt = channelSnapshots
             .Select(item => item.SampledAt)
             .Where(item => item.HasValue)
@@ -1280,20 +1299,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             .DefaultIfEmpty()
             .Max();
 
-        if (latestSampleAt == default)
+        if (latestSampleAt != default
+            && communicationStatus.UpdatedAt < latestSampleAt.AddSeconds(-1))
         {
             return "-";
         }
 
-        var elapsed = DateTimeOffset.Now - latestSampleAt;
-        if (elapsed.TotalMilliseconds < 0)
-        {
-            return "0 ms";
-        }
-
-        return elapsed.TotalSeconds < 1
-            ? $"{Math.Max(0, (int)elapsed.TotalMilliseconds)} ms"
-            : $"{elapsed.TotalSeconds:0.0} s";
+        return responseMilliseconds < 1000
+            ? $"{Math.Max(0, (int)Math.Round(responseMilliseconds))} ms"
+            : $"{responseMilliseconds / 1000d:0.0} s";
     }
 
     private string CalculateDiskUsageText()
@@ -1433,6 +1447,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             TemperatureTrendPoints = string.Empty;
             HumidityTrendPoints = string.Empty;
+            PressureTrendPoints = string.Empty;
             return;
         }
 
@@ -1550,12 +1565,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private IReadOnlyList<DashboardMetricCard> CreateDashboardMetricCards(MonitoringDashboardSnapshot snapshot)
     {
         var temperatureSnapshots = snapshot.ChannelSnapshots
-            .Where(item => item.Kind == ChannelKind.Temperature && item.Value.HasValue)
+            .Where(item => item.IsActive && item.Kind == ChannelKind.Temperature && item.Value.HasValue)
             .ToArray();
         var humiditySnapshot = snapshot.ChannelSnapshots
-            .FirstOrDefault(item => item.Kind == ChannelKind.Humidity && item.Value.HasValue);
+            .FirstOrDefault(item => item.IsActive && item.Kind == ChannelKind.Humidity && item.Value.HasValue);
         var pressureSnapshot = snapshot.ChannelSnapshots
-            .FirstOrDefault(item => item.Kind == ChannelKind.Pressure && item.Value.HasValue);
+            .FirstOrDefault(item => item.IsActive && item.Kind == ChannelKind.Pressure && item.Value.HasValue);
         var referenceTemperature = temperatureSnapshots.FirstOrDefault();
 
         double? averageTemperature = temperatureSnapshots.Length == 0
@@ -1594,12 +1609,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private IReadOnlyList<GraphSummaryCard> CreateGraphSummaryCards(MonitoringDashboardSnapshot snapshot)
     {
         var temperatureSnapshots = snapshot.ChannelSnapshots
-            .Where(item => item.Kind == ChannelKind.Temperature && item.Value.HasValue)
+            .Where(item => item.IsActive && item.Kind == ChannelKind.Temperature && item.Value.HasValue)
             .ToArray();
         var humiditySnapshot = snapshot.ChannelSnapshots
-            .FirstOrDefault(item => item.Kind == ChannelKind.Humidity && item.Value.HasValue);
+            .FirstOrDefault(item => item.IsActive && item.Kind == ChannelKind.Humidity && item.Value.HasValue);
         var pressureSnapshot = snapshot.ChannelSnapshots
-            .FirstOrDefault(item => item.Kind == ChannelKind.Pressure && item.Value.HasValue);
+            .FirstOrDefault(item => item.IsActive && item.Kind == ChannelKind.Pressure && item.Value.HasValue);
 
         var averageTemperature = temperatureSnapshots.Length == 0
             ? (double?)null
@@ -1667,7 +1682,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 $"{item.LatestValue} {item.Unit}".Trim(),
                 item.Accent))
             .ToArray();
+        UpdateSecondaryTrendSeries(visibleStart, visibleEnd);
         RenderGraphSeries(series);
+    }
+
+    private void UpdateSecondaryTrendSeries(DateTimeOffset visibleStart, DateTimeOffset visibleEnd)
+    {
+        HumidityTrendPoints = BuildTimeBasedPolylinePoints(
+            _graphSamples,
+            ChannelKind.Humidity,
+            visibleStart,
+            visibleEnd,
+            SmallGraphCanvasHeight);
+
+        PressureTrendPoints = BuildTimeBasedPolylinePoints(
+            _graphSamples,
+            ChannelKind.Pressure,
+            visibleStart,
+            visibleEnd,
+            SmallGraphCanvasHeight);
     }
 
     private void RenderGraphSeries(IReadOnlyList<GraphSeriesItem> series)
@@ -1680,7 +1713,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 Points = item.Points,
                 Stroke = item.Accent,
-                StrokeThickness = 1.5,
+                StrokeThickness = 1.0,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round,
                 StrokeLineJoin = PenLineJoin.Round,
@@ -2156,11 +2189,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
     {
         var temperatureValues = channelSnapshots
-            .Where(item => item.Kind == ChannelKind.Temperature && item.Value.HasValue)
+            .Where(item => item.IsActive && item.Kind == ChannelKind.Temperature && item.Value.HasValue)
             .Select(item => item.Value!.Value)
             .ToArray();
         var humiditySnapshot = channelSnapshots
-            .FirstOrDefault(item => item.Kind == ChannelKind.Humidity && item.Value.HasValue);
+            .FirstOrDefault(item => item.IsActive && item.Kind == ChannelKind.Humidity && item.Value.HasValue);
 
         var averageTemperature = temperatureValues.Length == 0
             ? (double?)null
@@ -2223,6 +2256,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             .Select(channel =>
             {
                 lookup.TryGetValue(channel.Name, out var snapshot);
+
+                if (!channel.IsActive)
+                {
+                    return new SensorFeedItem(
+                        ToDisplayChannelName(channel),
+                        "-",
+                        string.Empty,
+                        "센서 없음",
+                        DashboardSeverity.Notice,
+                        IsActive: false);
+                }
+
                 var severity = ResolveTileSeverity(channel, snapshot);
 
                 return new SensorFeedItem(
@@ -2384,12 +2429,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private static DashboardSeverity ResolveCommunicationSeverity(
         IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
     {
-        if (channelSnapshots.All(item => item.SampledAt is null))
+        var activeSnapshots = channelSnapshots
+            .Where(item => item.IsActive)
+            .ToArray();
+
+        if (activeSnapshots.Length == 0 || activeSnapshots.All(item => item.SampledAt is null))
         {
             return DashboardSeverity.Notice;
         }
 
-        return channelSnapshots.Any(item => item.QualityStatus == SampleQualityStatus.CommunicationError)
+        return activeSnapshots.Any(item => item.QualityStatus == SampleQualityStatus.CommunicationError)
             ? DashboardSeverity.Warning
             : DashboardSeverity.Normal;
     }
@@ -2397,12 +2446,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private static string BuildCommunicationDetail(
         IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
     {
-        if (channelSnapshots.All(item => item.SampledAt is null))
+        var activeSnapshots = channelSnapshots
+            .Where(item => item.IsActive)
+            .ToArray();
+
+        if (activeSnapshots.Length == 0 || activeSnapshots.All(item => item.SampledAt is null))
         {
             return "수집 대기 중";
         }
 
-        var errorCount = channelSnapshots.Count(item => item.QualityStatus == SampleQualityStatus.CommunicationError);
+        var errorCount = activeSnapshots.Count(item => item.QualityStatus == SampleQualityStatus.CommunicationError);
 
         return errorCount == 0
             ? $"{channelSnapshots.Count}채널 응답 / Modbus TCP"
@@ -3006,10 +3059,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         IReadOnlyList<MonitoringSampleRecord> samples,
         ChannelKind kind,
         DateTimeOffset visibleStart,
-        DateTimeOffset visibleEnd)
+        DateTimeOffset visibleEnd,
+        double height = MainGraphCanvasHeight)
     {
         var points = new PointCollection();
-        var axis = GetGraphAxisScale(kind, MainGraphCanvasHeight);
+        var axis = GetGraphAxisScale(kind, height);
 
         foreach (var sample in samples)
         {
@@ -3026,6 +3080,41 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         return points;
+    }
+
+    private static string BuildTimeBasedPolylinePoints(
+        IReadOnlyList<MonitoringSampleRecord> samples,
+        ChannelKind kind,
+        DateTimeOffset visibleStart,
+        DateTimeOffset visibleEnd,
+        double height)
+    {
+        var filteredSamples = samples
+            .Where(item => item.Kind == kind
+                && item.SampledAt >= visibleStart
+                && item.SampledAt <= visibleEnd
+                && item.CorrectedValue.HasValue
+                && double.IsFinite(item.CorrectedValue.Value))
+            .OrderBy(item => item.SampledAt)
+            .ToArray();
+
+        var points = BuildTimeBasedPolylinePointCollection(
+            filteredSamples,
+            kind,
+            visibleStart,
+            visibleEnd,
+            height);
+
+        if (points.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        return string.Join(
+            " ",
+            points
+                .Cast<Point>()
+                .Select(point => FormattableString.Invariant($"{point.X:0.##},{point.Y:0.##}")));
     }
 
     private static GraphAxisScale GetGraphAxisScale(ChannelKind kind, double height)

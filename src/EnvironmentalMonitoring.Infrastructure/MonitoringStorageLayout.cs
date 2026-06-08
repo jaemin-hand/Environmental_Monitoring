@@ -16,6 +16,8 @@ public sealed class MonitoringStorageLayout(string rootDirectory)
 
     public string RuntimeSettingsFilePath => Path.Combine(ConfigDirectory, "monitoring-settings.json");
 
+    public string CommunicationStatusFilePath => Path.Combine(DataDirectory, "communication-status.json");
+
     public string GetDailyCsvPath(DateOnly date) => Path.Combine(ReportDirectory, $"{date:yyyy-MM-dd}.csv");
 
     public void EnsureCreated()

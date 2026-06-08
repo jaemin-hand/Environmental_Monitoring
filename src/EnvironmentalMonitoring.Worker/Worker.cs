@@ -12,6 +12,7 @@ public sealed class Worker(
     MonitoringBlueprint blueprint,
     MonitoringStorageLayout storageLayout,
     SqliteMonitoringStorageService storageService,
+    CommunicationStatusFileService communicationStatusFileService,
     IMonitoringAcquisitionGateway acquisitionGateway) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -47,6 +48,7 @@ public sealed class Worker(
             var cycleStopwatch = Stopwatch.StartNew();
             var sampledAt = DateTimeOffset.Now;
             var snapshot = await acquisitionGateway.CaptureAsync(currentBlueprint, sampledAt, stoppingToken);
+            await communicationStatusFileService.SaveAsync(snapshot, stoppingToken);
             var storageStatus = await storageService.SaveSnapshotAsync(snapshot, stoppingToken);
             cycleStopwatch.Stop();
 

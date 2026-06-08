@@ -371,14 +371,33 @@
                                Foreground="{StaticResource TextBrush}"
                                FontSize="14"
                                FontWeight="SemiBold" />
-                    <Viewbox Grid.Column="1"
-                             Width="20"
-                             Height="20"
-                             Margin="0,-1,0,0">
-                        <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
-                              Stroke="{Binding Accent}"
-                              Style="{StaticResource SvgIconPathStyle}" />
-                    </Viewbox>
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top">
+                        <TextBlock Text="{Binding StatusText}"
+                                   Foreground="{Binding Accent}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Margin="0,1,8,0" />
+                        <Viewbox Width="20"
+                                 Height="20"
+                                 Margin="0,-1,0,0">
+                            <Viewbox.Style>
+                                <Style TargetType="Viewbox">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Viewbox.Style>
+                            <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                                  Stroke="{Binding Accent}"
+                                  Style="{StaticResource SvgIconPathStyle}" />
+                        </Viewbox>
+                    </StackPanel>
 
                     <StackPanel Grid.Row="1"
                                 Grid.ColumnSpan="2"
@@ -879,7 +898,7 @@
                                     <Line X1="0" Y1="138" X2="760" Y2="138" Style="{StaticResource GraphAxisLineStyle}" />
                                     <Polyline Points="{Binding HumidityTrendPoints}"
                                               Stroke="#66A3FF"
-                                              StrokeThickness="3"
+                                              StrokeThickness="2"
                                               StrokeLineJoin="Round"
                                               StrokeStartLineCap="Round"
                                               StrokeEndLineCap="Round" />
@@ -913,12 +932,12 @@
                                     <Line X1="0" Y1="116" X2="760" Y2="116" Stroke="#17263A" StrokeThickness="1" />
                                     <Line X1="0" Y1="0" X2="0" Y2="138" Style="{StaticResource GraphAxisLineStyle}" />
                                     <Line X1="0" Y1="138" X2="760" Y2="138" Style="{StaticResource GraphAxisLineStyle}" />
-                                    <Polyline Stroke="#B482FF"
-                                              StrokeThickness="3"
+                                    <Polyline Points="{Binding PressureTrendPoints}"
+                                              Stroke="#B482FF"
+                                              StrokeThickness="2"
                                               StrokeLineJoin="Round"
                                               StrokeStartLineCap="Round"
-                                              StrokeEndLineCap="Round"
-                                              Points="0,70 48,72 96,69 144,74 192,64 240,67 288,58 336,62 384,56 432,61 480,55 528,63 576,60 624,67 672,62 720,58 760,62" />
+                                              StrokeEndLineCap="Round" />
                                 </Canvas>
                             </Viewbox>
                         </Border>
@@ -1142,7 +1161,7 @@
 
                                         <Polyline Points="{Binding HistoryTemperatureTrendPoints}"
                                                   Stroke="{StaticResource BlueBrush}"
-                                                  StrokeThickness="3"
+                                                  StrokeThickness="2"
                                                   StrokeLineJoin="Round"
                                                   StrokeStartLineCap="Round"
                                                   StrokeEndLineCap="Round" />
@@ -1362,7 +1381,7 @@
                                                    FontSize="18"
                                                    FontWeight="SemiBold"
                                                    VerticalAlignment="Center" />
-                                        <TextBlock Text="T1 ~ T8 실시간 온도"
+                                        <TextBlock Text="실시간 온도"
                                                    Foreground="{StaticResource MutedTextBrush}"
                                                    FontSize="13"
                                                    HorizontalAlignment="Right"
@@ -1720,7 +1739,7 @@
                                         <Polyline Canvas.Left="48"
                                                   Points="{Binding HumidityTrendPoints}"
                                                   Stroke="#69A0FF"
-                                                  StrokeThickness="1.5"
+                                                  StrokeThickness="1.0"
                                                   StrokeLineJoin="Round"
                                                   StrokeStartLineCap="Round"
                                                   StrokeEndLineCap="Round" />
@@ -1791,12 +1810,12 @@
                                                 Height="140" />
 
                                         <Polyline Canvas.Left="48"
+                                                  Points="{Binding PressureTrendPoints}"
                                                   Stroke="#B482FF"
-                                                  StrokeThickness="1.5"
+                                                  StrokeThickness="1.0"
                                                   StrokeLineJoin="Round"
                                                   StrokeStartLineCap="Round"
-                                                  StrokeEndLineCap="Round"
-                                                  Points="0,84 48,83 96,85 144,80 192,82 240,79 288,82 336,77 384,80 432,76 480,80 528,75 576,79 624,77 672,80 720,78 760,79" />
+                                                  StrokeEndLineCap="Round" />
                                         <Line X1="48"
                                               Y1="41"
                                               X2="808"
@@ -2178,7 +2197,7 @@
 
                                                     <Polyline Points="{Binding HistoryTemperatureTrendPoints}"
                                                               Stroke="{StaticResource BlueBrush}"
-                                                              StrokeThickness="2"
+                                                              StrokeThickness="1.3"
                                                               StrokeLineJoin="Round"
                                                               StrokeStartLineCap="Round"
                                                               StrokeEndLineCap="Round" />

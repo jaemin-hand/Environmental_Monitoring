@@ -206,7 +206,7 @@ public sealed class SqliteMonitoringStorageService(
                     (SELECT id FROM devices WHERE code = @DeviceCode),
                     @DeviceChannelNo,
                     @LocationName,
-                    1
+                    @IsActive
                 )
                 ON CONFLICT(code) DO UPDATE SET
                     name = excluded.name,
@@ -224,6 +224,7 @@ public sealed class SqliteMonitoringStorageService(
             command.Parameters.AddWithValue("@DeviceCode", channel.DeviceKey);
             command.Parameters.AddWithValue("@DeviceChannelNo", channel.DeviceChannelIndex);
             command.Parameters.AddWithValue("@LocationName", channel.LocationName);
+            command.Parameters.AddWithValue("@IsActive", channel.IsActive ? 1 : 0);
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 

@@ -43,4 +43,6 @@ public sealed class RuntimeChannelSetting
     public decimal Offset { get; set; }
 
     public List<CalibrationPoint> CalibrationPoints { get; set; } = [];
+
+    public bool? IsActive { get; set; }
 }

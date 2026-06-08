@@ -24,6 +24,7 @@ builder.Services.AddSingleton(blueprint);
 builder.Services.AddSingleton(storageLayout);
 builder.Services.AddSingleton(settingsStore);
 builder.Services.AddSingleton<SqliteMonitoringStorageService>();
+builder.Services.AddSingleton<CommunicationStatusFileService>();
 builder.Services.AddSingleton<PlaceholderMonitoringAcquisitionGateway>();
 builder.Services.AddSingleton<ModbusTcpMonitoringAcquisitionGateway>();
 builder.Services.AddSingleton<ModbusTcpClient>();

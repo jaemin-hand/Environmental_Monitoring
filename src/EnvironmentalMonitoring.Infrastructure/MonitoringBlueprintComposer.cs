@@ -65,6 +65,7 @@ public static class MonitoringBlueprintComposer
                             .OrderBy(point => point.PointNumber)
                             .ToArray()
                         : channel.CalibrationPoints,
+                    IsActive = overrideItem.IsActive ?? channel.IsActive,
                 };
             })
             .ToArray();

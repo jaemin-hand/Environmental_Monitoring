@@ -16,7 +16,8 @@ public sealed record MonitoringChannelSnapshot(
     string Unit,
     double? Value,
     SampleQualityStatus QualityStatus,
-    DateTimeOffset? SampledAt);
+    DateTimeOffset? SampledAt,
+    bool IsActive = true);
 
 public sealed record MonitoringTrendPoint(
     DateTimeOffset SampledAt,

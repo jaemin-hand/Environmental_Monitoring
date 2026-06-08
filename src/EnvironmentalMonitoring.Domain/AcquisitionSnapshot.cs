@@ -4,4 +4,5 @@ public sealed record AcquisitionSnapshot(
     DateTimeOffset SampledAt,
     SamplingMode SamplingMode,
     IReadOnlyList<CapturedMeasurement> Measurements,
-    AcquisitionBatchStatus Status);
+    AcquisitionBatchStatus Status,
+    IReadOnlyList<DeviceCommunicationSnapshot> CommunicationSnapshots);

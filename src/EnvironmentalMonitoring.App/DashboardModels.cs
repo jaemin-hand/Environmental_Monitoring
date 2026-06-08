@@ -541,9 +541,12 @@ public sealed record SensorFeedItem(
     string Value,
     string Unit,
     string StatusText,
-    DashboardSeverity Severity)
+    DashboardSeverity Severity,
+    bool IsActive = true)
 {
-    public Brush Accent => Severity switch
+    public Brush Accent => !IsActive
+        ? DashboardPalette.TextMuted
+        : Severity switch
     {
         DashboardSeverity.Critical => DashboardPalette.Critical,
         DashboardSeverity.Warning => DashboardPalette.Critical,
@@ -551,7 +554,9 @@ public sealed record SensorFeedItem(
         _ => DashboardPalette.Normal,
     };
 
-    public Brush Border => Severity is DashboardSeverity.Critical or DashboardSeverity.Warning
+    public Brush Border => !IsActive
+        ? DashboardPalette.EventBorder
+        : Severity is DashboardSeverity.Critical or DashboardSeverity.Warning
         ? DashboardPalette.Critical
         : DashboardPalette.SurfaceContainerLowest;
 }
@@ -604,6 +609,8 @@ public sealed class SettingsChannelItem
     public decimal Offset { get; set; }
 
     public List<CalibrationPoint> CalibrationPoints { get; set; } = [];
+
+    public bool IsActive { get; set; } = true;
 }
 
 public sealed record LookupOption(

@@ -14,6 +14,7 @@ public sealed class PlaceholderMonitoringAcquisitionGateway(
         CancellationToken cancellationToken)
     {
         var measurements = blueprint.Channels
+            .Where(channel => channel.IsActive)
             .Select(channel => CreateMeasurement(channel, sampledAt))
             .ToList();
 
@@ -25,9 +26,37 @@ public sealed class PlaceholderMonitoringAcquisitionGateway(
             sampledAt,
             blueprint.DefaultSamplingMode,
             measurements,
-            batchStatus);
+            batchStatus,
+            CreateCommunicationSnapshots(blueprint, measurements, sampledAt));
 
         return Task.FromResult(snapshot);
+    }
+
+    private static IReadOnlyList<DeviceCommunicationSnapshot> CreateCommunicationSnapshots(
+        MonitoringBlueprint blueprint,
+        IReadOnlyList<CapturedMeasurement> measurements,
+        DateTimeOffset sampledAt)
+    {
+        var measurementsByDevice = measurements
+            .GroupBy(item => item.Channel.DeviceKey)
+            .ToDictionary(
+                item => item.Key,
+                item => item.Any(measurement => measurement.QualityStatus == SampleQualityStatus.CommunicationError),
+                StringComparer.OrdinalIgnoreCase);
+
+        return blueprint.Devices
+            .Where(device => measurementsByDevice.ContainsKey(device.Key))
+            .Select(device =>
+            {
+                var hasCommunicationError = measurementsByDevice[device.Key];
+                return new DeviceCommunicationSnapshot(
+                    device.Key,
+                    device.DisplayName,
+                    hasCommunicationError ? 1500d : 132d,
+                    !hasCommunicationError,
+                    sampledAt);
+            })
+            .ToArray();
     }
 
     private CapturedMeasurement CreateMeasurement(

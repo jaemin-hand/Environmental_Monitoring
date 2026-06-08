@@ -125,6 +125,7 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
                     CalibrationScale = channel.CalibrationScale,
                     Offset = channel.CalibrationOffset,
                     CalibrationPoints = channel.CalibrationPoints.ToList(),
+                    IsActive = channel.IsActive,
                 })
                 .ToList(),
         };
@@ -197,6 +198,7 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
                     CalibrationScale = channel.CalibrationScale,
                     Offset = channel.CalibrationOffset,
                     CalibrationPoints = channel.CalibrationPoints.ToList(),
+                    IsActive = channel.IsActive,
                 });
                 changed = true;
             }
@@ -242,6 +244,12 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
                 if (existing.CalibrationScale == 0m)
                 {
                     existing.CalibrationScale = channel.CalibrationScale;
+                    changed = true;
+                }
+
+                if (existing.IsActive is null)
+                {
+                    existing.IsActive = channel.IsActive;
                     changed = true;
                 }
             }

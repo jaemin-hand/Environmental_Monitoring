@@ -48,7 +48,8 @@ public sealed class MonitoringDashboardQueryService(
                 channel.Unit,
                 null,
                 SampleQualityStatus.CommunicationError,
-                null))
+                null,
+                channel.IsActive))
             .ToArray();
 
         return new MonitoringDashboardSnapshot(
@@ -171,14 +172,15 @@ public sealed class MonitoringDashboardQueryService(
 
         return blueprint.Channels
             .Select(channel => latestBatchChannels.TryGetValue(channel.Name, out var snapshot)
-                ? snapshot
+                ? snapshot with { IsActive = channel.IsActive }
                 : new MonitoringChannelSnapshot(
                     channel.Name,
                     channel.Kind,
                     channel.Unit,
                     null,
                     SampleQualityStatus.CommunicationError,
-                    null))
+                    null,
+                    channel.IsActive))
             .ToArray();
     }
 
