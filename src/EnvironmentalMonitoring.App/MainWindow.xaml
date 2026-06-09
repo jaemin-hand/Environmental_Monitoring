@@ -619,7 +619,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="1"
-                                Grid.ColumnSpan="2"
+                                Grid.Column="0"
                                 Orientation="Horizontal"
                                 VerticalAlignment="Bottom">
                         <TextBlock Text="{Binding Value}"
@@ -631,6 +631,67 @@
                                    FontSize="12"
                                    Margin="4,11,0,0" />
                     </StackPanel>
+
+                    <Grid Grid.Row="1"
+                          Grid.Column="1"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Bottom"
+                          Margin="16,0,0,0">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.IsSensorDetailLimitEditMode, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                 Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="하한"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="13"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,3" />
+                            <TextBox Text="{Binding EditableLowLimit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Tag="LowLimit"
+                                     Width="72"
+                                     Height="27"
+                                     Padding="5,0"
+                                     Background="#D8DCE7"
+                                     Foreground="#111827"
+                                     BorderBrush="#8C95A8"
+                                     BorderThickness="1"
+                                     FontSize="14"
+                                     HorizontalContentAlignment="Center"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="상한"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="13"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,3" />
+                            <TextBox Text="{Binding EditableHighLimit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Tag="HighLimit"
+                                     Width="72"
+                                     Height="27"
+                                     Padding="5,0"
+                                     Background="#D8DCE7"
+                                     Foreground="#111827"
+                                     BorderBrush="#8C95A8"
+                                     BorderThickness="1"
+                                     FontSize="14"
+                                     HorizontalContentAlignment="Center"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -682,6 +743,7 @@
                         </TextBlock>
                         <TextBox Text="{Binding EditableTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  Grid.Column="1"
+                                 Tag="Name"
                                  Width="92"
                                  Height="22"
                                  Padding="5,0"
@@ -2236,6 +2298,47 @@
                             <StackPanel Orientation="Horizontal"
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Center">
+                                <Button Click="ToggleSensorDetailLimitEditModeButton_Click"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="8,3"
+                                        Margin="0,0,6,0"
+                                        Cursor="Hand"
+                                        ToolTip="{Binding SensorDetailLimitEditButtonToolTip}">
+                                    <Grid>
+                                        <Viewbox Width="20" Height="20">
+                                            <Viewbox.Style>
+                                                <Style TargetType="Viewbox">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSensorDetailLimitEditMode}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Viewbox.Style>
+                                            <Path Data="M5 4V20M12 4V20M19 4V20M3 9H7M10 15H14M17 8H21"
+                                                  Stroke="{StaticResource MutedTextBrush}"
+                                                  Style="{StaticResource SvgIconPathStyle}" />
+                                        </Viewbox>
+                                        <TextBlock Text="저장"
+                                                   Foreground="{StaticResource BlueBrush}"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSensorDetailLimitEditMode}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </Button>
+
                                 <Button Click="ToggleSensorDetailNameEditModeButton_Click"
                                         Background="Transparent"
                                         BorderThickness="0"

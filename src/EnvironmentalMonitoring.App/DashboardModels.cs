@@ -613,6 +613,10 @@ public sealed record SensorFeedItem(
 {
     public string EditableTitle { get; set; } = Title;
 
+    public string EditableLowLimit { get; set; } = string.Empty;
+
+    public string EditableHighLimit { get; set; } = string.Empty;
+
     public Brush Accent => !IsActive
         ? DashboardPalette.TextMuted
         : Severity switch

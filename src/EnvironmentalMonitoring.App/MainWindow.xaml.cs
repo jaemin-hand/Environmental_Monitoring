@@ -150,6 +150,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _selectedGraphTimeScale = "1초";
     private bool _isSensorDetailPopoverOpen;
     private bool _isSensorDetailNameEditMode;
+    private bool _isSensorDetailLimitEditMode;
     private ChannelKind _selectedSensorDetailKind = ChannelKind.Temperature;
     private bool _isHistoryModalOpen;
     private bool _isCalibrationModalOpen;
@@ -860,6 +861,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public string SensorDetailNameEditButtonToolTip =>
         IsSensorDetailNameEditMode ? "센서 이름 저장" : "센서 이름 편집";
 
+    public bool IsSensorDetailLimitEditMode
+    {
+        get => _isSensorDetailLimitEditMode;
+        private set
+        {
+            if (SetField(ref _isSensorDetailLimitEditMode, value))
+            {
+                OnPropertyChanged(nameof(SensorDetailLimitEditButtonToolTip));
+            }
+        }
+    }
+
+    public string SensorDetailLimitEditButtonToolTip =>
+        IsSensorDetailLimitEditMode ? "임계값 저장" : "임계값 조정";
+
     public string SensorDetailTitle => _selectedSensorDetailKind switch
     {
         ChannelKind.Humidity => "습도 채널 상세",
@@ -1348,9 +1364,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _latestChannelSnapshots = snapshot.ChannelSnapshots;
 
         SensorTiles = CreateSensorTiles(snapshot.ChannelSnapshots);
-        if (!IsSensorDetailNameEditMode)
+        SensorFeedItems = CreateSensorFeedItems(snapshot.ChannelSnapshots);
+        if (!IsSensorDetailNameEditMode && !IsSensorDetailLimitEditMode)
         {
-            SensorFeedItems = CreateSensorFeedItems(snapshot.ChannelSnapshots);
             SensorDetailItems = CreateSensorDetailItems(snapshot.ChannelSnapshots, _selectedSensorDetailKind);
         }
 
@@ -1908,6 +1924,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         _selectedSensorDetailKind = kind;
         IsSensorDetailNameEditMode = false;
+        IsSensorDetailLimitEditMode = false;
         SensorDetailItems = CreateSensorDetailItems(_latestChannelSnapshots, _selectedSensorDetailKind);
         OnPropertyChanged(nameof(SensorDetailTitle));
         OnPropertyChanged(nameof(SensorDetailRealtimeLabel));
@@ -1918,6 +1935,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         IsSensorDetailPopoverOpen = false;
         IsSensorDetailNameEditMode = false;
+        IsSensorDetailLimitEditMode = false;
         SensorDetailItems = CreateSensorDetailItems(_latestChannelSnapshots, _selectedSensorDetailKind);
     }
 
@@ -1925,6 +1943,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         if (!IsSensorDetailNameEditMode)
         {
+            IsSensorDetailLimitEditMode = false;
             foreach (var item in SensorDetailItems)
             {
                 item.EditableTitle = item.Title;
@@ -1991,15 +2010,140 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         e.Handled = true;
     }
 
+    private async void ToggleSensorDetailLimitEditModeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!IsSensorDetailLimitEditMode)
+        {
+            IsSensorDetailNameEditMode = false;
+            foreach (var item in SensorDetailItems)
+            {
+                var channel = _blueprint.Channels.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Name, item.ChannelCode, StringComparison.OrdinalIgnoreCase));
+
+                if (channel is null)
+                {
+                    continue;
+                }
+
+                item.EditableLowLimit = FormatLimitInput(channel.LowAlarmLimit, channel.Kind);
+                item.EditableHighLimit = FormatLimitInput(channel.HighAlarmLimit, channel.Kind);
+            }
+
+            IsSensorDetailLimitEditMode = true;
+            e.Handled = true;
+            return;
+        }
+
+        SyncSensorDetailLimitEditorValues();
+
+        var changedCount = 0;
+        foreach (var item in SensorDetailItems)
+        {
+            if (string.IsNullOrWhiteSpace(item.ChannelCode))
+            {
+                continue;
+            }
+
+            if (!TryParseLimitInput(item.EditableLowLimit, out var lowLimit))
+            {
+                FooterStatusMessage = $"하한 임계값을 숫자로 입력하세요: {item.Title}";
+                return;
+            }
+
+            if (!TryParseLimitInput(item.EditableHighLimit, out var highLimit))
+            {
+                FooterStatusMessage = $"상한 임계값을 숫자로 입력하세요: {item.Title}";
+                return;
+            }
+
+            if (lowLimit.HasValue && highLimit.HasValue && lowLimit.Value >= highLimit.Value)
+            {
+                FooterStatusMessage = $"하한은 상한보다 작아야 합니다: {item.Title}";
+                return;
+            }
+
+            var channelSetting = ChannelSettingsItems.FirstOrDefault(channel =>
+                string.Equals(channel.Code, item.ChannelCode, StringComparison.OrdinalIgnoreCase));
+
+            if (channelSetting is null)
+            {
+                FooterStatusMessage = $"채널 설정을 찾을 수 없습니다: {item.ChannelCode}";
+                return;
+            }
+
+            if (channelSetting.LowAlarmLimit == lowLimit && channelSetting.HighAlarmLimit == highLimit)
+            {
+                continue;
+            }
+
+            channelSetting.LowAlarmLimit = lowLimit;
+            channelSetting.HighAlarmLimit = highLimit;
+            changedCount++;
+        }
+
+        if (changedCount > 0)
+        {
+            _settingsDocument = BuildSettingsDocumentFromEditor();
+            _settingsStore.Save(_settingsDocument);
+            ApplyRuntimeState();
+        }
+
+        IsSensorDetailPopoverOpen = true;
+        IsSensorDetailLimitEditMode = false;
+        SensorDetailItems = CreateSensorDetailItems(_latestChannelSnapshots, _selectedSensorDetailKind);
+        FooterStatusMessage = changedCount == 0
+            ? "임계값 변경 없음"
+            : $"임계값 {changedCount}건 저장 완료";
+        if (changedCount > 0)
+        {
+            await RefreshAllAsync();
+        }
+
+        e.Handled = true;
+    }
+
     private void SyncSensorDetailNameEditorValues()
     {
         foreach (var textBox in FindVisualChildren<TextBox>(SensorDetailOverlayItemsControl))
         {
+            if (!string.Equals(textBox.Tag as string, "Name", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
 
             if (textBox.DataContext is SensorFeedItem item)
             {
                 item.EditableTitle = textBox.Text;
+            }
+        }
+    }
+
+    private void SyncSensorDetailLimitEditorValues()
+    {
+        foreach (var textBox in FindVisualChildren<TextBox>(SensorDetailOverlayItemsControl))
+        {
+            var tag = textBox.Tag as string;
+            if (tag is not ("LowLimit" or "HighLimit"))
+            {
+                continue;
+            }
+
+            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+
+            if (textBox.DataContext is not SensorFeedItem item)
+            {
+                continue;
+            }
+
+            if (string.Equals(tag, "LowLimit", StringComparison.Ordinal))
+            {
+                item.EditableLowLimit = textBox.Text;
+            }
+            else
+            {
+                item.EditableHighLimit = textBox.Text;
             }
         }
     }
@@ -2803,6 +2947,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         IsActive: false,
                         ChannelCode: channel.Name);
                     inactiveItem.EditableTitle = editableTitle;
+                    inactiveItem.EditableLowLimit = FormatLimitInput(channel.LowAlarmLimit, channel.Kind);
+                    inactiveItem.EditableHighLimit = FormatLimitInput(channel.HighAlarmLimit, channel.Kind);
                     return inactiveItem;
                 }
 
@@ -2816,6 +2962,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     GetChannelAccentBrush(channel),
                     ChannelCode: channel.Name);
                 item.EditableTitle = editableTitle;
+                item.EditableLowLimit = FormatLimitInput(channel.LowAlarmLimit, channel.Kind);
+                item.EditableHighLimit = FormatLimitInput(channel.HighAlarmLimit, channel.Kind);
                 return item;
             })
             .ToArray();
@@ -3258,6 +3406,41 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ChannelKind.Pressure => "kPa",
         _ => string.Empty,
     };
+
+    private static string FormatLimitInput(decimal? value, ChannelKind kind) =>
+        value.HasValue
+            ? $"{value.Value:0.###}{ToDetailCardUnit(kind)}"
+            : string.Empty;
+
+    private static bool TryParseLimitInput(string input, out decimal? value)
+    {
+        var normalized = input
+            .Trim()
+            .Replace("℃", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("°C", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("degC", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("%RH", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("%", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("kPa", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("hPa", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Trim();
+
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            value = null;
+            return true;
+        }
+
+        if (decimal.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out var invariantValue)
+            || decimal.TryParse(normalized, NumberStyles.Float, CultureInfo.CurrentCulture, out invariantValue))
+        {
+            value = invariantValue;
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
 
     private static string BuildCleanCommunicationDetail(
         IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
