@@ -640,6 +640,7 @@
                     BorderBrush="{Binding Border}"
                     BorderThickness="1"
                     CornerRadius="6"
+                    MinHeight="82"
                     Padding="12,8">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -1067,7 +1068,7 @@
                                       ItemTemplate="{StaticResource SensorCardTemplate}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <UniformGrid Columns="2" Rows="4" />
+                                    <UniformGrid Columns="2" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemContainerStyle>
@@ -2200,7 +2201,6 @@
                         Grid.Column="0"
                         Grid.ColumnSpan="3"
                         Width="660"
-                        Height="430"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
                         Margin="430,120,0,0"
@@ -2282,7 +2282,7 @@
                                       ItemTemplate="{StaticResource TemperatureDetailSensorCardTemplate}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <UniformGrid Columns="2" Rows="4" />
+                                    <UniformGrid Columns="2" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemContainerStyle>
