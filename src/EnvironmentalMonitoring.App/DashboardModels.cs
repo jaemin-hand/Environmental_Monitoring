@@ -119,7 +119,8 @@ public sealed record GraphSeriesItem(
 public sealed class GraphChannelFilterItem(
     string code,
     string label,
-    ChannelKind kind) : INotifyPropertyChanged
+    ChannelKind kind,
+    Brush accent) : INotifyPropertyChanged
 {
     private bool _isSelected = true;
 
@@ -130,6 +131,8 @@ public sealed class GraphChannelFilterItem(
     public string Label { get; } = label;
 
     public ChannelKind Kind { get; } = kind;
+
+    public Brush Accent { get; } = accent;
 
     public bool IsSelected
     {
@@ -604,6 +607,7 @@ public sealed record SensorFeedItem(
     string Unit,
     string StatusText,
     DashboardSeverity Severity,
+    Brush ChannelAccent,
     bool IsActive = true,
     string ChannelCode = "")
 {

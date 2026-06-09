@@ -18,17 +18,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private static readonly Brush SelectedNavBackgroundBrush = CreateFrozenBrush("#1C2026");
     private static readonly Brush SelectedNavForegroundBrush = CreateFrozenBrush("#DFE2EB");
     private static readonly Brush SelectedNavBorderBrush = CreateFrozenBrush("#8DB2FF");
-    private static readonly Brush[] GraphSeriesBrushes =
-    [
-        CreateFrozenBrush("#ABC9EF"),
-        CreateFrozenBrush("#4AE183"),
-        CreateFrozenBrush("#F3B13F"),
-        CreateFrozenBrush("#FFB4AB"),
-        CreateFrozenBrush("#AACBE1"),
-        CreateFrozenBrush("#D1E4FF"),
-        CreateFrozenBrush("#7CA8FF"),
-        CreateFrozenBrush("#6BFE9C"),
-    ];
+    private static readonly Brush T1ChannelBrush = CreateFrozenBrush("#FF4D4D");
+    private static readonly Brush T2ChannelBrush = CreateFrozenBrush("#FF9F1C");
+    private static readonly Brush T3ChannelBrush = CreateFrozenBrush("#FFD84D");
+    private static readonly Brush T4ChannelBrush = CreateFrozenBrush("#4AE183");
     private const double MainGraphCanvasWidth = 760d;
     private const double MainGraphCanvasHeight = 220d;
     private const double MainGraphPlotTop = 44d;
@@ -1082,7 +1075,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var item = new GraphChannelFilterItem(
                 channel.Name,
                 ToGraphFilterLabel(channel),
-                channel.Kind)
+                channel.Kind,
+                GetChannelAccentBrush(channel))
             {
                 IsSelected = !_graphChannelSelectionByCode.TryGetValue(channel.Name, out var selected) || selected,
             };
@@ -2609,7 +2603,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 BuildTimeBasedPolylinePointCollection(channelSamples, kind, visibleStart, visibleEnd),
                 FormatMetricNumber(latestValue),
                 NormalizeGraphUnit(unit),
-                GraphSeriesBrushes[index % GraphSeriesBrushes.Length]));
+                filter.Accent));
         }
 
         return series;
@@ -2704,6 +2698,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         string.Empty,
                         "센서 없음",
                         DashboardSeverity.Notice,
+                        GetChannelAccentBrush(channel),
                         IsActive: false,
                         ChannelCode: channel.Name);
                     inactiveItem.EditableTitle = editableTitle;
@@ -2718,6 +2713,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     "°C",
                     ResolveSensorFeedStatusText(channel, snapshot),
                     severity,
+                    GetChannelAccentBrush(channel),
                     ChannelCode: channel.Name);
                 item.EditableTitle = editableTitle;
                 return item;
@@ -3052,6 +3048,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         return ToDisplayChannelName(channel);
     }
+
+    private static Brush GetChannelAccentBrush(MeasurementChannel channel) => channel.Kind switch
+    {
+        ChannelKind.Temperature => channel.Name.ToUpperInvariant() switch
+        {
+            "T01" => T1ChannelBrush,
+            "T02" => T2ChannelBrush,
+            "T03" => T3ChannelBrush,
+            "T04" => T4ChannelBrush,
+            _ => DashboardPalette.Primary,
+        },
+        ChannelKind.Humidity => DashboardPalette.Humidity,
+        ChannelKind.Pressure => DashboardPalette.Pressure,
+        _ => DashboardPalette.Primary,
+    };
 
     private static string NormalizeGraphUnit(string unit) => unit switch
     {

@@ -552,10 +552,18 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Text="{Binding Title}"
-                               Foreground="{StaticResource TextBrush}"
-                               FontSize="14"
-                               FontWeight="SemiBold" />
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Top">
+                        <Ellipse Width="9"
+                                 Height="9"
+                                 Fill="{Binding ChannelAccent}"
+                                 VerticalAlignment="Center"
+                                 Margin="0,0,7,0" />
+                        <TextBlock Text="{Binding Title}"
+                                   Foreground="{StaticResource TextBrush}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
                     <StackPanel Grid.Column="1"
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Right"
@@ -644,7 +652,17 @@
                     </Grid.ColumnDefinitions>
 
                     <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="9"
+                                 Height="9"
+                                 Fill="{Binding ChannelAccent}"
+                                 VerticalAlignment="Center"
+                                 Margin="0,0,7,0" />
                         <TextBlock Text="{Binding Title}"
+                                   Grid.Column="1"
                                    Foreground="{StaticResource TextBrush}"
                                    FontSize="14"
                                    FontWeight="SemiBold"
@@ -662,6 +680,7 @@
                             </TextBlock.Style>
                         </TextBlock>
                         <TextBox Text="{Binding EditableTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Grid.Column="1"
                                  Width="92"
                                  Height="22"
                                  Padding="5,0"
@@ -1094,9 +1113,18 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <CheckBox Content="{Binding Label}"
-                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                      Style="{StaticResource TinyCheckBoxStyle}" />
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      Style="{StaticResource TinyCheckBoxStyle}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8"
+                                                             Height="8"
+                                                             Fill="{Binding Accent}"
+                                                             VerticalAlignment="Center"
+                                                             Margin="0,0,5,0" />
+                                                    <TextBlock Text="{Binding Label}"
+                                                               VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </CheckBox>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
@@ -1859,9 +1887,18 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <CheckBox Content="{Binding Label}"
-                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                      Style="{StaticResource TinyCheckBoxStyle}" />
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      Style="{StaticResource TinyCheckBoxStyle}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8"
+                                                             Height="8"
+                                                             Fill="{Binding Accent}"
+                                                             VerticalAlignment="Center"
+                                                             Margin="0,0,5,0" />
+                                                    <TextBlock Text="{Binding Label}"
+                                                               VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </CheckBox>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
