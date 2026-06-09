@@ -672,7 +672,7 @@
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Visible" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding DataContext.IsTemperatureNameEditMode, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        <DataTrigger Binding="{Binding DataContext.IsSensorDetailNameEditMode, RelativeSource={RelativeSource AncestorType=Window}}"
                                                      Value="True">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
@@ -697,7 +697,7 @@
                                 <Style TargetType="TextBox">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding DataContext.IsTemperatureNameEditMode, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        <DataTrigger Binding="{Binding DataContext.IsSensorDetailNameEditMode, RelativeSource={RelativeSource AncestorType=Window}}"
                                                      Value="True">
                                             <Setter Property="Visibility" Value="Visible" />
                                         </DataTrigger>
@@ -1708,9 +1708,13 @@
                         </Grid>
                     </Border>
 
-                    <Border Grid.Row="4"
+                    <Border x:Name="HumidityCard"
+                            Grid.Row="4"
                             Style="{StaticResource PanelStyle}"
-                            Padding="24,13">
+                            Padding="24,13"
+                            Cursor="Hand"
+                            ToolTip="클릭하여 습도 채널 상세 보기"
+                            MouseLeftButtonDown="HumidityCard_MouseLeftButtonDown">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -1747,9 +1751,13 @@
                         </Grid>
                     </Border>
 
-                    <Border Grid.Row="6"
+                    <Border x:Name="PressureCard"
+                            Grid.Row="6"
                             Style="{StaticResource PanelStyle}"
-                            Padding="24,13">
+                            Padding="24,13"
+                            Cursor="Hand"
+                            ToolTip="클릭하여 대기압 채널 상세 보기"
+                            MouseLeftButtonDown="PressureCard_MouseLeftButtonDown">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -2197,7 +2205,7 @@
                     </Grid>
                 </Border>
 
-                <Border x:Name="TemperatureDetailOverlayRoot"
+                <Border x:Name="SensorDetailOverlayRoot"
                         Grid.Column="0"
                         Grid.ColumnSpan="3"
                         Width="660"
@@ -2210,7 +2218,7 @@
                         BorderThickness="1.2"
                         CornerRadius="14"
                         Padding="14"
-                        Visibility="{Binding TemperatureDetailVisibility}"
+                        Visibility="{Binding SensorDetailVisibility}"
                         Effect="{StaticResource PanelShadow}">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -2219,7 +2227,7 @@
                         </Grid.RowDefinitions>
 
                         <Grid>
-                            <TextBlock Text="온도 채널 상세"
+                            <TextBlock Text="{Binding SensorDetailTitle}"
                                        Foreground="{StaticResource TextBrush}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
@@ -2228,20 +2236,20 @@
                             <StackPanel Orientation="Horizontal"
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Center">
-                                <Button Click="ToggleTemperatureNameEditModeButton_Click"
+                                <Button Click="ToggleSensorDetailNameEditModeButton_Click"
                                         Background="Transparent"
                                         BorderThickness="0"
                                         Padding="8,3"
                                         Margin="0,0,8,0"
                                         Cursor="Hand"
-                                        ToolTip="{Binding TemperatureNameEditButtonToolTip}">
+                                        ToolTip="{Binding SensorDetailNameEditButtonToolTip}">
                                     <Grid>
                                         <Viewbox Width="18" Height="18">
                                             <Viewbox.Style>
                                                 <Style TargetType="Viewbox">
                                                     <Setter Property="Visibility" Value="Visible" />
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsTemperatureNameEditMode}" Value="True">
+                                                        <DataTrigger Binding="{Binding IsSensorDetailNameEditMode}" Value="True">
                                                             <Setter Property="Visibility" Value="Collapsed" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
@@ -2259,7 +2267,7 @@
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsTemperatureNameEditMode}" Value="True">
+                                                        <DataTrigger Binding="{Binding IsSensorDetailNameEditMode}" Value="True">
                                                             <Setter Property="Visibility" Value="Visible" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
@@ -2269,16 +2277,16 @@
                                     </Grid>
                                 </Button>
 
-                                <TextBlock Text="실시간 온도"
+                                <TextBlock Text="{Binding SensorDetailRealtimeLabel}"
                                            Foreground="{StaticResource MutedTextBrush}"
                                            FontSize="13"
                                            VerticalAlignment="Center" />
                             </StackPanel>
                         </Grid>
 
-                        <ItemsControl x:Name="TemperatureSensorFeedOverlayItemsControl"
+                        <ItemsControl x:Name="SensorDetailOverlayItemsControl"
                                       Grid.Row="1"
-                                      ItemsSource="{Binding SensorFeedItems}"
+                                      ItemsSource="{Binding SensorDetailItems}"
                                       ItemTemplate="{StaticResource TemperatureDetailSensorCardTemplate}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>

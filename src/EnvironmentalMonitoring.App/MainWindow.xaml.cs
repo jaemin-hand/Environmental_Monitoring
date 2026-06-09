@@ -90,6 +90,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly Dictionary<string, bool> _graphChannelSelectionByCode = new(StringComparer.OrdinalIgnoreCase);
     private IReadOnlyList<SensorTile> _sensorTiles = [];
     private IReadOnlyList<SensorFeedItem> _sensorFeedItems = [];
+    private IReadOnlyList<SensorFeedItem> _sensorDetailItems = [];
+    private IReadOnlyList<MonitoringChannelSnapshot> _latestChannelSnapshots = [];
     private IReadOnlyList<RecentEventItem> _recentEvents = [];
     private IReadOnlyList<LiveChannelItem> _liveChannelItems = [];
     private IReadOnlyList<SampleHistoryItem> _sampleHistoryItems = [];
@@ -146,8 +148,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _graphTimeThreeQuarterText = "-";
     private string _graphTimeEndText = "-";
     private string _selectedGraphTimeScale = "1초";
-    private bool _isTemperaturePopoverOpen;
-    private bool _isTemperatureNameEditMode;
+    private bool _isSensorDetailPopoverOpen;
+    private bool _isSensorDetailNameEditMode;
+    private ChannelKind _selectedSensorDetailKind = ChannelKind.Temperature;
     private bool _isHistoryModalOpen;
     private bool _isCalibrationModalOpen;
     private bool _isAlarmActionModalOpen;
@@ -488,6 +491,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         private set => SetField(ref _sensorFeedItems, value);
     }
 
+    public IReadOnlyList<SensorFeedItem> SensorDetailItems
+    {
+        get => _sensorDetailItems;
+        private set => SetField(ref _sensorDetailItems, value);
+    }
+
     public IReadOnlyList<RecentEventItem> RecentEvents
     {
         get => _recentEvents;
@@ -821,35 +830,49 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    public bool IsTemperaturePopoverOpen
+    public bool IsSensorDetailPopoverOpen
     {
-        get => _isTemperaturePopoverOpen;
+        get => _isSensorDetailPopoverOpen;
         private set
         {
-            if (SetField(ref _isTemperaturePopoverOpen, value))
+            if (SetField(ref _isSensorDetailPopoverOpen, value))
             {
-                OnPropertyChanged(nameof(TemperatureDetailVisibility));
+                OnPropertyChanged(nameof(SensorDetailVisibility));
             }
         }
     }
 
-    public Visibility TemperatureDetailVisibility =>
-        _isTemperaturePopoverOpen ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility SensorDetailVisibility =>
+        _isSensorDetailPopoverOpen ? Visibility.Visible : Visibility.Collapsed;
 
-    public bool IsTemperatureNameEditMode
+    public bool IsSensorDetailNameEditMode
     {
-        get => _isTemperatureNameEditMode;
+        get => _isSensorDetailNameEditMode;
         private set
         {
-            if (SetField(ref _isTemperatureNameEditMode, value))
+            if (SetField(ref _isSensorDetailNameEditMode, value))
             {
-                OnPropertyChanged(nameof(TemperatureNameEditButtonToolTip));
+                OnPropertyChanged(nameof(SensorDetailNameEditButtonToolTip));
             }
         }
     }
 
-    public string TemperatureNameEditButtonToolTip =>
-        IsTemperatureNameEditMode ? "센서 이름 저장" : "센서 이름 편집";
+    public string SensorDetailNameEditButtonToolTip =>
+        IsSensorDetailNameEditMode ? "센서 이름 저장" : "센서 이름 편집";
+
+    public string SensorDetailTitle => _selectedSensorDetailKind switch
+    {
+        ChannelKind.Humidity => "습도 채널 상세",
+        ChannelKind.Pressure => "대기압 채널 상세",
+        _ => "온도 채널 상세",
+    };
+
+    public string SensorDetailRealtimeLabel => _selectedSensorDetailKind switch
+    {
+        ChannelKind.Humidity => "실시간 습도",
+        ChannelKind.Pressure => "실시간 대기압",
+        _ => "실시간 온도",
+    };
 
     public Visibility HistoryModalVisibility =>
         _isHistoryModalOpen ? Visibility.Visible : Visibility.Collapsed;
@@ -1322,10 +1345,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ? null
             : $"{SelectedSampleHistoryItem.SampledAt}|{SelectedSampleHistoryItem.ChannelCode}";
 
+        _latestChannelSnapshots = snapshot.ChannelSnapshots;
+
         SensorTiles = CreateSensorTiles(snapshot.ChannelSnapshots);
-        if (!IsTemperatureNameEditMode)
+        if (!IsSensorDetailNameEditMode)
         {
             SensorFeedItems = CreateSensorFeedItems(snapshot.ChannelSnapshots);
+            SensorDetailItems = CreateSensorDetailItems(snapshot.ChannelSnapshots, _selectedSensorDetailKind);
         }
 
         RecentEvents = CreateRecentEvents(snapshot.RecentEvents);
@@ -1471,9 +1497,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        if (e.Key == Key.Escape && IsTemperaturePopoverOpen)
+        if (e.Key == Key.Escape && IsSensorDetailPopoverOpen)
         {
-            IsTemperaturePopoverOpen = false;
+            CloseSensorDetailPopover();
             e.Handled = true;
             return;
         }
@@ -1844,44 +1870,75 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void MainWindow_PreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (IsTemperaturePopoverOpen
+        if (IsSensorDetailPopoverOpen
             && !AverageTemperatureCard.IsMouseOver
-            && !TemperatureDetailOverlayRoot.IsMouseOver)
+            && !HumidityCard.IsMouseOver
+            && !PressureCard.IsMouseOver
+            && !SensorDetailOverlayRoot.IsMouseOver)
         {
-            IsTemperaturePopoverOpen = false;
-            IsTemperatureNameEditMode = false;
+            CloseSensorDetailPopover();
         }
     }
 
     private void AverageTemperatureCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        IsTemperaturePopoverOpen = !IsTemperaturePopoverOpen;
-        if (!IsTemperaturePopoverOpen)
-        {
-            IsTemperatureNameEditMode = false;
-        }
-
+        ToggleSensorDetailPopover(ChannelKind.Temperature);
         e.Handled = true;
     }
 
-    private async void ToggleTemperatureNameEditModeButton_Click(object sender, RoutedEventArgs e)
+    private void HumidityCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (!IsTemperatureNameEditMode)
+        ToggleSensorDetailPopover(ChannelKind.Humidity);
+        e.Handled = true;
+    }
+
+    private void PressureCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        ToggleSensorDetailPopover(ChannelKind.Pressure);
+        e.Handled = true;
+    }
+
+    private void ToggleSensorDetailPopover(ChannelKind kind)
+    {
+        if (IsSensorDetailPopoverOpen && _selectedSensorDetailKind == kind)
         {
-            foreach (var item in SensorFeedItems)
+            CloseSensorDetailPopover();
+            return;
+        }
+
+        _selectedSensorDetailKind = kind;
+        IsSensorDetailNameEditMode = false;
+        SensorDetailItems = CreateSensorDetailItems(_latestChannelSnapshots, _selectedSensorDetailKind);
+        OnPropertyChanged(nameof(SensorDetailTitle));
+        OnPropertyChanged(nameof(SensorDetailRealtimeLabel));
+        IsSensorDetailPopoverOpen = true;
+    }
+
+    private void CloseSensorDetailPopover()
+    {
+        IsSensorDetailPopoverOpen = false;
+        IsSensorDetailNameEditMode = false;
+        SensorDetailItems = CreateSensorDetailItems(_latestChannelSnapshots, _selectedSensorDetailKind);
+    }
+
+    private async void ToggleSensorDetailNameEditModeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!IsSensorDetailNameEditMode)
+        {
+            foreach (var item in SensorDetailItems)
             {
                 item.EditableTitle = item.Title;
             }
 
-            IsTemperatureNameEditMode = true;
+            IsSensorDetailNameEditMode = true;
             e.Handled = true;
             return;
         }
 
-        SyncTemperatureNameEditorValues();
+        SyncSensorDetailNameEditorValues();
 
         var changedCount = 0;
-        foreach (var item in SensorFeedItems)
+        foreach (var item in SensorDetailItems)
         {
             if (string.IsNullOrWhiteSpace(item.ChannelCode))
             {
@@ -1918,10 +1975,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _settingsDocument = BuildSettingsDocumentFromEditor();
             _settingsStore.Save(_settingsDocument);
             ApplyRuntimeState();
+            SensorDetailItems = CreateSensorDetailItems(_latestChannelSnapshots, _selectedSensorDetailKind);
         }
 
-        IsTemperaturePopoverOpen = true;
-        IsTemperatureNameEditMode = false;
+        IsSensorDetailPopoverOpen = true;
+        IsSensorDetailNameEditMode = false;
         FooterStatusMessage = changedCount == 0
             ? "센서 이름 변경 없음"
             : $"센서 이름 {changedCount}건 저장 완료";
@@ -1933,9 +1991,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         e.Handled = true;
     }
 
-    private void SyncTemperatureNameEditorValues()
+    private void SyncSensorDetailNameEditorValues()
     {
-        foreach (var textBox in FindVisualChildren<TextBox>(TemperatureSensorFeedOverlayItemsControl))
+        foreach (var textBox in FindVisualChildren<TextBox>(SensorDetailOverlayItemsControl))
         {
             textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
 
@@ -2265,7 +2323,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(HistoryModalVisibility));
         }
 
-        IsTemperaturePopoverOpen = false;
+        CloseSensorDetailPopover();
         FooterStatusMessage = isOpen
             ? "3점 캘리브레이션 모달 표시 중"
             : "실시간 대시보드 표시 중";
@@ -2286,7 +2344,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(CalibrationModalVisibility));
         }
 
-        IsTemperaturePopoverOpen = false;
+        CloseSensorDetailPopover();
         _currentView = isOpen ? MainViewMode.History : MainViewMode.Dashboard;
         FooterStatusMessage = isOpen
             ? "DB 기준 히스토리 조회 모달 표시 중"
@@ -2317,7 +2375,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 OnPropertyChanged(nameof(CalibrationModalVisibility));
             }
 
-            IsTemperaturePopoverOpen = false;
+            CloseSensorDetailPopover();
         }
 
         FooterStatusMessage = isOpen
@@ -2673,15 +2731,58 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
     {
         var lookup = channelSnapshots.ToDictionary(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase);
-        var editingTitles = IsTemperatureNameEditMode
-            ? _sensorFeedItems
+
+        return _blueprint.Channels
+            .Where(channel => channel.Kind == ChannelKind.Temperature)
+            .Take(8)
+            .Select(channel =>
+            {
+                lookup.TryGetValue(channel.Name, out var snapshot);
+                var title = ToDisplayChannelName(channel);
+
+                if (!channel.IsActive)
+                {
+                    var inactiveItem = new SensorFeedItem(
+                        title,
+                        "-",
+                        string.Empty,
+                        "센서 없음",
+                        DashboardSeverity.Notice,
+                        GetChannelAccentBrush(channel),
+                        IsActive: false,
+                        ChannelCode: channel.Name);
+                    return inactiveItem;
+                }
+
+                var severity = ResolveTileSeverity(channel, snapshot);
+
+                var item = new SensorFeedItem(
+                    title,
+                    FormatMetricNumber(snapshot?.Value),
+                    "°C",
+                    ResolveSensorFeedStatusText(channel, snapshot),
+                    severity,
+                    GetChannelAccentBrush(channel),
+                    ChannelCode: channel.Name);
+                return item;
+            })
+            .ToArray();
+    }
+
+    private IReadOnlyList<SensorFeedItem> CreateSensorDetailItems(
+        IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots,
+        ChannelKind kind)
+    {
+        var lookup = channelSnapshots.ToDictionary(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase);
+        var editingTitles = IsSensorDetailNameEditMode
+            ? _sensorDetailItems
                 .Where(item => !string.IsNullOrWhiteSpace(item.ChannelCode))
                 .ToDictionary(item => item.ChannelCode, item => item.EditableTitle, StringComparer.OrdinalIgnoreCase)
             : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         return _blueprint.Channels
-            .Where(channel => channel.Kind == ChannelKind.Temperature)
-            .Take(8)
+            .Where(channel => channel.Kind == kind)
+            .OrderBy(GetGraphChannelSortKey)
             .Select(channel =>
             {
                 lookup.TryGetValue(channel.Name, out var snapshot);
@@ -2706,11 +2807,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 }
 
                 var severity = ResolveTileSeverity(channel, snapshot);
-
                 var item = new SensorFeedItem(
                     title,
                     FormatMetricNumber(snapshot?.Value),
-                    "°C",
+                    ToDetailCardUnit(channel.Kind),
                     ResolveSensorFeedStatusText(channel, snapshot),
                     severity,
                     GetChannelAccentBrush(channel),
@@ -3150,6 +3250,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         value.HasValue
             ? value.Value.ToString("0.0", CultureInfo.InvariantCulture)
             : "--";
+
+    private static string ToDetailCardUnit(ChannelKind kind) => kind switch
+    {
+        ChannelKind.Temperature => "°C",
+        ChannelKind.Humidity => "%",
+        ChannelKind.Pressure => "kPa",
+        _ => string.Empty,
+    };
 
     private static string BuildCleanCommunicationDetail(
         IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
