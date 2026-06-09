@@ -160,20 +160,21 @@ public sealed class CalibrationPointEditorItem : INotifyPropertyChanged
     {
         _owner = owner;
         PointNumber = pointNumber;
+        _referenceValueText = owner.GetDefaultReferenceValueText(pointNumber);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public int PointNumber { get; }
 
-    public string Title => $"P{PointNumber}";
+    public string Title => _owner.GetCalibrationPointTitle(PointNumber);
 
     public string RawValueText => _rawValue.HasValue
         ? $"{_rawValue.Value:0.###}"
         : "미캡처";
 
     public string RawValueDetailText => _rawValue.HasValue
-        ? $"Raw {_rawValue.Value:0.###} {_owner.Unit}"
+        ? $"Raw {_rawValue.Value:0.###} {_owner.DisplayUnit}"
         : "현재값 캡처 필요";
 
     public string ReferenceValueText
@@ -202,7 +203,7 @@ public sealed class CalibrationPointEditorItem : INotifyPropertyChanged
                 return "숫자 확인";
             }
 
-            if (!_rawValue.HasValue && string.IsNullOrWhiteSpace(ReferenceValueText))
+            if (!_rawValue.HasValue && !HasCustomReferenceValue)
             {
                 return "대기";
             }
@@ -230,7 +231,13 @@ public sealed class CalibrationPointEditorItem : INotifyPropertyChanged
     }
 
     public bool HasAnyInput =>
-        _rawValue.HasValue || !string.IsNullOrWhiteSpace(ReferenceValueText);
+        _rawValue.HasValue || HasCustomReferenceValue;
+
+    public bool HasCustomReferenceValue =>
+        !string.Equals(
+            ReferenceValueText,
+            _owner.GetDefaultReferenceValueText(PointNumber),
+            StringComparison.OrdinalIgnoreCase);
 
     public bool IsComplete =>
         _rawValue.HasValue && TryGetReferenceValue(out _);
@@ -265,7 +272,7 @@ public sealed class CalibrationPointEditorItem : INotifyPropertyChanged
     public void Clear()
     {
         _rawValue = null;
-        _referenceValueText = string.Empty;
+        _referenceValueText = _owner.GetDefaultReferenceValueText(PointNumber);
         OnPropertyChanged(nameof(RawValueText));
         OnPropertyChanged(nameof(RawValueDetailText));
         OnPropertyChanged(nameof(ReferenceValueText));
@@ -304,6 +311,7 @@ public sealed class CalibrationPointEditorItem : INotifyPropertyChanged
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(StatusBrush));
         OnPropertyChanged(nameof(HasAnyInput));
+        OnPropertyChanged(nameof(HasCustomReferenceValue));
         OnPropertyChanged(nameof(IsComplete));
         OnPropertyChanged(nameof(HasInvalidReference));
     }
@@ -356,6 +364,8 @@ public sealed class CalibrationChannelItem : INotifyPropertyChanged
 
     public string Unit { get; }
 
+    public string DisplayUnit => NormalizeDisplayUnit(Unit);
+
     public ObservableCollection<CalibrationPointEditorItem> Points { get; }
 
     public double? CurrentValue => _currentValue;
@@ -369,7 +379,7 @@ public sealed class CalibrationChannelItem : INotifyPropertyChanged
     };
 
     public string CurrentValueText => _currentValue.HasValue
-        ? $"{_currentValue.Value:0.###} {Unit}"
+        ? FormatDisplayValue(_currentValue.Value)
         : "-";
 
     public string PreviewValueText
@@ -382,7 +392,7 @@ public sealed class CalibrationChannelItem : INotifyPropertyChanged
             }
 
             var preview = CalibrationCalculator.Apply(_currentValue.Value, 1m, 0m, points);
-            return $"{preview:0.###} {Unit}";
+            return FormatDisplayValue(preview);
         }
     }
 
@@ -456,6 +466,58 @@ public sealed class CalibrationChannelItem : INotifyPropertyChanged
 
             return rawValues.Length != rawValues.Distinct().Count();
         }
+    }
+
+    public string GetCalibrationPointTitle(int pointNumber)
+    {
+        var referenceValue = GetDefaultReferenceValueText(pointNumber);
+        return string.IsNullOrWhiteSpace(referenceValue)
+            ? $"측정포인트 {pointNumber}"
+            : $"{referenceValue}{DisplayUnit} 기준";
+    }
+
+    public string GetDefaultReferenceValueText(int pointNumber) =>
+        Kind switch
+        {
+            ChannelKind.Temperature => pointNumber switch
+            {
+                1 => "0",
+                2 => "20",
+                3 => "40",
+                _ => string.Empty,
+            },
+            ChannelKind.Humidity => pointNumber switch
+            {
+                1 => "20",
+                2 => "50",
+                3 => "80",
+                _ => string.Empty,
+            },
+            ChannelKind.Pressure => pointNumber switch
+            {
+                1 => "96",
+                2 => "101.3",
+                3 => "105",
+                _ => string.Empty,
+            },
+            _ => string.Empty,
+        };
+
+    public string FormatDisplayValue(double value) =>
+        $"{value:0.###} {DisplayUnit}";
+
+    public string FormatDisplayValue(decimal value) =>
+        $"{value:0.###} {DisplayUnit}";
+
+    private static string NormalizeDisplayUnit(string unit)
+    {
+        if (string.Equals(unit, "degC", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(unit, "°C", StringComparison.OrdinalIgnoreCase))
+        {
+            return "℃";
+        }
+
+        return unit;
     }
 
     public void UpdateCurrentValue(double? value, string qualityText)
@@ -542,8 +604,11 @@ public sealed record SensorFeedItem(
     string Unit,
     string StatusText,
     DashboardSeverity Severity,
-    bool IsActive = true)
+    bool IsActive = true,
+    string ChannelCode = "")
 {
+    public string EditableTitle { get; set; } = Title;
+
     public Brush Accent => !IsActive
         ? DashboardPalette.TextMuted
         : Severity switch
@@ -616,6 +681,12 @@ public sealed class SettingsChannelItem
 public sealed record LookupOption(
     string Value,
     string Label);
+
+public sealed record HistoryAxisTickItem(
+    double X,
+    double LabelX,
+    string Label,
+    double Opacity);
 
 public sealed record SampleHistoryItem(
     string SampledAt,

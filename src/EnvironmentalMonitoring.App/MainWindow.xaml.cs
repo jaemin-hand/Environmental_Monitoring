@@ -138,6 +138,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _humidityTrendPoints = string.Empty;
     private string _pressureTrendPoints = string.Empty;
     private string _historyTemperatureTrendPoints = string.Empty;
+    private IReadOnlyList<HistoryAxisTickItem> _historyTimeAxisTicks = CreateHistoryTimeAxisTicks();
+    private double _historyHighAlarmLineY;
+    private double _historyHighAlarmLabelY;
+    private string _historyHighAlarmText = string.Empty;
+    private Visibility _historyHighAlarmLineVisibility = Visibility.Collapsed;
+    private double _historyLowAlarmLineY;
+    private double _historyLowAlarmLabelY;
+    private string _historyLowAlarmText = string.Empty;
+    private Visibility _historyLowAlarmLineVisibility = Visibility.Collapsed;
     private string _graphTimeStartText = "-";
     private string _graphTimeQuarterText = "-";
     private string _graphTimeMiddleText = "-";
@@ -145,6 +154,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _graphTimeEndText = "-";
     private string _selectedGraphTimeScale = "1초";
     private bool _isTemperaturePopoverOpen;
+    private bool _isTemperatureNameEditMode;
+    private bool _isSensorNameEditorOpen;
+    private string _editingSensorChannelCode = string.Empty;
+    private string _editingSensorOriginalName = string.Empty;
+    private string _sensorNameEditText = string.Empty;
     private bool _isHistoryModalOpen;
     private bool _isCalibrationModalOpen;
     private bool _isAlarmActionModalOpen;
@@ -722,6 +736,60 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         private set => SetField(ref _historyTemperatureTrendPoints, value);
     }
 
+    public IReadOnlyList<HistoryAxisTickItem> HistoryTimeAxisTicks
+    {
+        get => _historyTimeAxisTicks;
+        private set => SetField(ref _historyTimeAxisTicks, value);
+    }
+
+    public double HistoryHighAlarmLineY
+    {
+        get => _historyHighAlarmLineY;
+        private set => SetField(ref _historyHighAlarmLineY, value);
+    }
+
+    public double HistoryHighAlarmLabelY
+    {
+        get => _historyHighAlarmLabelY;
+        private set => SetField(ref _historyHighAlarmLabelY, value);
+    }
+
+    public string HistoryHighAlarmText
+    {
+        get => _historyHighAlarmText;
+        private set => SetField(ref _historyHighAlarmText, value);
+    }
+
+    public Visibility HistoryHighAlarmLineVisibility
+    {
+        get => _historyHighAlarmLineVisibility;
+        private set => SetField(ref _historyHighAlarmLineVisibility, value);
+    }
+
+    public double HistoryLowAlarmLineY
+    {
+        get => _historyLowAlarmLineY;
+        private set => SetField(ref _historyLowAlarmLineY, value);
+    }
+
+    public double HistoryLowAlarmLabelY
+    {
+        get => _historyLowAlarmLabelY;
+        private set => SetField(ref _historyLowAlarmLabelY, value);
+    }
+
+    public string HistoryLowAlarmText
+    {
+        get => _historyLowAlarmText;
+        private set => SetField(ref _historyLowAlarmText, value);
+    }
+
+    public Visibility HistoryLowAlarmLineVisibility
+    {
+        get => _historyLowAlarmLineVisibility;
+        private set => SetField(ref _historyLowAlarmLineVisibility, value);
+    }
+
     public string GraphTimeStartText
     {
         get => _graphTimeStartText;
@@ -767,7 +835,40 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public bool IsTemperaturePopoverOpen
     {
         get => _isTemperaturePopoverOpen;
-        private set => SetField(ref _isTemperaturePopoverOpen, value);
+        private set
+        {
+            if (SetField(ref _isTemperaturePopoverOpen, value))
+            {
+                OnPropertyChanged(nameof(TemperatureDetailVisibility));
+            }
+        }
+    }
+
+    public Visibility TemperatureDetailVisibility =>
+        _isTemperaturePopoverOpen ? Visibility.Visible : Visibility.Collapsed;
+
+    public bool IsTemperatureNameEditMode
+    {
+        get => _isTemperatureNameEditMode;
+        private set
+        {
+            if (SetField(ref _isTemperatureNameEditMode, value))
+            {
+                OnPropertyChanged(nameof(TemperatureNameEditButtonToolTip));
+            }
+        }
+    }
+
+    public string TemperatureNameEditButtonToolTip =>
+        IsTemperatureNameEditMode ? "센서 이름 저장" : "센서 이름 편집";
+
+    public Visibility SensorNameEditorVisibility =>
+        _isSensorNameEditorOpen ? Visibility.Visible : Visibility.Collapsed;
+
+    public string SensorNameEditText
+    {
+        get => _sensorNameEditText;
+        set => SetField(ref _sensorNameEditText, value);
     }
 
     public Visibility HistoryModalVisibility =>
@@ -909,10 +1010,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             .Select(channel => new LookupOption(channel.Name, ToDisplayChannelName(channel)))
             .ToArray();
 
+        var activeChannelOptions = _blueprint.Channels
+            .Where(channel => channel.IsActive)
+            .OrderBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(channel => new LookupOption(channel.Name, ToDisplayChannelName(channel)))
+            .ToArray();
+
         HistoryChannelOptions =
         [
             new LookupOption(string.Empty, "전체 채널"),
-            .. channelOptions,
+            .. activeChannelOptions,
         ];
 
         var locationOptions = _blueprint.Channels
@@ -1235,7 +1342,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             : $"{SelectedSampleHistoryItem.SampledAt}|{SelectedSampleHistoryItem.ChannelCode}";
 
         SensorTiles = CreateSensorTiles(snapshot.ChannelSnapshots);
-        SensorFeedItems = CreateSensorFeedItems(snapshot.ChannelSnapshots);
+        if (!IsTemperatureNameEditMode)
+        {
+            SensorFeedItems = CreateSensorFeedItems(snapshot.ChannelSnapshots);
+        }
+
         RecentEvents = CreateRecentEvents(snapshot.RecentEvents);
         StatusCards = CreateTopStatusCards(snapshot);
         DashboardMetricCards = CreateDashboardMetricCards(snapshot);
@@ -1752,16 +1863,214 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void MainWindow_PreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (IsTemperaturePopoverOpen && !AverageTemperatureCard.IsMouseOver)
+        if (IsTemperaturePopoverOpen
+            && !AverageTemperatureCard.IsMouseOver
+            && !TemperatureDetailOverlayRoot.IsMouseOver)
         {
             IsTemperaturePopoverOpen = false;
+            IsTemperatureNameEditMode = false;
         }
     }
 
     private void AverageTemperatureCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         IsTemperaturePopoverOpen = !IsTemperaturePopoverOpen;
+        if (!IsTemperaturePopoverOpen)
+        {
+            IsTemperatureNameEditMode = false;
+        }
+
         e.Handled = true;
+    }
+
+    private async void ToggleTemperatureNameEditModeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!IsTemperatureNameEditMode)
+        {
+            foreach (var item in SensorFeedItems)
+            {
+                item.EditableTitle = item.Title;
+            }
+
+            IsTemperatureNameEditMode = true;
+            e.Handled = true;
+            return;
+        }
+
+        SyncTemperatureNameEditorValues();
+
+        var changedCount = 0;
+        foreach (var item in SensorFeedItems)
+        {
+            if (string.IsNullOrWhiteSpace(item.ChannelCode))
+            {
+                continue;
+            }
+
+            var newName = item.EditableTitle.Trim();
+            if (string.IsNullOrWhiteSpace(newName))
+            {
+                FooterStatusMessage = "센서 이름은 비워둘 수 없습니다.";
+                return;
+            }
+
+            var channelSetting = ChannelSettingsItems.FirstOrDefault(channel =>
+                string.Equals(channel.Code, item.ChannelCode, StringComparison.OrdinalIgnoreCase));
+
+            if (channelSetting is null)
+            {
+                FooterStatusMessage = $"채널 설정을 찾을 수 없습니다: {item.ChannelCode}";
+                return;
+            }
+
+            if (string.Equals(channelSetting.DisplayName, newName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            channelSetting.DisplayName = newName;
+            changedCount++;
+        }
+
+        if (changedCount > 0)
+        {
+            _settingsDocument = BuildSettingsDocumentFromEditor();
+            _settingsStore.Save(_settingsDocument);
+            ApplyRuntimeState();
+        }
+
+        IsTemperaturePopoverOpen = true;
+        IsTemperatureNameEditMode = false;
+        FooterStatusMessage = changedCount == 0
+            ? "센서 이름 변경 없음"
+            : $"센서 이름 {changedCount}건 저장 완료";
+        if (changedCount > 0)
+        {
+            await RefreshAllAsync();
+        }
+
+        e.Handled = true;
+    }
+
+    private void SyncTemperatureNameEditorValues()
+    {
+        foreach (var textBox in FindVisualChildren<TextBox>(TemperatureSensorFeedOverlayItemsControl))
+        {
+            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+
+            if (textBox.DataContext is SensorFeedItem item)
+            {
+                item.EditableTitle = textBox.Text;
+            }
+        }
+    }
+
+    private static IEnumerable<T> FindVisualChildren<T>(DependencyObject root)
+        where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is T matched)
+            {
+                yield return matched;
+            }
+
+            foreach (var descendant in FindVisualChildren<T>(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    private void EditSensorNameButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not SensorFeedItem item
+            || string.IsNullOrWhiteSpace(item.ChannelCode))
+        {
+            return;
+        }
+
+        var channelSetting = ChannelSettingsItems.FirstOrDefault(channel =>
+            string.Equals(channel.Code, item.ChannelCode, StringComparison.OrdinalIgnoreCase));
+
+        if (channelSetting is null)
+        {
+            FooterStatusMessage = $"채널 설정을 찾을 수 없습니다: {item.ChannelCode}";
+            return;
+        }
+
+        _editingSensorChannelCode = item.ChannelCode;
+        _editingSensorOriginalName = string.IsNullOrWhiteSpace(channelSetting.DisplayName)
+            ? item.Title
+            : channelSetting.DisplayName;
+        SensorNameEditText = _editingSensorOriginalName;
+        IsTemperaturePopoverOpen = true;
+        SetSensorNameEditorOpen(true);
+        e.Handled = true;
+    }
+
+    private async void SaveSensorNameButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_editingSensorChannelCode))
+        {
+            return;
+        }
+
+        var newName = SensorNameEditText.Trim();
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            FooterStatusMessage = "센서 이름은 비워둘 수 없습니다.";
+            return;
+        }
+
+        var channelSetting = ChannelSettingsItems.FirstOrDefault(channel =>
+            string.Equals(channel.Code, _editingSensorChannelCode, StringComparison.OrdinalIgnoreCase));
+
+        if (channelSetting is null)
+        {
+            FooterStatusMessage = $"채널 설정을 찾을 수 없습니다: {_editingSensorChannelCode}";
+            return;
+        }
+
+        if (string.Equals(_editingSensorOriginalName, newName, StringComparison.Ordinal))
+        {
+            SetSensorNameEditorOpen(false);
+            return;
+        }
+
+        var oldName = _editingSensorOriginalName;
+        channelSetting.DisplayName = newName;
+        _settingsDocument = BuildSettingsDocumentFromEditor();
+        _settingsStore.Save(_settingsDocument);
+        ApplyRuntimeState();
+        IsTemperaturePopoverOpen = true;
+        SetSensorNameEditorOpen(false);
+        FooterStatusMessage = $"센서 이름 변경 완료: {oldName} -> {channelSetting.DisplayName}";
+        await RefreshAllAsync();
+    }
+
+    private void CancelSensorNameEditButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetSensorNameEditorOpen(false);
+    }
+
+    private void SetSensorNameEditorOpen(bool isOpen)
+    {
+        if (_isSensorNameEditorOpen == isOpen)
+        {
+            return;
+        }
+
+        _isSensorNameEditorOpen = isOpen;
+        if (!isOpen)
+        {
+            _editingSensorChannelCode = string.Empty;
+            _editingSensorOriginalName = string.Empty;
+            SensorNameEditText = string.Empty;
+        }
+
+        OnPropertyChanged(nameof(SensorNameEditorVisibility));
     }
 
     private async void OpenCalibrationModalButton_Click(object sender, RoutedEventArgs e)
@@ -1805,6 +2114,110 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         point.Clear();
         FooterStatusMessage = "선택한 교정 포인트를 초기화했습니다.";
+    }
+
+    private async void ApplyCalibrationChannelButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not CalibrationChannelItem item)
+        {
+            return;
+        }
+
+        if (item.HasInvalidReference)
+        {
+            FooterStatusMessage = $"교정 기준값을 숫자로 입력했는지 확인하세요: {item.DisplayName}";
+            return;
+        }
+
+        if (item.HasDuplicateRawValues)
+        {
+            FooterStatusMessage = $"Raw 값이 중복된 교정 포인트가 있습니다: {item.DisplayName}";
+            return;
+        }
+
+        if (!item.HasCompleteThreePoint || !item.TryGetCalibrationPoints(out var calibrationPoints))
+        {
+            FooterStatusMessage = $"3개 측정포인트를 모두 캡처해야 합니다: {item.DisplayName}";
+            return;
+        }
+
+        var channelSetting = ChannelSettingsItems
+            .FirstOrDefault(channel => string.Equals(
+                channel.Code,
+                item.Code,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (channelSetting is null)
+        {
+            FooterStatusMessage = $"설정 채널을 찾을 수 없습니다: {item.DisplayName}";
+            return;
+        }
+
+        channelSetting.CalibrationPoints = calibrationPoints.ToList();
+
+        try
+        {
+            _settingsDocument = BuildSettingsDocumentFromEditor();
+            _settingsStore.Save(_settingsDocument);
+            ApplyRuntimeState();
+            _refreshTimer.Interval = GetRefreshInterval();
+            FooterStatusMessage = $"교정값 적용 완료: {item.DisplayName}";
+            await RefreshAllAsync();
+        }
+        catch (Exception ex)
+        {
+            FooterStatusMessage = $"교정값 적용 실패: {ex.Message}";
+        }
+    }
+
+    private async void ResetCalibrationChannelButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not CalibrationChannelItem item)
+        {
+            return;
+        }
+
+        var result = MessageBox.Show(
+            $"{item.DisplayName} 채널의 저장된 교정값을 초기화할까요?\n\n3점 교정값을 삭제하고 기본 보정값(Scale=1, Offset=0)으로 되돌립니다.",
+            "교정값 초기화 확인",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        var channelSetting = ChannelSettingsItems
+            .FirstOrDefault(channel => string.Equals(
+                channel.Code,
+                item.Code,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (channelSetting is null)
+        {
+            FooterStatusMessage = $"설정 채널을 찾을 수 없습니다: {item.DisplayName}";
+            return;
+        }
+
+        channelSetting.CalibrationScale = 1m;
+        channelSetting.Offset = 0m;
+        channelSetting.CalibrationPoints = [];
+        item.ClearReference();
+
+        try
+        {
+            _settingsDocument = BuildSettingsDocumentFromEditor();
+            _settingsStore.Save(_settingsDocument);
+            ApplyRuntimeState();
+            _refreshTimer.Interval = GetRefreshInterval();
+            FooterStatusMessage = $"교정값 초기화 완료: {item.DisplayName}";
+            await RefreshAllAsync();
+        }
+        catch (Exception ex)
+        {
+            FooterStatusMessage = $"교정값 초기화 실패: {ex.Message}";
+        }
     }
 
     private async void SaveCalibrationButton_Click(object sender, RoutedEventArgs e)
@@ -2369,6 +2782,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         IReadOnlyList<MonitoringChannelSnapshot> channelSnapshots)
     {
         var lookup = channelSnapshots.ToDictionary(item => item.ChannelCode, StringComparer.OrdinalIgnoreCase);
+        var editingTitles = IsTemperatureNameEditMode
+            ? _sensorFeedItems
+                .Where(item => !string.IsNullOrWhiteSpace(item.ChannelCode))
+                .ToDictionary(item => item.ChannelCode, item => item.EditableTitle, StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         return _blueprint.Channels
             .Where(channel => channel.Kind == ChannelKind.Temperature)
@@ -2376,26 +2794,36 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             .Select(channel =>
             {
                 lookup.TryGetValue(channel.Name, out var snapshot);
+                var title = ToDisplayChannelName(channel);
+                var editableTitle = editingTitles.TryGetValue(channel.Name, out var pendingTitle)
+                    ? pendingTitle
+                    : title;
 
                 if (!channel.IsActive)
                 {
-                    return new SensorFeedItem(
-                        ToDisplayChannelName(channel),
+                    var inactiveItem = new SensorFeedItem(
+                        title,
                         "-",
                         string.Empty,
                         "센서 없음",
                         DashboardSeverity.Notice,
-                        IsActive: false);
+                        IsActive: false,
+                        ChannelCode: channel.Name);
+                    inactiveItem.EditableTitle = editableTitle;
+                    return inactiveItem;
                 }
 
                 var severity = ResolveTileSeverity(channel, snapshot);
 
-                return new SensorFeedItem(
-                    ToDisplayChannelName(channel),
+                var item = new SensorFeedItem(
+                    title,
                     FormatMetricNumber(snapshot?.Value),
                     "°C",
-                    snapshot is null ? "미수신" : ToCleanQualityLabel(snapshot.QualityStatus),
-                    severity);
+                    ResolveSensorFeedStatusText(channel, snapshot),
+                    severity,
+                    ChannelCode: channel.Name);
+                item.EditableTitle = editableTitle;
+                return item;
             })
             .ToArray();
     }
@@ -2688,6 +3116,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private static string ToDisplayChannelName(MeasurementChannel channel)
     {
+        if (!string.IsNullOrWhiteSpace(channel.DisplayName))
+        {
+            return channel.DisplayName;
+        }
+
         if (channel.Kind == ChannelKind.Temperature
             && channel.Name.Length == 3
             && channel.Name[0] == 'T'
@@ -2697,9 +3130,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return $"T{temperatureIndex}";
         }
 
-        return string.IsNullOrWhiteSpace(channel.DisplayName)
-            ? channel.Name
-            : channel.DisplayName;
+        return channel.Name;
     }
 
     private static int GetGraphChannelSortKey(MeasurementChannel channel) => channel.Kind switch
@@ -2836,6 +3267,57 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _ => status.ToString(),
     };
 
+    private static string ResolveSensorFeedStatusText(
+        MeasurementChannel channel,
+        MonitoringChannelSnapshot? snapshot)
+    {
+        if (snapshot is null || snapshot.Value is null)
+        {
+            return "미수신";
+        }
+
+        if (snapshot.QualityStatus != SampleQualityStatus.Normal)
+        {
+            return ToCleanQualityLabel(snapshot.QualityStatus);
+        }
+
+        var value = snapshot.Value.Value;
+
+        if (channel.Kind == ChannelKind.Temperature && (value < -20 || value > 60))
+        {
+            return "범위 이탈";
+        }
+
+        if (channel.Kind == ChannelKind.Humidity && (value < 0 || value > 100))
+        {
+            return "범위 이탈";
+        }
+
+        if (channel.Kind == ChannelKind.Pressure && (value < 80 || value > 120))
+        {
+            return "범위 이탈";
+        }
+
+        if (channel.LowAlarmLimit.HasValue && value < (double)channel.LowAlarmLimit.Value)
+        {
+            return "임계치 이탈";
+        }
+
+        if (channel.HighAlarmLimit.HasValue && value > (double)channel.HighAlarmLimit.Value)
+        {
+            return "임계치 이탈";
+        }
+
+        if (channel.TargetValue.HasValue
+            && channel.DefaultDeviationThreshold.HasValue
+            && Math.Abs(value - (double)channel.TargetValue.Value) > (double)channel.DefaultDeviationThreshold.Value)
+        {
+            return "설정값 이탈";
+        }
+
+        return "정상";
+    }
+
     private static string ToCleanSeverityLabel(DashboardSeverity severity) => severity switch
     {
         DashboardSeverity.Critical => "경보",
@@ -2939,28 +3421,238 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void UpdateHistoryTemperatureTrend(IReadOnlyList<MonitoringSampleRecord> samples)
     {
+        var selectedDate = (SelectedReportDate ?? DateTime.Today).Date;
+        var dayStart = CreateLocalDayStart(selectedDate);
+        var dayEnd = dayStart.AddDays(1);
+
         var temperatureValues = samples
-            .Where(item => item.Kind == ChannelKind.Temperature && item.CorrectedValue.HasValue)
+            .Where(item => item.Kind == ChannelKind.Temperature
+                && item.CorrectedValue.HasValue
+                && item.SampledAt.ToLocalTime() >= dayStart
+                && item.SampledAt.ToLocalTime() <= dayEnd)
             .GroupBy(item => item.SampledAt)
             .OrderBy(group => group.Key)
-            .Select(group => group.Average(item => item.CorrectedValue!.Value))
+            .Select(group => (
+                SampledAt: group.Key,
+                Value: group.Average(item => item.CorrectedValue!.Value)))
             .ToArray();
-
-        if (temperatureValues.Length > 80)
-        {
-            temperatureValues = temperatureValues[^80..];
-        }
 
         if (temperatureValues.Length == 0)
         {
             HistoryTemperatureTrendPoints = string.Empty;
+            UpdateHistoryAlarmTriggerLines(ChannelKind.Temperature, samples);
             return;
         }
 
-        var min = temperatureValues.Min() - 1.0;
-        var max = temperatureValues.Max() + 1.0;
-        HistoryTemperatureTrendPoints = BuildPolylinePoints(temperatureValues, min, max);
+        HistoryTemperatureTrendPoints = BuildHistoryDailyPolylinePoints(
+            temperatureValues,
+            ChannelKind.Temperature,
+            dayStart,
+            dayEnd);
+        UpdateHistoryAlarmTriggerLines(ChannelKind.Temperature, samples);
     }
+
+    private static DateTimeOffset CreateLocalDayStart(DateTime date)
+    {
+        var localDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Unspecified);
+        return new DateTimeOffset(localDate, TimeZoneInfo.Local.GetUtcOffset(localDate));
+    }
+
+    private static IReadOnlyList<HistoryAxisTickItem> CreateHistoryTimeAxisTicks()
+    {
+        const int hoursPerDay = 24;
+        var ticks = new List<HistoryAxisTickItem>(hoursPerDay);
+
+        for (var hour = 1; hour <= hoursPerDay; hour++)
+        {
+            var x = MainGraphCanvasWidth * hour / hoursPerDay;
+            var labelX = Math.Clamp(x - 9d, 0d, MainGraphCanvasWidth - 24d);
+            var opacity = hour % 6 == 0 ? 0.9d : 0.35d;
+
+            ticks.Add(new HistoryAxisTickItem(
+                x,
+                labelX,
+                FormattableString.Invariant($"{hour}h"),
+                opacity));
+        }
+
+        return ticks;
+    }
+
+    private static string BuildHistoryDailyPolylinePoints(
+        IReadOnlyList<(DateTimeOffset SampledAt, double Value)> samples,
+        ChannelKind kind,
+        DateTimeOffset dayStart,
+        DateTimeOffset dayEnd)
+    {
+        if (samples.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var axis = GetGraphAxisScale(kind, MainGraphCanvasHeight);
+        var points = samples
+            .Where(item => double.IsFinite(item.Value))
+            .Select(item =>
+            {
+                var localSampledAt = item.SampledAt.ToLocalTime();
+                var x = CalculateGraphX(localSampledAt, dayStart, dayEnd);
+                var y = CalculateGraphY(item.Value, axis);
+                return new Point(x, y);
+            })
+            .OrderBy(point => point.X)
+            .ToArray();
+
+        if (points.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        if (points.Length == 1)
+        {
+            var x1 = Math.Max(0d, points[0].X - 2d);
+            var x2 = Math.Min(MainGraphCanvasWidth, points[0].X + 2d);
+            return FormattableString.Invariant($"{x1:0.##},{points[0].Y:0.##} {x2:0.##},{points[0].Y:0.##}");
+        }
+
+        return string.Join(
+            " ",
+            points.Select(point => FormattableString.Invariant($"{point.X:0.##},{point.Y:0.##}")));
+    }
+
+    private void UpdateHistoryAlarmTriggerLines(
+        ChannelKind kind,
+        IReadOnlyList<MonitoringSampleRecord> samples)
+    {
+        var axis = GetGraphAxisScale(kind, MainGraphCanvasHeight);
+        var thresholdChannel = ResolveHistoryThresholdChannel(kind, samples);
+
+        if (thresholdChannel is null)
+        {
+            HideHistoryAlarmTriggerLines();
+            return;
+        }
+
+        var (low, high) = ResolveAlarmLimitValues(thresholdChannel);
+        ApplyHistoryAlarmLine(high, axis, isHigh: true, kind);
+        ApplyHistoryAlarmLine(low, axis, isHigh: false, kind);
+    }
+
+    private SettingsChannelItem? ResolveHistoryThresholdChannel(
+        ChannelKind kind,
+        IReadOnlyList<MonitoringSampleRecord> samples)
+    {
+        if (!string.IsNullOrWhiteSpace(SelectedHistoryChannelCode))
+        {
+            var selected = ChannelSettingsItems.FirstOrDefault(item =>
+                string.Equals(item.Code, SelectedHistoryChannelCode, StringComparison.OrdinalIgnoreCase));
+            if (selected is not null && IsBlueprintChannelKind(selected.Code, kind))
+            {
+                return selected;
+            }
+        }
+
+        var firstSampleChannelCode = samples
+            .Where(item => item.Kind == kind)
+            .GroupBy(item => item.ChannelCode)
+            .OrderByDescending(group => group.Count())
+            .Select(group => group.Key)
+            .FirstOrDefault();
+
+        if (!string.IsNullOrWhiteSpace(firstSampleChannelCode))
+        {
+            return ChannelSettingsItems.FirstOrDefault(item =>
+                string.Equals(item.Code, firstSampleChannelCode, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var firstBlueprintChannel = _blueprint.Channels
+            .Where(channel => channel.Kind == kind && channel.IsActive)
+            .OrderBy(GetGraphChannelSortKey)
+            .FirstOrDefault();
+
+        return firstBlueprintChannel is null
+            ? null
+            : ChannelSettingsItems.FirstOrDefault(item =>
+                string.Equals(item.Code, firstBlueprintChannel.Name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool IsBlueprintChannelKind(string code, ChannelKind kind) =>
+        _blueprint.Channels.Any(channel =>
+            string.Equals(channel.Name, code, StringComparison.OrdinalIgnoreCase)
+            && channel.Kind == kind);
+
+    private static (double? Low, double? High) ResolveAlarmLimitValues(SettingsChannelItem channel)
+    {
+        double? low = channel.LowAlarmLimit.HasValue ? (double)channel.LowAlarmLimit.Value : null;
+        double? high = channel.HighAlarmLimit.HasValue ? (double)channel.HighAlarmLimit.Value : null;
+
+        if (channel.TargetValue.HasValue && channel.DeviationThreshold.HasValue)
+        {
+            var target = (double)channel.TargetValue.Value;
+            var deviation = (double)channel.DeviationThreshold.Value;
+            low ??= target - deviation;
+            high ??= target + deviation;
+        }
+
+        return (low, high);
+    }
+
+    private void ApplyHistoryAlarmLine(
+        double? value,
+        GraphAxisScale axis,
+        bool isHigh,
+        ChannelKind kind)
+    {
+        if (!value.HasValue || value.Value < axis.LowValue || value.Value > axis.HighValue)
+        {
+            if (isHigh)
+            {
+                HistoryHighAlarmLineVisibility = Visibility.Collapsed;
+                HistoryHighAlarmText = string.Empty;
+            }
+            else
+            {
+                HistoryLowAlarmLineVisibility = Visibility.Collapsed;
+                HistoryLowAlarmText = string.Empty;
+            }
+
+            return;
+        }
+
+        var y = CalculateGraphY(value.Value, axis);
+        var labelY = Math.Clamp(y - 18d, 2d, 214d);
+        var text = FormatHistoryThresholdText(value.Value, kind);
+
+        if (isHigh)
+        {
+            HistoryHighAlarmLineY = y;
+            HistoryHighAlarmLabelY = labelY;
+            HistoryHighAlarmText = text;
+            HistoryHighAlarmLineVisibility = Visibility.Visible;
+            return;
+        }
+
+        HistoryLowAlarmLineY = y;
+        HistoryLowAlarmLabelY = labelY;
+        HistoryLowAlarmText = text;
+        HistoryLowAlarmLineVisibility = Visibility.Visible;
+    }
+
+    private void HideHistoryAlarmTriggerLines()
+    {
+        HistoryHighAlarmLineVisibility = Visibility.Collapsed;
+        HistoryHighAlarmText = string.Empty;
+        HistoryLowAlarmLineVisibility = Visibility.Collapsed;
+        HistoryLowAlarmText = string.Empty;
+    }
+
+    private static string FormatHistoryThresholdText(double value, ChannelKind kind) =>
+        kind switch
+        {
+            ChannelKind.Humidity => $"{value:0.#}%RH",
+            ChannelKind.Pressure => $"{value:0.#}kPa",
+            _ => $"{value:0.#}℃",
+        };
 
     private static string BuildRealtimeSummary(MonitoringDashboardSnapshot snapshot)
     {
