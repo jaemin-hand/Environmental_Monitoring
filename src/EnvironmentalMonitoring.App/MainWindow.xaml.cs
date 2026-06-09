@@ -155,10 +155,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _selectedGraphTimeScale = "1초";
     private bool _isTemperaturePopoverOpen;
     private bool _isTemperatureNameEditMode;
-    private bool _isSensorNameEditorOpen;
-    private string _editingSensorChannelCode = string.Empty;
-    private string _editingSensorOriginalName = string.Empty;
-    private string _sensorNameEditText = string.Empty;
     private bool _isHistoryModalOpen;
     private bool _isCalibrationModalOpen;
     private bool _isAlarmActionModalOpen;
@@ -861,15 +857,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public string TemperatureNameEditButtonToolTip =>
         IsTemperatureNameEditMode ? "센서 이름 저장" : "센서 이름 편집";
-
-    public Visibility SensorNameEditorVisibility =>
-        _isSensorNameEditorOpen ? Visibility.Visible : Visibility.Collapsed;
-
-    public string SensorNameEditText
-    {
-        get => _sensorNameEditText;
-        set => SetField(ref _sensorNameEditText, value);
-    }
 
     public Visibility HistoryModalVisibility =>
         _isHistoryModalOpen ? Visibility.Visible : Visibility.Collapsed;
@@ -1983,96 +1970,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private void EditSensorNameButton_Click(object sender, RoutedEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.DataContext is not SensorFeedItem item
-            || string.IsNullOrWhiteSpace(item.ChannelCode))
-        {
-            return;
-        }
-
-        var channelSetting = ChannelSettingsItems.FirstOrDefault(channel =>
-            string.Equals(channel.Code, item.ChannelCode, StringComparison.OrdinalIgnoreCase));
-
-        if (channelSetting is null)
-        {
-            FooterStatusMessage = $"채널 설정을 찾을 수 없습니다: {item.ChannelCode}";
-            return;
-        }
-
-        _editingSensorChannelCode = item.ChannelCode;
-        _editingSensorOriginalName = string.IsNullOrWhiteSpace(channelSetting.DisplayName)
-            ? item.Title
-            : channelSetting.DisplayName;
-        SensorNameEditText = _editingSensorOriginalName;
-        IsTemperaturePopoverOpen = true;
-        SetSensorNameEditorOpen(true);
-        e.Handled = true;
-    }
-
-    private async void SaveSensorNameButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (string.IsNullOrWhiteSpace(_editingSensorChannelCode))
-        {
-            return;
-        }
-
-        var newName = SensorNameEditText.Trim();
-        if (string.IsNullOrWhiteSpace(newName))
-        {
-            FooterStatusMessage = "센서 이름은 비워둘 수 없습니다.";
-            return;
-        }
-
-        var channelSetting = ChannelSettingsItems.FirstOrDefault(channel =>
-            string.Equals(channel.Code, _editingSensorChannelCode, StringComparison.OrdinalIgnoreCase));
-
-        if (channelSetting is null)
-        {
-            FooterStatusMessage = $"채널 설정을 찾을 수 없습니다: {_editingSensorChannelCode}";
-            return;
-        }
-
-        if (string.Equals(_editingSensorOriginalName, newName, StringComparison.Ordinal))
-        {
-            SetSensorNameEditorOpen(false);
-            return;
-        }
-
-        var oldName = _editingSensorOriginalName;
-        channelSetting.DisplayName = newName;
-        _settingsDocument = BuildSettingsDocumentFromEditor();
-        _settingsStore.Save(_settingsDocument);
-        ApplyRuntimeState();
-        IsTemperaturePopoverOpen = true;
-        SetSensorNameEditorOpen(false);
-        FooterStatusMessage = $"센서 이름 변경 완료: {oldName} -> {channelSetting.DisplayName}";
-        await RefreshAllAsync();
-    }
-
-    private void CancelSensorNameEditButton_Click(object sender, RoutedEventArgs e)
-    {
-        SetSensorNameEditorOpen(false);
-    }
-
-    private void SetSensorNameEditorOpen(bool isOpen)
-    {
-        if (_isSensorNameEditorOpen == isOpen)
-        {
-            return;
-        }
-
-        _isSensorNameEditorOpen = isOpen;
-        if (!isOpen)
-        {
-            _editingSensorChannelCode = string.Empty;
-            _editingSensorOriginalName = string.Empty;
-            SensorNameEditText = string.Empty;
-        }
-
-        OnPropertyChanged(nameof(SensorNameEditorVisibility));
-    }
-
     private async void OpenCalibrationModalButton_Click(object sender, RoutedEventArgs e)
     {
         SetCalibrationModalOpen(true);
@@ -3006,7 +2903,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var errorCount = activeSnapshots.Count(item => item.QualityStatus == SampleQualityStatus.CommunicationError);
 
         return errorCount == 0
-            ? $"{channelSnapshots.Count}채널 응답 / Modbus TCP"
+            ? $"{activeSnapshots.Length}채널 응답 / RS-485 Modbus"
             : $"통신 이상 {errorCount}채널";
     }
 
@@ -3254,7 +3151,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var errorCount = channelSnapshots.Count(item => item.QualityStatus == SampleQualityStatus.CommunicationError);
 
         return errorCount == 0
-            ? $"{channelSnapshots.Count}채널 응답 / Modbus TCP + RS-485"
+            ? $"{channelSnapshots.Count}채널 응답 / RS-485 Modbus"
             : $"통신 이상 {errorCount}채널";
     }
 

@@ -13,8 +13,8 @@ Windows 기반 환경 모니터링 프로그램의 초기 솔루션 골격입니
 현재 가정
 
 - OS: Windows
-- 통신: Modbus TCP
-- 장비: HCD-S-MOD 1대, TMW110 3대 PBS83M00L 1대
+- 통신: RS-485 Modbus
+- 장비: TMW110 4대, HCD-S-MOD 1대, PBS83M00L 1대
 - 채널: 온도 4, 습도 1, 대기압 1
 - 기본 샘플링: 1초
 - 알람 기준: 설정 온도 대비 ±5 degC

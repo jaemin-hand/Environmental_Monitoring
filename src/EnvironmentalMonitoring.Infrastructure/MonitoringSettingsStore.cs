@@ -6,42 +6,6 @@ namespace EnvironmentalMonitoring.Infrastructure;
 
 public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayout)
 {
-    private static readonly HashSet<string> ObsoleteDefaultDeviceKeys = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "ADAM6015-A",
-        "ADAM6015-B",
-    };
-
-    private static readonly HashSet<string> ObsoleteDefaultChannelCodes = new(StringComparer.OrdinalIgnoreCase);
-
-    private static readonly Dictionary<string, string> PreviousDefaultChannelDisplayNames = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["T01"] = "T1",
-        ["T02"] = "Point 2 (입구)",
-        ["T03"] = "Point 3 (센터)",
-        ["T04"] = "Point 4 (앞단)",
-        ["T05"] = "Point 5",
-        ["T06"] = "Point 6",
-        ["T07"] = "Point 7",
-        ["T08"] = "Point 8",
-        ["H01"] = "H1 Humidity",
-        ["P01"] = "P1 Pressure",
-    };
-
-    private static readonly Dictionary<string, string> PreviousDefaultChannelLocationNames = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["T01"] = "시험장 중앙 (1.5m)",
-        ["T02"] = "시험장 입구 근처",
-        ["T03"] = "샤시다이나모 근접",
-        ["T04"] = "배기/환기구 근처",
-        ["T05"] = "실험실 구석 A",
-        ["T06"] = "실험실 구석 B",
-        ["T07"] = "실험실 구석 C",
-        ["T08"] = "실험실 구석 D",
-        ["H01"] = "습도 설치 위치 협의",
-        ["P01"] = "압력 설치 위치 협의",
-    };
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -151,16 +115,22 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
             changed = true;
         }
 
-        var removedObsoleteDevices = document.Devices.RemoveAll(
-            device => ObsoleteDefaultDeviceKeys.Contains(device.Key));
-        if (removedObsoleteDevices > 0)
+        var blueprintDeviceKeys = blueprint.Devices
+            .Select(device => device.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var removedUnknownDevices = document.Devices.RemoveAll(
+            device => !blueprintDeviceKeys.Contains(device.Key));
+        if (removedUnknownDevices > 0)
         {
             changed = true;
         }
 
-        var removedObsoleteChannels = document.Channels.RemoveAll(
-            channel => ObsoleteDefaultChannelCodes.Contains(channel.Code));
-        if (removedObsoleteChannels > 0)
+        var blueprintChannelCodes = blueprint.Channels
+            .Select(channel => channel.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var removedUnknownChannels = document.Channels.RemoveAll(
+            channel => !blueprintChannelCodes.Contains(channel.Code));
+        if (removedUnknownChannels > 0)
         {
             changed = true;
         }
@@ -205,13 +175,13 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
             else
             {
                 var existing = existingChannels[channel.Name];
-                if (ShouldUseBlueprintText(existing.DisplayName, PreviousDefaultChannelDisplayNames, channel.Name))
+                if (ShouldUseBlueprintText(existing.DisplayName, channel.Name))
                 {
                     existing.DisplayName = channel.DisplayName;
                     changed = true;
                 }
 
-                if (ShouldUseBlueprintText(existing.LocationName, PreviousDefaultChannelLocationNames, channel.Name))
+                if (ShouldUseBlueprintText(existing.LocationName, channel.Name))
                 {
                     existing.LocationName = channel.LocationName;
                     changed = true;
@@ -260,7 +230,6 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
 
     private static bool ShouldUseBlueprintText(
         string? currentValue,
-        IReadOnlyDictionary<string, string> previousDefaults,
         string channelCode)
     {
         if (string.IsNullOrWhiteSpace(currentValue))
@@ -273,29 +242,6 @@ public sealed class MonitoringSettingsStore(MonitoringStorageLayout storageLayou
             return true;
         }
 
-        return previousDefaults.TryGetValue(channelCode, out var previousDefault)
-            && string.Equals(currentValue, previousDefault, StringComparison.Ordinal)
-            || IsKnownLegacyChannelText(channelCode, currentValue);
-    }
-
-    private static bool IsKnownLegacyChannelText(string channelCode, string currentValue)
-    {
-        string[] legacyValues = channelCode.ToUpperInvariant() switch
-        {
-            "T01" => ["T1"],
-            "T02" => ["T1", "좌측 상단", "Point 2 (입구)", "Point 2(입구)", "Point 2 (연구)", "Point 2(연구)"],
-            "T03" => ["T2", "좌측 중단"],
-            "T04" => ["T3", "좌측 하단"],
-            "T05" => ["T4", "하단 우측"],
-            "T06" => ["T5", "전기 패널 하단"],
-            "H01" => ["H1 Humidity"],
-            "P01" => ["P1 Pressure"],
-            _ => [],
-        };
-
-        return legacyValues.Any(value => string.Equals(
-            currentValue,
-            value,
-            StringComparison.Ordinal));
+        return false;
     }
 }
