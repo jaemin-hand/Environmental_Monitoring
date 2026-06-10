@@ -24,6 +24,7 @@ public sealed class SqliteMonitoringStorageService(
         await ApplyPragmasAsync(connection, cancellationToken);
         await ExecuteNonQueryAsync(connection, MonitoringDatabaseSchema.Sql, cancellationToken);
         await EnsureAlarmActionColumnsAsync(connection, cancellationToken);
+        await EnsureAlarmLifecycleColumnsAsync(connection, cancellationToken);
         await SeedBlueprintAsync(connection, cancellationToken);
     }
 
@@ -197,6 +198,47 @@ public sealed class SqliteMonitoringStorageService(
         }
     }
 
+    private static async Task EnsureAlarmLifecycleColumnsAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA table_info(alarm_events);";
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                columns.Add(reader.GetString(1));
+            }
+        }
+
+        var columnDefinitions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["threshold_value"] = "REAL",
+            ["trigger_value"] = "REAL",
+            ["current_value"] = "REAL",
+            ["worst_value"] = "REAL",
+            ["worst_at"] = "TEXT",
+            ["returned_at"] = "TEXT",
+            ["return_value"] = "REAL",
+            ["status"] = "TEXT NOT NULL DEFAULT 'ACTIVE'",
+        };
+
+        foreach (var (column, definition) in columnDefinitions)
+        {
+            if (columns.Contains(column))
+            {
+                continue;
+            }
+
+            await ExecuteNonQueryAsync(
+                connection,
+                $"ALTER TABLE alarm_events ADD COLUMN {column} {definition};",
+                cancellationToken);
+        }
+    }
+
     private async Task SeedBlueprintAsync(
         SqliteConnection connection,
         CancellationToken cancellationToken)
@@ -349,10 +391,39 @@ public sealed class SqliteMonitoringStorageService(
 
         foreach (var activeAlarm in activeAlarms.Values)
         {
-            if (!openAlarms.ContainsKey(activeAlarm.Key))
+            if (openAlarms.TryGetValue(activeAlarm.Key, out var openAlarm))
             {
-                await InsertAlarmEventAsync(connection, transaction, batchId, snapshot.SampledAt, activeAlarm, cancellationToken);
+                await UpdateOpenAlarmAsync(
+                    connection,
+                    transaction,
+                    openAlarm,
+                    activeAlarm,
+                    snapshot.SampledAt,
+                    cancellationToken);
+                continue;
             }
+
+            await InsertAlarmEventAsync(connection, transaction, batchId, snapshot.SampledAt, activeAlarm, cancellationToken);
+        }
+
+        var measurementsByChannel = snapshot.Measurements
+            .ToDictionary(item => item.Channel.Name, StringComparer.OrdinalIgnoreCase);
+        foreach (var openAlarm in openAlarms.Values)
+        {
+            if (activeAlarms.ContainsKey(openAlarm.Key)
+                || openAlarm.HasReturned
+                || !measurementsByChannel.TryGetValue(openAlarm.ChannelCode, out var measurement))
+            {
+                continue;
+            }
+
+            await MarkAlarmReturnedAsync(
+                connection,
+                transaction,
+                openAlarm,
+                measurement,
+                snapshot.SampledAt,
+                cancellationToken);
         }
     }
 
@@ -464,7 +535,13 @@ public sealed class SqliteMonitoringStorageService(
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = """
-            SELECT a.id, c.code, a.alarm_type
+            SELECT
+                a.id,
+                c.code,
+                a.alarm_type,
+                a.current_value,
+                a.worst_value,
+                a.returned_at
             FROM alarm_events a
             JOIN channels c ON c.id = a.channel_id
             WHERE a.resolved_at IS NULL;
@@ -479,10 +556,115 @@ public sealed class SqliteMonitoringStorageService(
             var alarmType = reader.GetString(2);
             var key = BuildAlarmKey(channelCode, alarmType);
 
-            alarms[key] = new OpenAlarmState(id, key);
+            alarms[key] = new OpenAlarmState(
+                id,
+                key,
+                channelCode,
+                alarmType,
+                reader.IsDBNull(3) ? null : reader.GetDouble(3),
+                reader.IsDBNull(4) ? null : reader.GetDouble(4),
+                !reader.IsDBNull(5));
         }
 
         return alarms;
+    }
+
+    private static async Task UpdateOpenAlarmAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        OpenAlarmState openAlarm,
+        AlarmState activeAlarm,
+        DateTimeOffset sampledAt,
+        CancellationToken cancellationToken)
+    {
+        var measuredValue = NormalizeAlarmValue(activeAlarm.MeasuredValue);
+        var shouldUpdateWorst = measuredValue.HasValue
+            && IsWorseAlarmValue(openAlarm.AlarmType, measuredValue.Value, openAlarm.WorstValue);
+
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = shouldUpdateWorst
+            ? """
+                UPDATE alarm_events
+                SET current_value = @CurrentValue,
+                    worst_value = @CurrentValue,
+                    worst_at = @SampledAt,
+                    returned_at = NULL,
+                    return_value = NULL,
+                    status = 'ACTIVE'
+                WHERE id = @AlarmId;
+                """
+            : """
+                UPDATE alarm_events
+                SET current_value = @CurrentValue,
+                    returned_at = NULL,
+                    return_value = NULL,
+                    status = 'ACTIVE'
+                WHERE id = @AlarmId;
+                """;
+        command.Parameters.AddWithValue("@AlarmId", openAlarm.Id);
+        command.Parameters.AddWithValue("@CurrentValue", ToDbValue(measuredValue));
+        command.Parameters.AddWithValue("@SampledAt", sampledAt.ToString("O"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+
+        if (openAlarm.HasReturned)
+        {
+            await InsertEventLogAsync(
+                connection,
+                transaction,
+                "ALARM_REACTIVATED",
+                activeAlarm.ChannelCode,
+                openAlarm.Id,
+                activeAlarm.Severity,
+                measuredValue,
+                activeAlarm.Message,
+                sampledAt,
+                cancellationToken);
+        }
+    }
+
+    private static async Task MarkAlarmReturnedAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        OpenAlarmState openAlarm,
+        CapturedMeasurement measurement,
+        DateTimeOffset sampledAt,
+        CancellationToken cancellationToken)
+    {
+        var value = NormalizeAlarmValue(measurement.CorrectedValue);
+
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            UPDATE alarm_events
+            SET current_value = @CurrentValue,
+                returned_at = @ReturnedAt,
+                return_value = @CurrentValue,
+                status = 'RETURNED'
+            WHERE id = @AlarmId
+              AND returned_at IS NULL
+              AND resolved_at IS NULL;
+            """;
+        command.Parameters.AddWithValue("@AlarmId", openAlarm.Id);
+        command.Parameters.AddWithValue("@CurrentValue", ToDbValue(value));
+        command.Parameters.AddWithValue("@ReturnedAt", sampledAt.ToString("O"));
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        if (affected == 0)
+        {
+            return;
+        }
+
+        await InsertEventLogAsync(
+            connection,
+            transaction,
+            "ALARM_RETURNED",
+            measurement.Channel.Name,
+            openAlarm.Id,
+            "Info",
+            value,
+            $"{BuildChannelLabel(measurement.Channel)} 정상 범위 복귀",
+            sampledAt,
+            cancellationToken);
     }
 
     private static async Task InsertAlarmEventAsync(
@@ -501,7 +683,13 @@ public sealed class SqliteMonitoringStorageService(
                 batch_id,
                 alarm_type,
                 severity,
+                threshold_value,
+                trigger_value,
                 measured_value,
+                current_value,
+                worst_value,
+                worst_at,
+                status,
                 message,
                 occurred_at
             )
@@ -510,20 +698,108 @@ public sealed class SqliteMonitoringStorageService(
                 @BatchId,
                 @AlarmType,
                 @Severity,
+                @ThresholdValue,
                 @MeasuredValue,
+                @MeasuredValue,
+                @MeasuredValue,
+                @MeasuredValue,
+                @OccurredAt,
+                'ACTIVE',
                 @Message,
                 @OccurredAt
             );
+            SELECT last_insert_rowid();
             """;
         command.Parameters.AddWithValue("@ChannelCode", alarm.ChannelCode);
         command.Parameters.AddWithValue("@BatchId", batchId);
         command.Parameters.AddWithValue("@AlarmType", alarm.AlarmType);
         command.Parameters.AddWithValue("@Severity", alarm.Severity);
-        command.Parameters.AddWithValue("@MeasuredValue", double.IsNaN(alarm.MeasuredValue) ? DBNull.Value : alarm.MeasuredValue);
+        command.Parameters.AddWithValue("@ThresholdValue", ToDbValue(alarm.ThresholdValue));
+        command.Parameters.AddWithValue("@MeasuredValue", ToDbValue(NormalizeAlarmValue(alarm.MeasuredValue)));
         command.Parameters.AddWithValue("@Message", alarm.Message);
+        command.Parameters.AddWithValue("@OccurredAt", occurredAt.ToString("O"));
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        var alarmId = Convert.ToInt64(result);
+
+        await InsertEventLogAsync(
+            connection,
+            transaction,
+            "ALARM_TRIGGERED",
+            alarm.ChannelCode,
+            alarmId,
+            alarm.Severity,
+            NormalizeAlarmValue(alarm.MeasuredValue),
+            alarm.Message,
+            occurredAt,
+            cancellationToken);
+    }
+
+    private static async Task InsertEventLogAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        string eventType,
+        string? channelCode,
+        long? alarmId,
+        string severity,
+        double? value,
+        string message,
+        DateTimeOffset occurredAt,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT INTO event_logs (
+                event_type,
+                channel_id,
+                alarm_id,
+                severity,
+                value,
+                message,
+                occurred_at
+            )
+            VALUES (
+                @EventType,
+                (SELECT id FROM channels WHERE code = @ChannelCode),
+                @AlarmId,
+                @Severity,
+                @Value,
+                @Message,
+                @OccurredAt
+            );
+            """;
+        command.Parameters.AddWithValue("@EventType", eventType);
+        command.Parameters.AddWithValue("@ChannelCode", string.IsNullOrWhiteSpace(channelCode) ? DBNull.Value : channelCode);
+        command.Parameters.AddWithValue("@AlarmId", alarmId.HasValue ? alarmId.Value : DBNull.Value);
+        command.Parameters.AddWithValue("@Severity", severity);
+        command.Parameters.AddWithValue("@Value", ToDbValue(value));
+        command.Parameters.AddWithValue("@Message", message);
         command.Parameters.AddWithValue("@OccurredAt", occurredAt.ToString("O"));
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
+
+    private static bool IsWorseAlarmValue(
+        string alarmType,
+        double value,
+        double? existingWorstValue)
+    {
+        if (!existingWorstValue.HasValue)
+        {
+            return true;
+        }
+
+        return alarmType.ToUpperInvariant() switch
+        {
+            "LOW_LIMIT" => value < existingWorstValue.Value,
+            _ => value > existingWorstValue.Value,
+        };
+    }
+
+    private static double? NormalizeAlarmValue(double value) =>
+        double.IsNaN(value) || double.IsInfinity(value) ? null : value;
+
+    private static object ToDbValue(double? value) =>
+        value.HasValue ? value.Value : DBNull.Value;
 
     private async Task AppendDailyCsvAsync(
         AcquisitionSnapshot snapshot,
@@ -596,10 +872,28 @@ public sealed class SqliteMonitoringStorageService(
         string ChannelCode,
         string AlarmType,
         string Severity,
+        double? ThresholdValue,
         double MeasuredValue,
-        string Message);
+        string Message)
+    {
+        public AlarmState(
+            string key,
+            string channelCode,
+            string alarmType,
+            string severity,
+            double measuredValue,
+            string message)
+            : this(key, channelCode, alarmType, severity, null, measuredValue, message)
+        {
+        }
+    }
 
     private sealed record OpenAlarmState(
         long Id,
-        string Key);
+        string Key,
+        string ChannelCode,
+        string AlarmType,
+        double? CurrentValue,
+        double? WorstValue,
+        bool HasReturned);
 }

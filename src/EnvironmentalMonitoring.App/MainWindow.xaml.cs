@@ -1501,7 +1501,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ActiveAlarmCountText = $"{snapshot.ActiveAlarmCount}건";
         var activeAlarmMessage = snapshot.ActiveAlarmCount == 0
             ? string.Empty
-            : snapshot.RecentEvents.FirstOrDefault()?.Message ?? "알람 발생";
+            : snapshot.LatestActiveAlarm?.Message ?? "알람 발생";
         ActiveAlarmDetailText = snapshot.ActiveAlarmCount == 0
             ? "활성 알람 없음"
             : RemoveParentheticalDetail(activeAlarmMessage);
@@ -4643,6 +4643,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             MonitoringEventSeverity.Info,
             [],
             [],
+            null,
             [
                 new MonitoringEventSnapshot(
                     DateTimeOffset.Now,
@@ -4664,6 +4665,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             MonitoringEventSeverity.Critical,
             [],
             [],
+            null,
             [
                 new MonitoringEventSnapshot(
                     DateTimeOffset.Now,

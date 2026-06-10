@@ -18,6 +18,7 @@ public sealed class MonitoringAlarmCommandService(MonitoringStorageLayout storag
 
         await using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
+        await EnsureEventLogTableAsync(connection, cancellationToken);
         await EnsureAlarmActionColumnsAsync(connection, cancellationToken);
 
         await using var command = connection.CreateCommand();
@@ -46,6 +47,7 @@ public sealed class MonitoringAlarmCommandService(MonitoringStorageLayout storag
 
         await using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
+        await EnsureEventLogTableAsync(connection, cancellationToken);
         await EnsureAlarmActionColumnsAsync(connection, cancellationToken);
 
         await using var command = connection.CreateCommand();
@@ -73,6 +75,7 @@ public sealed class MonitoringAlarmCommandService(MonitoringStorageLayout storag
 
         await using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
+        await EnsureEventLogTableAsync(connection, cancellationToken);
         await EnsureAlarmActionColumnsAsync(connection, cancellationToken);
 
         await using var command = connection.CreateCommand();
@@ -88,7 +91,18 @@ public sealed class MonitoringAlarmCommandService(MonitoringStorageLayout storag
         command.Parameters.AddWithValue("@HandledBy", handledBy);
         command.Parameters.AddWithValue("@ActionNote", actionNote);
 
-        return await command.ExecuteNonQueryAsync(cancellationToken);
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        if (affected > 0)
+        {
+            await InsertResolvedAlarmLogsAsync(
+                connection,
+                handledAt,
+                handledBy,
+                actionNote,
+                cancellationToken);
+        }
+
+        return affected;
     }
 
     public async Task<int> ResolveAlarmWithActionAsync(
@@ -105,6 +119,7 @@ public sealed class MonitoringAlarmCommandService(MonitoringStorageLayout storag
 
         await using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
+        await EnsureEventLogTableAsync(connection, cancellationToken);
         await EnsureAlarmActionColumnsAsync(connection, cancellationToken);
 
         await using var command = connection.CreateCommand();
@@ -122,7 +137,104 @@ public sealed class MonitoringAlarmCommandService(MonitoringStorageLayout storag
         command.Parameters.AddWithValue("@HandledBy", handledBy);
         command.Parameters.AddWithValue("@ActionNote", actionNote);
 
-        return await command.ExecuteNonQueryAsync(cancellationToken);
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        if (affected > 0)
+        {
+            await InsertResolvedAlarmLogAsync(
+                connection,
+                alarmId,
+                handledAt,
+                handledBy,
+                actionNote,
+                cancellationToken);
+        }
+
+        return affected;
+    }
+
+    private static async Task EnsureEventLogTableAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        await ExecuteNonQueryAsync(connection, MonitoringDatabaseSchema.Sql, cancellationToken);
+    }
+
+    private static async Task InsertResolvedAlarmLogsAsync(
+        SqliteConnection connection,
+        DateTimeOffset handledAt,
+        string handledBy,
+        string actionNote,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO event_logs (
+                event_type,
+                channel_id,
+                alarm_id,
+                severity,
+                value,
+                message,
+                occurred_at
+            )
+            SELECT
+                'ALARM_RESOLVED',
+                a.channel_id,
+                a.id,
+                'Info',
+                a.measured_value,
+                c.name || ' 알람 조치 완료 / ' || @HandledBy ||
+                    CASE WHEN @ActionNote = '' THEN '' ELSE ' / ' || @ActionNote END,
+                @HandledAt
+            FROM alarm_events a
+            JOIN channels c ON c.id = a.channel_id
+            WHERE a.resolved_at = @HandledAt
+              AND a.acknowledged_by = @HandledBy
+              AND a.action_note = @ActionNote;
+            """;
+        command.Parameters.AddWithValue("@HandledAt", handledAt.ToString("O"));
+        command.Parameters.AddWithValue("@HandledBy", handledBy);
+        command.Parameters.AddWithValue("@ActionNote", actionNote);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task InsertResolvedAlarmLogAsync(
+        SqliteConnection connection,
+        long alarmId,
+        DateTimeOffset handledAt,
+        string handledBy,
+        string actionNote,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO event_logs (
+                event_type,
+                channel_id,
+                alarm_id,
+                severity,
+                value,
+                message,
+                occurred_at
+            )
+            SELECT
+                'ALARM_RESOLVED',
+                a.channel_id,
+                a.id,
+                'Info',
+                a.measured_value,
+                c.name || ' 알람 조치 완료 / ' || @HandledBy ||
+                    CASE WHEN @ActionNote = '' THEN '' ELSE ' / ' || @ActionNote END,
+                @HandledAt
+            FROM alarm_events a
+            JOIN channels c ON c.id = a.channel_id
+            WHERE a.id = @AlarmId;
+            """;
+        command.Parameters.AddWithValue("@AlarmId", alarmId);
+        command.Parameters.AddWithValue("@HandledAt", handledAt.ToString("O"));
+        command.Parameters.AddWithValue("@HandledBy", handledBy);
+        command.Parameters.AddWithValue("@ActionNote", actionNote);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task EnsureAlarmActionColumnsAsync(

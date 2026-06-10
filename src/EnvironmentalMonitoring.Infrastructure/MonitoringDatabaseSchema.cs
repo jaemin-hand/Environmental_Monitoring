@@ -52,7 +52,15 @@ internal static class MonitoringDatabaseSchema
             batch_id INTEGER,
             alarm_type TEXT NOT NULL,
             severity TEXT NOT NULL,
+            threshold_value REAL,
+            trigger_value REAL,
             measured_value REAL,
+            current_value REAL,
+            worst_value REAL,
+            worst_at TEXT,
+            returned_at TEXT,
+            return_value REAL,
+            status TEXT NOT NULL DEFAULT 'ACTIVE',
             message TEXT NOT NULL,
             occurred_at TEXT NOT NULL,
             acknowledged_at TEXT,
@@ -61,6 +69,20 @@ internal static class MonitoringDatabaseSchema
             resolved_at TEXT,
             FOREIGN KEY (channel_id) REFERENCES channels(id),
             FOREIGN KEY (batch_id) REFERENCES acquisition_batches(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS event_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_type TEXT NOT NULL,
+            channel_id INTEGER,
+            alarm_id INTEGER,
+            severity TEXT NOT NULL,
+            value REAL,
+            message TEXT NOT NULL,
+            occurred_at TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (channel_id) REFERENCES channels(id),
+            FOREIGN KEY (alarm_id) REFERENCES alarm_events(id)
         );
 
         CREATE TABLE IF NOT EXISTS app_settings (
@@ -77,5 +99,11 @@ internal static class MonitoringDatabaseSchema
 
         CREATE INDEX IF NOT EXISTS idx_alarm_events_occurred_at
         ON alarm_events(occurred_at);
+
+        CREATE INDEX IF NOT EXISTS idx_event_logs_occurred_at
+        ON event_logs(occurred_at);
+
+        CREATE INDEX IF NOT EXISTS idx_event_logs_alarm_id
+        ON event_logs(alarm_id);
         """;
 }

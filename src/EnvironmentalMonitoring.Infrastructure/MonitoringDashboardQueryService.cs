@@ -28,6 +28,7 @@ public sealed class MonitoringDashboardQueryService(
         var activeAlarmSummary = await GetActiveAlarmSummaryAsync(connection, cancellationToken);
         var channelSnapshots = await GetLatestChannelSnapshotsAsync(connection, cancellationToken);
         var trendPoints = await GetTrendPointsAsync(connection, cancellationToken);
+        var latestActiveAlarm = await GetLatestActiveAlarmAsync(connection, cancellationToken);
         var recentEvents = await GetRecentEventsAsync(connection, latestBatch, channelSnapshots, cancellationToken);
 
         return new MonitoringDashboardSnapshot(
@@ -36,6 +37,7 @@ public sealed class MonitoringDashboardQueryService(
             activeAlarmSummary.HighestSeverity,
             channelSnapshots,
             trendPoints,
+            latestActiveAlarm,
             recentEvents);
     }
 
@@ -63,6 +65,7 @@ public sealed class MonitoringDashboardQueryService(
             MonitoringEventSeverity.Info,
             channels,
             [],
+            null,
             [
                 new MonitoringEventSnapshot(
                     DateTimeOffset.Now,
@@ -127,6 +130,31 @@ public sealed class MonitoringDashboardQueryService(
         }
 
         return (count, highestSeverity);
+    }
+
+    private static async Task<MonitoringEventSnapshot?> GetLatestActiveAlarmAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT occurred_at, message, severity
+            FROM alarm_events
+            WHERE resolved_at IS NULL
+            ORDER BY occurred_at DESC, id DESC
+            LIMIT 1;
+            """;
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return new MonitoringEventSnapshot(
+            DateTimeOffset.Parse(reader.GetString(0), CultureInfo.InvariantCulture),
+            reader.GetString(1),
+            ParseEventSeverity(reader.GetString(2)));
     }
 
     private async Task<IReadOnlyList<MonitoringChannelSnapshot>> GetLatestChannelSnapshotsAsync(
@@ -226,8 +254,30 @@ public sealed class MonitoringDashboardQueryService(
     {
         var events = new List<MonitoringEventSnapshot>();
 
-        await using (var command = connection.CreateCommand())
+        if (await TableExistsAsync(connection, "event_logs", cancellationToken))
         {
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                SELECT occurred_at, message, severity
+                FROM event_logs
+                ORDER BY occurred_at DESC, id DESC
+                LIMIT 5;
+                """;
+
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                events.Add(new MonitoringEventSnapshot(
+                    DateTimeOffset.Parse(reader.GetString(0), CultureInfo.InvariantCulture),
+                    reader.GetString(1),
+                    ParseEventSeverity(reader.GetString(2))));
+            }
+        }
+
+        if (events.Count == 0)
+        {
+            await using var command = connection.CreateCommand();
             command.CommandText = """
                 SELECT occurred_at, message, severity
                 FROM alarm_events
@@ -274,6 +324,23 @@ public sealed class MonitoringDashboardQueryService(
             .OrderByDescending(item => item.OccurredAt)
             .Take(3)
             .ToArray();
+    }
+
+    private static async Task<bool> TableExistsAsync(
+        SqliteConnection connection,
+        string tableName,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table'
+              AND name = @TableName;
+            """;
+        command.Parameters.AddWithValue("@TableName", tableName);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(result, CultureInfo.InvariantCulture) > 0;
     }
 
     private static MonitoringEventSeverity ParseEventSeverity(string severity) =>

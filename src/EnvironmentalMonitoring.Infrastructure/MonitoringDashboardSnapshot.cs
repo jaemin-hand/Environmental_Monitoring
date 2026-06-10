@@ -8,6 +8,7 @@ public sealed record MonitoringDashboardSnapshot(
     MonitoringEventSeverity HighestActiveAlarmSeverity,
     IReadOnlyList<MonitoringChannelSnapshot> ChannelSnapshots,
     IReadOnlyList<MonitoringTrendPoint> TrendPoints,
+    MonitoringEventSnapshot? LatestActiveAlarm,
     IReadOnlyList<MonitoringEventSnapshot> RecentEvents);
 
 public sealed record MonitoringChannelSnapshot(
