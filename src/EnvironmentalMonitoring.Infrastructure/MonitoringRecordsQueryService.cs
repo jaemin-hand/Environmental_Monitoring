@@ -152,6 +152,14 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
                 a.alarm_type,
                 a.severity,
                 a.measured_value,
+                a.threshold_value,
+                a.trigger_value,
+                a.current_value,
+                a.worst_value,
+                a.worst_at,
+                a.returned_at,
+                a.return_value,
+                a.status,
                 a.message
             FROM alarm_events a
             JOIN channels c ON c.id = a.channel_id
@@ -185,7 +193,15 @@ public sealed class MonitoringRecordsQueryService(MonitoringStorageLayout storag
                 reader.GetString(5),
                 ParseSeverity(reader.GetString(6)),
                 reader.IsDBNull(7) ? null : reader.GetDouble(7),
-                reader.GetString(8)));
+                reader.IsDBNull(8) ? null : reader.GetDouble(8),
+                reader.IsDBNull(9) ? null : reader.GetDouble(9),
+                reader.IsDBNull(10) ? null : reader.GetDouble(10),
+                reader.IsDBNull(11) ? null : reader.GetDouble(11),
+                reader.IsDBNull(12) ? null : DateTimeOffset.Parse(reader.GetString(12)),
+                reader.IsDBNull(13) ? null : DateTimeOffset.Parse(reader.GetString(13)),
+                reader.IsDBNull(14) ? null : reader.GetDouble(14),
+                reader.IsDBNull(15) ? "ACTIVE" : reader.GetString(15),
+                reader.GetString(16)));
         }
 
         return records;

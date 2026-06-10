@@ -2608,6 +2608,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         SetAlarmSelectionModalOpen(false);
     }
 
+    private void BackToAlarmSelectionButton_Click(object sender, RoutedEventArgs e)
+    {
+        SelectedAlarmActionItem = null;
+        AlarmActionNote = string.Empty;
+        SetAlarmActionModalOpen(false);
+
+        if (ActiveAlarmSelectionItems.Count > 0)
+        {
+            SetAlarmSelectionModalOpen(true);
+        }
+    }
+
     private void CloseAlarmActionModalButton_Click(object sender, RoutedEventArgs e)
     {
         SetAlarmActionModalOpen(false);
@@ -3348,6 +3360,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var channel = _blueprint.Channels
                     .FirstOrDefault(item => string.Equals(item.Name, alarm.ChannelCode, StringComparison.OrdinalIgnoreCase));
                 var comparison = BuildAlarmLimitComparison(channel, alarm);
+                var thresholdValue = alarm.ThresholdValue ?? ResolveAlarmThreshold(channel, alarm.AlarmType);
+                var triggerValue = alarm.TriggerValue ?? alarm.MeasuredValue;
+                var currentValue = alarm.CurrentValue ?? alarm.MeasuredValue;
+                var worstValue = alarm.WorstValue ?? triggerValue;
 
                 return new AlarmHistoryItem(
                     alarm.Id,
@@ -3364,6 +3380,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         ? FormatNullableNumericValue(alarm.MeasuredValue)
                         : FormatValue(channel.Kind, channel.Unit, alarm.MeasuredValue),
                     alarm.Message,
+                    BuildAlarmLifecycleStatusText(alarm),
+                    FormatAlarmValue(channel, thresholdValue),
+                    FormatAlarmValue(channel, triggerValue),
+                    FormatAlarmValue(channel, currentValue),
+                    FormatAlarmValue(channel, worstValue),
+                    FormatAlarmDateTime(alarm.WorstAt, "미기록"),
+                    FormatAlarmDateTime(alarm.ReturnedAt, "미복귀"),
+                    FormatAlarmValue(channel, alarm.ReturnValue),
                     comparison.Text,
                     comparison.IsAboveLimit,
                     comparison.IsBelowLimit,
@@ -3371,6 +3395,48 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     alarm.ResolvedAt is not null);
             })
             .ToArray();
+    }
+
+    private static string BuildAlarmLifecycleStatusText(MonitoringAlarmRecord alarm)
+    {
+        if (alarm.ResolvedAt.HasValue)
+        {
+            return "조치 완료";
+        }
+
+        return alarm.ReturnedAt.HasValue
+            ? "정상 복귀 / 조치 대기"
+            : "이탈 지속 / 조치 대기";
+    }
+
+    private static string FormatAlarmDateTime(
+        DateTimeOffset? value,
+        string fallback) =>
+        value?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) ?? fallback;
+
+    private static string FormatAlarmValue(
+        MeasurementChannel? channel,
+        double? value) =>
+        channel is null
+            ? FormatNullableNumericValue(value)
+            : FormatValue(channel.Kind, channel.Unit, value);
+
+    private static double? ResolveAlarmThreshold(
+        MeasurementChannel? channel,
+        string alarmType)
+    {
+        if (channel is null)
+        {
+            return null;
+        }
+
+        return alarmType.ToUpperInvariant() switch
+        {
+            "LOW_LIMIT" => channel.LowAlarmLimit.HasValue ? (double)channel.LowAlarmLimit.Value : null,
+            "HIGH_LIMIT" => channel.HighAlarmLimit.HasValue ? (double)channel.HighAlarmLimit.Value : null,
+            "DEVIATION" => channel.TargetValue.HasValue ? (double)channel.TargetValue.Value : null,
+            _ => null,
+        };
     }
 
     private static string FormatElapsedTime(DateTimeOffset occurredAt)
@@ -3829,9 +3895,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         MeasurementChannel? channel,
         MonitoringAlarmRecord alarm)
     {
-        if (channel is not null && alarm.MeasuredValue.HasValue)
+        var measuredValue = alarm.WorstValue ?? alarm.CurrentValue ?? alarm.TriggerValue ?? alarm.MeasuredValue;
+        if (channel is not null && measuredValue.HasValue)
         {
-            var value = alarm.MeasuredValue.Value;
+            var value = measuredValue.Value;
             if (string.Equals(alarm.AlarmType, "HIGH_LIMIT", StringComparison.OrdinalIgnoreCase)
                 && channel.HighAlarmLimit.HasValue)
             {

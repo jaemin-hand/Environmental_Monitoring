@@ -3185,8 +3185,8 @@
                   Panel.ZIndex="130"
                   Background="#B0000000"
                   Visibility="{Binding AlarmActionModalVisibility}">
-                <Border Width="640"
-                        Height="468"
+                <Border Width="720"
+                        Height="620"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Background="#0A1422"
@@ -3198,14 +3198,36 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="58" />
-                            <RowDefinition Height="76" />
+                            <RowDefinition Height="192" />
                             <RowDefinition Height="86" />
                             <RowDefinition Height="*" />
                             <RowDefinition Height="56" />
                         </Grid.RowDefinitions>
 
                         <Grid>
-                            <StackPanel VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Button Content="←"
+                                    Click="BackToAlarmSelectionButton_Click"
+                                    Width="40"
+                                    Height="40"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Background="#121A26"
+                                    Foreground="{StaticResource TextBrush}"
+                                    BorderBrush="#526A88"
+                                    BorderThickness="1"
+                                    FontSize="22"
+                                    Cursor="Hand"
+                                    ToolTip="알람 선택 목록으로 돌아가기" />
+
+                            <StackPanel Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Margin="14,0,0,0">
                                 <TextBlock Text="알람 조치"
                                            Foreground="{StaticResource TextBrush}"
                                            FontSize="28"
@@ -3217,6 +3239,7 @@
                             </StackPanel>
                             <Button Content="×"
                                     Click="CloseAlarmActionModalButton_Click"
+                                    Grid.Column="2"
                                     Width="40"
                                     Height="40"
                                     HorizontalAlignment="Right"
@@ -3297,6 +3320,68 @@
                                                    FontWeight="SemiBold"
                                                    VerticalAlignment="Center" />
                                     </StackPanel>
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Row="0" Grid.Column="0" Background="#07101A" CornerRadius="6" Padding="9,7" Margin="0,0,8,8">
+                                            <StackPanel>
+                                                <TextBlock Text="상태" Foreground="{StaticResource MutedTextBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding SelectedAlarmActionItem.LifecycleStatusText}" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Row="0" Grid.Column="1" Background="#07101A" CornerRadius="6" Padding="9,7" Margin="0,0,8,8">
+                                            <StackPanel>
+                                                <TextBlock Text="기준값" Foreground="{StaticResource MutedTextBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding SelectedAlarmActionItem.ThresholdValueText}" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Row="0" Grid.Column="2" Background="#07101A" CornerRadius="6" Padding="9,7" Margin="0,0,8,8">
+                                            <StackPanel>
+                                                <TextBlock Text="발생값" Foreground="{StaticResource MutedTextBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding SelectedAlarmActionItem.TriggerValueText}" Foreground="{StaticResource RedBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Row="0" Grid.Column="3" Background="#07101A" CornerRadius="6" Padding="9,7" Margin="0,0,0,8">
+                                            <StackPanel>
+                                                <TextBlock Text="최악값" Foreground="{StaticResource MutedTextBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding SelectedAlarmActionItem.WorstValueText}" Foreground="{StaticResource RedBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="1" Grid.Column="0" Background="#07101A" CornerRadius="6" Padding="9,7" Margin="0,0,8,0">
+                                            <StackPanel>
+                                                <TextBlock Text="현재값" Foreground="{StaticResource MutedTextBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding SelectedAlarmActionItem.CurrentValueText}" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Row="1" Grid.Column="1" Background="#07101A" CornerRadius="6" Padding="9,7" Margin="0,0,8,0">
+                                            <StackPanel>
+                                                <TextBlock Text="복귀값" Foreground="{StaticResource MutedTextBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding SelectedAlarmActionItem.ReturnValueText}" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Row="1" Grid.Column="2" Background="#07101A" CornerRadius="6" Padding="9,7" Margin="0,0,8,0">
+                                            <StackPanel>
+                                                <TextBlock Text="복귀시각" Foreground="{StaticResource MutedTextBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding SelectedAlarmActionItem.ReturnedAtText}" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Row="1" Grid.Column="3" Background="#07101A" CornerRadius="6" Padding="9,7">
+                                            <StackPanel>
+                                                <TextBlock Text="발생시각" Foreground="{StaticResource MutedTextBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding SelectedAlarmActionItem.OccurredAt}" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
                                 </StackPanel>
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SelectedAlarmActionItem.Severity}"

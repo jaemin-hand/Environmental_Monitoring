@@ -20,4 +20,12 @@ public sealed record MonitoringAlarmRecord(
     string AlarmType,
     MonitoringEventSeverity Severity,
     double? MeasuredValue,
+    double? ThresholdValue,
+    double? TriggerValue,
+    double? CurrentValue,
+    double? WorstValue,
+    DateTimeOffset? WorstAt,
+    DateTimeOffset? ReturnedAt,
+    double? ReturnValue,
+    string Status,
     string Message);
