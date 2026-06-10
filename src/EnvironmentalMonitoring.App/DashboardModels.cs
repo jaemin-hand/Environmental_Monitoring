@@ -646,6 +646,12 @@ public sealed record SensorFeedItem(
 
     public string EditableHighLimit { get; set; } = string.Empty;
 
+    public string LimitComparisonText { get; init; } = string.Empty;
+
+    public bool IsAboveLimit { get; init; }
+
+    public bool IsBelowLimit { get; init; }
+
     public Brush Accent => !IsActive
         ? DashboardPalette.TextMuted
         : Severity switch
@@ -661,6 +667,21 @@ public sealed record SensorFeedItem(
         : Severity is DashboardSeverity.Critical or DashboardSeverity.Warning
         ? DashboardPalette.Critical
         : DashboardPalette.SurfaceContainerLowest;
+
+    public Visibility LimitComparisonVisibility =>
+        string.IsNullOrWhiteSpace(LimitComparisonText) ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility AboveLimitIconVisibility =>
+        IsAboveLimit ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility BelowLimitIconVisibility =>
+        IsBelowLimit ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility CheckIconVisibility =>
+        IsActive && Severity == DashboardSeverity.Normal ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility WarningIconVisibility =>
+        IsActive && Severity != DashboardSeverity.Normal ? Visibility.Visible : Visibility.Collapsed;
 }
 
 public sealed record RecentEventItem(
@@ -741,6 +762,7 @@ public sealed record SampleHistoryItem(
 public sealed record AlarmHistoryItem(
     long Id,
     string OccurredAt,
+    string OccurredAgo,
     string AcknowledgedAt,
     string ResolvedAt,
     string ChannelCode,
@@ -748,8 +770,23 @@ public sealed record AlarmHistoryItem(
     string Severity,
     string MeasuredValue,
     string Message,
+    string LimitComparisonText,
+    bool IsAboveLimit,
+    bool IsBelowLimit,
     bool IsAcknowledged,
-    bool IsResolved);
+    bool IsResolved)
+{
+    public string SelectionTitle => $"{ChannelCode} {AlarmType}";
+
+    public Visibility LimitComparisonVisibility =>
+        string.IsNullOrWhiteSpace(LimitComparisonText) ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility AboveLimitIconVisibility =>
+        IsAboveLimit ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility BelowLimitIconVisibility =>
+        IsBelowLimit ? Visibility.Visible : Visibility.Collapsed;
+}
 
 public sealed record LiveChannelItem(
     string ChannelCode,

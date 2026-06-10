@@ -67,6 +67,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _headerDbStatusText = "DB 확인 중";
     private string _activeAlarmCountText = "0건";
     private string _activeAlarmDetailText = "활성 알람 없음";
+    private string _activeAlarmComparisonText = string.Empty;
+    private bool _activeAlarmIsAboveLimit;
+    private bool _activeAlarmIsBelowLimit;
     private bool _hasActiveAlarm;
     private string _samplingIntervalText = "-";
     private string _storageStateText = "-";
@@ -295,6 +298,51 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         get => _activeAlarmDetailText;
         private set => SetField(ref _activeAlarmDetailText, value);
     }
+
+    public string ActiveAlarmComparisonText
+    {
+        get => _activeAlarmComparisonText;
+        private set
+        {
+            if (SetField(ref _activeAlarmComparisonText, value))
+            {
+                OnPropertyChanged(nameof(ActiveAlarmComparisonVisibility));
+            }
+        }
+    }
+
+    public Visibility ActiveAlarmComparisonVisibility =>
+        string.IsNullOrWhiteSpace(ActiveAlarmComparisonText) ? Visibility.Collapsed : Visibility.Visible;
+
+    public bool ActiveAlarmIsAboveLimit
+    {
+        get => _activeAlarmIsAboveLimit;
+        private set
+        {
+            if (SetField(ref _activeAlarmIsAboveLimit, value))
+            {
+                OnPropertyChanged(nameof(ActiveAlarmAboveLimitIconVisibility));
+            }
+        }
+    }
+
+    public bool ActiveAlarmIsBelowLimit
+    {
+        get => _activeAlarmIsBelowLimit;
+        private set
+        {
+            if (SetField(ref _activeAlarmIsBelowLimit, value))
+            {
+                OnPropertyChanged(nameof(ActiveAlarmBelowLimitIconVisibility));
+            }
+        }
+    }
+
+    public Visibility ActiveAlarmAboveLimitIconVisibility =>
+        ActiveAlarmIsAboveLimit ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility ActiveAlarmBelowLimitIconVisibility =>
+        ActiveAlarmIsBelowLimit ? Visibility.Visible : Visibility.Collapsed;
 
     public bool HasActiveAlarm
     {
@@ -1451,9 +1499,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             : "DB 연결됨";
         HasActiveAlarm = snapshot.ActiveAlarmCount > 0;
         ActiveAlarmCountText = $"{snapshot.ActiveAlarmCount}건";
+        var activeAlarmMessage = snapshot.ActiveAlarmCount == 0
+            ? string.Empty
+            : snapshot.RecentEvents.FirstOrDefault()?.Message ?? "알람 발생";
         ActiveAlarmDetailText = snapshot.ActiveAlarmCount == 0
             ? "활성 알람 없음"
-            : snapshot.RecentEvents.FirstOrDefault()?.Message ?? "알람 발생";
+            : RemoveParentheticalDetail(activeAlarmMessage);
+        var activeAlarmComparison = snapshot.ActiveAlarmCount == 0
+            ? new AlarmLimitComparison(string.Empty, false, false)
+            : BuildAlarmLimitComparisonFromMessage(activeAlarmMessage);
+        ActiveAlarmComparisonText = activeAlarmComparison.Text;
+        ActiveAlarmIsAboveLimit = activeAlarmComparison.IsAboveLimit;
+        ActiveAlarmIsBelowLimit = activeAlarmComparison.IsBelowLimit;
         SamplingIntervalText = _runtimeOptions.DefaultSamplingMode == SamplingMode.OneSecond
             ? "1초"
             : "1분";
@@ -3093,7 +3150,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     ResolveSensorFeedStatusText(channel, snapshot),
                     severity,
                     GetChannelAccentBrush(channel),
-                    ChannelCode: channel.Name);
+                    ChannelCode: channel.Name)
+                {
+                    LimitComparisonText = BuildLimitComparisonText(channel, snapshot),
+                    IsAboveLimit = IsAboveLimit(channel, snapshot),
+                    IsBelowLimit = IsBelowLimit(channel, snapshot),
+                };
                 return item;
             })
             .ToArray();
@@ -3146,7 +3208,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     ResolveSensorFeedStatusText(channel, snapshot),
                     severity,
                     GetChannelAccentBrush(channel),
-                    ChannelCode: channel.Name);
+                    ChannelCode: channel.Name)
+                {
+                    LimitComparisonText = BuildLimitComparisonText(channel, snapshot),
+                    IsAboveLimit = IsAboveLimit(channel, snapshot),
+                    IsBelowLimit = IsBelowLimit(channel, snapshot),
+                };
                 item.EditableTitle = editableTitle;
                 item.EditableLowLimit = FormatLimitInput(channel.LowAlarmLimit, channel.Kind);
                 item.EditableHighLimit = FormatLimitInput(channel.HighAlarmLimit, channel.Kind);
@@ -3280,10 +3347,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 var channel = _blueprint.Channels
                     .FirstOrDefault(item => string.Equals(item.Name, alarm.ChannelCode, StringComparison.OrdinalIgnoreCase));
+                var comparison = BuildAlarmLimitComparison(channel, alarm);
 
                 return new AlarmHistoryItem(
                     alarm.Id,
                     alarm.OccurredAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
+                    FormatElapsedTime(alarm.OccurredAt),
                     alarm.AcknowledgedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "미확인",
                     alarm.ResolvedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "활성",
                     channel is null
@@ -3295,10 +3364,39 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         ? FormatNullableNumericValue(alarm.MeasuredValue)
                         : FormatValue(channel.Kind, channel.Unit, alarm.MeasuredValue),
                     alarm.Message,
+                    comparison.Text,
+                    comparison.IsAboveLimit,
+                    comparison.IsBelowLimit,
                     alarm.AcknowledgedAt is not null,
                     alarm.ResolvedAt is not null);
             })
             .ToArray();
+    }
+
+    private static string FormatElapsedTime(DateTimeOffset occurredAt)
+    {
+        var elapsed = DateTimeOffset.Now - occurredAt.ToLocalTime();
+        if (elapsed < TimeSpan.Zero)
+        {
+            elapsed = TimeSpan.Zero;
+        }
+
+        if (elapsed.TotalMinutes < 1)
+        {
+            return "방금 전";
+        }
+
+        if (elapsed.TotalHours < 1)
+        {
+            return $"{(int)elapsed.TotalMinutes}분 전";
+        }
+
+        if (elapsed.TotalDays < 1)
+        {
+            return $"{(int)elapsed.TotalHours}시간 {elapsed.Minutes}분 전";
+        }
+
+        return $"{(int)elapsed.TotalDays}일 전";
     }
 
     private static DashboardSeverity ResolveCommunicationSeverity(
@@ -3702,6 +3800,197 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         return "정상";
     }
+
+    private static string BuildLimitComparisonText(
+        MeasurementChannel channel,
+        MonitoringChannelSnapshot? snapshot)
+    {
+        if (snapshot?.Value is not { } value)
+        {
+            return string.Empty;
+        }
+
+        if (channel.HighAlarmLimit.HasValue && value > (double)channel.HighAlarmLimit.Value)
+        {
+            var difference = value - (double)channel.HighAlarmLimit.Value;
+            return $"상한 대비 +{FormatLimitDifference(difference, channel.Kind)} 초과";
+        }
+
+        if (channel.LowAlarmLimit.HasValue && value < (double)channel.LowAlarmLimit.Value)
+        {
+            var difference = (double)channel.LowAlarmLimit.Value - value;
+            return $"하한 대비 {FormatLimitDifference(difference, channel.Kind)} 미만";
+        }
+
+        return string.Empty;
+    }
+
+    private static AlarmLimitComparison BuildAlarmLimitComparison(
+        MeasurementChannel? channel,
+        MonitoringAlarmRecord alarm)
+    {
+        if (channel is not null && alarm.MeasuredValue.HasValue)
+        {
+            var value = alarm.MeasuredValue.Value;
+            if (string.Equals(alarm.AlarmType, "HIGH_LIMIT", StringComparison.OrdinalIgnoreCase)
+                && channel.HighAlarmLimit.HasValue)
+            {
+                var difference = value - (double)channel.HighAlarmLimit.Value;
+                return new AlarmLimitComparison(
+                    $"상한 대비 +{FormatLimitDifference(difference, channel.Kind)} 초과",
+                    IsAboveLimit: true,
+                    IsBelowLimit: false);
+            }
+
+            if (string.Equals(alarm.AlarmType, "LOW_LIMIT", StringComparison.OrdinalIgnoreCase)
+                && channel.LowAlarmLimit.HasValue)
+            {
+                var difference = (double)channel.LowAlarmLimit.Value - value;
+                return new AlarmLimitComparison(
+                    $"하한 대비 {FormatLimitDifference(difference, channel.Kind)} 미만",
+                    IsAboveLimit: false,
+                    IsBelowLimit: true);
+            }
+        }
+
+        return BuildAlarmLimitComparisonFromMessage(alarm.Message);
+    }
+
+    private static AlarmLimitComparison BuildAlarmLimitComparisonFromMessage(string message)
+    {
+        var isAboveLimit = message.Contains("상한", StringComparison.OrdinalIgnoreCase)
+            || message.Contains(">", StringComparison.Ordinal);
+        var isBelowLimit = message.Contains("하한", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("<", StringComparison.Ordinal);
+
+        var comparisonText = ExtractLimitComparisonText(message);
+        return new AlarmLimitComparison(comparisonText, isAboveLimit, isBelowLimit);
+    }
+
+    private static string ExtractLimitComparisonText(string message)
+    {
+        var start = message.IndexOf('(');
+        var end = message.LastIndexOf(')');
+        var candidate = start >= 0 && end > start
+            ? message[(start + 1)..end]
+            : message;
+        var normalizedCandidate = NormalizeLimitComparisonText(candidate);
+
+        if (normalizedCandidate.Contains("상한 대비", StringComparison.OrdinalIgnoreCase)
+            || normalizedCandidate.Contains("하한 대비", StringComparison.OrdinalIgnoreCase))
+        {
+            return normalizedCandidate;
+        }
+
+        return TryBuildLegacyLimitComparisonText(normalizedCandidate, out var comparisonText)
+            ? comparisonText
+            : string.Empty;
+    }
+
+    private static string RemoveParentheticalDetail(string message)
+    {
+        var start = message.IndexOf('(');
+        return start > 0 ? message[..start].TrimEnd() : message;
+    }
+
+    private static bool TryBuildLegacyLimitComparisonText(
+        string comparisonExpression,
+        out string comparisonText)
+    {
+        comparisonText = string.Empty;
+
+        var operatorIndex = comparisonExpression.IndexOf('<');
+        var isBelowLimit = operatorIndex >= 0;
+        if (operatorIndex < 0)
+        {
+            operatorIndex = comparisonExpression.IndexOf('>');
+        }
+
+        if (operatorIndex < 0)
+        {
+            return false;
+        }
+
+        var isAboveLimit = !isBelowLimit;
+        var left = comparisonExpression[..operatorIndex].Trim();
+        var right = comparisonExpression[(operatorIndex + 1)..].Trim();
+        if (!TryParseValueWithUnit(left, out var leftValue, out var leftUnit)
+            || !TryParseValueWithUnit(right, out var rightValue, out var rightUnit))
+        {
+            return false;
+        }
+
+        var unit = string.IsNullOrWhiteSpace(leftUnit) ? rightUnit : leftUnit;
+        var difference = Math.Abs(leftValue - rightValue);
+        comparisonText = isAboveLimit
+            ? $"상한 대비 +{difference:0.0}{unit} 초과"
+            : $"하한 대비 {difference:0.0}{unit} 미만";
+        return true;
+    }
+
+    private static bool TryParseValueWithUnit(
+        string text,
+        out double value,
+        out string unit)
+    {
+        value = 0;
+        unit = string.Empty;
+
+        var index = 0;
+        while (index < text.Length
+               && (char.IsDigit(text[index])
+                   || text[index] is '-' or '+' or '.'))
+        {
+            index++;
+        }
+
+        if (index == 0
+            || !double.TryParse(text[..index], NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+        {
+            return false;
+        }
+
+        unit = text[index..].Trim();
+        return true;
+    }
+
+    private static string NormalizeLimitComparisonText(string text) =>
+        text
+            .Replace("degC", "°C", StringComparison.OrdinalIgnoreCase)
+            .Replace("%RH", "%", StringComparison.OrdinalIgnoreCase)
+            .Replace("하한 대비 -", "하한 대비 ", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsAboveLimit(
+        MeasurementChannel channel,
+        MonitoringChannelSnapshot? snapshot) =>
+        snapshot?.Value is { } value
+        && channel.HighAlarmLimit.HasValue
+        && value > (double)channel.HighAlarmLimit.Value;
+
+    private static bool IsBelowLimit(
+        MeasurementChannel channel,
+        MonitoringChannelSnapshot? snapshot) =>
+        snapshot?.Value is { } value
+        && channel.LowAlarmLimit.HasValue
+        && value < (double)channel.LowAlarmLimit.Value;
+
+    private static string FormatLimitDifference(double difference, ChannelKind kind)
+    {
+        var unit = kind switch
+        {
+            ChannelKind.Temperature => "°C",
+            ChannelKind.Humidity => "%",
+            ChannelKind.Pressure => "kPa",
+            _ => string.Empty,
+        };
+
+        return $"{difference:0.0}{unit}";
+    }
+
+    private readonly record struct AlarmLimitComparison(
+        string Text,
+        bool IsAboveLimit,
+        bool IsBelowLimit);
 
     private static string ToCleanSeverityLabel(DashboardSeverity severity) => severity switch
     {

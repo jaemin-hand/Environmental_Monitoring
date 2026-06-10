@@ -397,25 +397,27 @@ public sealed class SqliteMonitoringStorageService(
 
             if (channel.LowAlarmLimit.HasValue && value < (double)channel.LowAlarmLimit.Value)
             {
+                var difference = (double)channel.LowAlarmLimit.Value - value;
                 alarms.Add(new AlarmState(
                     BuildAlarmKey(channel.Name, "LOW_LIMIT"),
                     channel.Name,
                     "LOW_LIMIT",
                     "Warning",
                     value,
-                    $"{BuildChannelLabel(channel)} 하한 이탈 ({value:0.0}{channel.Unit} < {channel.LowAlarmLimit:0.###}{channel.Unit})"));
+                    $"{BuildChannelLabel(channel)} 하한 이탈 (하한 대비 -{difference:0.0}{channel.Unit} 미만)"));
                 continue;
             }
 
             if (channel.HighAlarmLimit.HasValue && value > (double)channel.HighAlarmLimit.Value)
             {
+                var difference = value - (double)channel.HighAlarmLimit.Value;
                 alarms.Add(new AlarmState(
                     BuildAlarmKey(channel.Name, "HIGH_LIMIT"),
                     channel.Name,
                     "HIGH_LIMIT",
                     "Warning",
                     value,
-                    $"{BuildChannelLabel(channel)} 상한 이탈 ({value:0.0}{channel.Unit} > {channel.HighAlarmLimit:0.###}{channel.Unit})"));
+                    $"{BuildChannelLabel(channel)} 상한 이탈 (상한 대비 +{difference:0.0}{channel.Unit} 초과)"));
                 continue;
             }
 

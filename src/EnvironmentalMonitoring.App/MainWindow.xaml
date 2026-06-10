@@ -588,32 +588,13 @@
                             </Viewbox.Style>
                             <Grid>
                                 <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
-                                      Stroke="{Binding Accent}">
-                                    <Path.Style>
-                                        <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding StatusText}" Value="설정값 이탈">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Path.Style>
-                                </Path>
-                                <Path Data="M0 15.8333L9.16667 0L18.3333 15.8333H0ZM2.875 14.1667H15.4583L9.16667 3.33333L2.875 14.1667ZM9.16667 13.3333C9.40278 13.3333 9.60069 13.2535 9.76042 13.0938C9.92014 12.934 10 12.7361 10 12.5C10 12.2639 9.92014 12.066 9.76042 11.9062C9.60069 11.7465 9.40278 11.6667 9.16667 11.6667C8.93056 11.6667 8.73264 11.7465 8.57292 11.9062C8.41319 12.066 8.33333 12.2639 8.33333 12.5C8.33333 12.7361 8.41319 12.934 8.57292 13.0938C8.73264 13.2535 8.93056 13.3333 9.16667 13.3333ZM8.33333 10.8333H10V6.66667H8.33333V10.8333Z"
-                                      Fill="#FFB4AB"
-                                      Stretch="Uniform">
-                                    <Path.Style>
-                                        <Style TargetType="Path">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding StatusText}" Value="설정값 이탈">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Path.Style>
-                                </Path>
+                                      Stroke="{Binding Accent}"
+                                      Visibility="{Binding CheckIconVisibility}"
+                                      Style="{StaticResource SvgIconPathStyle}" />
+                                <Path Data="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z"
+                                      Stroke="{Binding Accent}"
+                                      Visibility="{Binding WarningIconVisibility}"
+                                      Style="{StaticResource SvgIconPathStyle}" />
                             </Grid>
                         </Viewbox>
                     </StackPanel>
@@ -731,32 +712,13 @@
                             </Viewbox.Style>
                             <Grid>
                                 <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
-                                      Stroke="{Binding Accent}">
-                                    <Path.Style>
-                                        <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding StatusText}" Value="설정값 이탈">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Path.Style>
-                                </Path>
-                                <Path Data="M0 15.8333L9.16667 0L18.3333 15.8333H0ZM2.875 14.1667H15.4583L9.16667 3.33333L2.875 14.1667ZM9.16667 13.3333C9.40278 13.3333 9.60069 13.2535 9.76042 13.0938C9.92014 12.934 10 12.7361 10 12.5C10 12.2639 9.92014 12.066 9.76042 11.9062C9.60069 11.7465 9.40278 11.6667 9.16667 11.6667C8.93056 11.6667 8.73264 11.7465 8.57292 11.9062C8.41319 12.066 8.33333 12.2639 8.33333 12.5C8.33333 12.7361 8.41319 12.934 8.57292 13.0938C8.73264 13.2535 8.93056 13.3333 9.16667 13.3333ZM8.33333 10.8333H10V6.66667H8.33333V10.8333Z"
-                                      Fill="#FFB4AB"
-                                      Stretch="Uniform">
-                                    <Path.Style>
-                                        <Style TargetType="Path">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding StatusText}" Value="설정값 이탈">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Path.Style>
-                                </Path>
+                                      Stroke="{Binding Accent}"
+                                      Visibility="{Binding CheckIconVisibility}"
+                                      Style="{StaticResource SvgIconPathStyle}" />
+                                <Path Data="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z"
+                                      Stroke="{Binding Accent}"
+                                      Visibility="{Binding WarningIconVisibility}"
+                                      Style="{StaticResource SvgIconPathStyle}" />
                             </Grid>
                         </Viewbox>
                     </StackPanel>
@@ -773,6 +735,62 @@
                                    Foreground="{StaticResource TextBrush}"
                                    FontSize="12"
                                    Margin="4,11,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1"
+                                Grid.Column="1"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Bottom"
+                                Margin="14,0,0,1"
+                                Visibility="{Binding LimitComparisonVisibility}">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.IsSensorDetailLimitEditMode, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                 Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Viewbox Width="18"
+                                 Height="18"
+                                 Margin="0,0,6,0">
+                            <Grid>
+                                <Path Data="M23 6 L13.5 15.5 L8.5 10.5 L1 18 M17 6 L23 6 L23 12"
+                                      Stroke="{Binding Accent}">
+                                    <Path.Style>
+                                        <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsAboveLimit}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Path.Style>
+                                </Path>
+                                <Path Data="M23 18 L13.5 8.5 L8.5 13.5 L1 6 M17 18 L23 18 L23 12"
+                                      Stroke="{Binding Accent}">
+                                    <Path.Style>
+                                        <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBelowLimit}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Path.Style>
+                                </Path>
+                            </Grid>
+                        </Viewbox>
+                        <TextBlock Text="{Binding LimitComparisonText}"
+                                   Foreground="{Binding Accent}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
                     </StackPanel>
 
                     <Grid Grid.Row="1"
@@ -1069,6 +1087,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="66" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="♢"
                                    Style="{StaticResource AlarmAccentTextStyle}"
@@ -1078,6 +1097,50 @@
                             <TextBlock Text="활성 알람" Foreground="{StaticResource TextBrush}" FontSize="17" />
                             <TextBlock Text="{Binding ActiveAlarmCountText}" Style="{StaticResource AlarmAccentTextStyle}" FontSize="40" FontWeight="Light" Margin="0,2,0,-4" />
                             <TextBlock Text="{Binding ActiveAlarmDetailText}" Style="{StaticResource AlarmAccentTextStyle}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Margin="16,18,0,0"
+                                    Visibility="{Binding ActiveAlarmComparisonVisibility}">
+                            <Viewbox Width="18"
+                                     Height="18"
+                                     Margin="0,0,6,0">
+                                <Grid>
+                                    <Path Data="M23 6 L13.5 15.5 L8.5 10.5 L1 18 M17 6 L23 6 L23 12"
+                                          Stroke="{StaticResource RedBrush}">
+                                        <Path.Style>
+                                            <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ActiveAlarmIsAboveLimit}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                    <Path Data="M23 18 L13.5 8.5 L8.5 13.5 L1 6 M17 18 L23 18 L23 12"
+                                          Stroke="{StaticResource RedBrush}">
+                                        <Path.Style>
+                                            <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ActiveAlarmIsBelowLimit}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </Grid>
+                            </Viewbox>
+                            <TextBlock Text="{Binding ActiveAlarmComparisonText}"
+                                       Style="{StaticResource AlarmAccentTextStyle}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -1711,7 +1774,13 @@
                             Cursor="Hand"
                             ToolTip="활성 알람 조치 완료"
                             MouseLeftButtonDown="ActiveAlarmCard_MouseLeftButtonDown">
-                        <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
                             <TextBlock Text="활성 알람"
                                        Style="{StaticResource AlarmAccentTextStyle}"
                                        FontSize="18" />
@@ -1724,7 +1793,53 @@
                                        Style="{StaticResource AlarmAccentTextStyle}"
                                        FontSize="15"
                                        TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Margin="16,5,0,0"
+                                        Visibility="{Binding ActiveAlarmComparisonVisibility}">
+                                <Viewbox Width="18"
+                                         Height="18"
+                                         Margin="0,0,6,0">
+                                    <Grid>
+                                        <Path Data="M23 6 L13.5 15.5 L8.5 10.5 L1 18 M17 6 L23 6 L23 12"
+                                              Stroke="{StaticResource RedBrush}">
+                                            <Path.Style>
+                                                <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ActiveAlarmIsAboveLimit}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Path.Style>
+                                        </Path>
+                                        <Path Data="M23 18 L13.5 8.5 L8.5 13.5 L1 6 M17 18 L23 18 L23 12"
+                                              Stroke="{StaticResource RedBrush}">
+                                            <Path.Style>
+                                                <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ActiveAlarmIsBelowLimit}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Path.Style>
+                                        </Path>
+                                    </Grid>
+                                </Viewbox>
+                                <TextBlock Text="{Binding ActiveAlarmComparisonText}"
+                                           Style="{StaticResource AlarmAccentTextStyle}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
                     </Border>
 
                     <Border x:Name="AverageTemperatureCard"
@@ -2953,17 +3068,74 @@
                                                         <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{Binding Message}"
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="Auto" />
+                                                        </Grid.RowDefinitions>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock Grid.Row="0"
+                                                                   Grid.Column="0"
+                                                                   Text="{Binding SelectionTitle}"
                                                                    Foreground="#FFE3DF"
                                                                    FontSize="17"
                                                                    FontWeight="SemiBold"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock Text="{Binding OccurredAt}"
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Grid.Row="0"
+                                                                    Grid.Column="1"
+                                                                    Margin="12,1,0,0"
+                                                                    Visibility="{Binding LimitComparisonVisibility}">
+                                                            <Viewbox Width="18"
+                                                                     Height="18"
+                                                                     Margin="0,0,6,0">
+                                                                <Grid>
+                                                                    <Path Data="M23 6 L13.5 15.5 L8.5 10.5 L1 18 M17 6 L23 6 L23 12"
+                                                                          Stroke="{StaticResource RedBrush}">
+                                                                        <Path.Style>
+                                                                            <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsAboveLimit}" Value="True">
+                                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Path.Style>
+                                                                    </Path>
+                                                                    <Path Data="M23 18 L13.5 8.5 L8.5 13.5 L1 6 M17 18 L23 18 L23 12"
+                                                                          Stroke="{StaticResource RedBrush}">
+                                                                        <Path.Style>
+                                                                            <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsBelowLimit}" Value="True">
+                                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Path.Style>
+                                                                    </Path>
+                                                                </Grid>
+                                                            </Viewbox>
+                                                            <TextBlock Text="{Binding LimitComparisonText}"
+                                                                       Foreground="{StaticResource RedBrush}"
+                                                                       FontSize="13"
+                                                                       FontWeight="SemiBold"
+                                                                       VerticalAlignment="Center" />
+                                                        </StackPanel>
+
+                                                        <TextBlock Grid.Row="1"
+                                                                   Grid.ColumnSpan="2"
+                                                                   Text="{Binding OccurredAgo}"
                                                                    Foreground="{StaticResource MutedTextBrush}"
                                                                    FontSize="13"
-                                                                   Margin="0,5,0,0" />
-                                                    </StackPanel>
+                                                                   Margin="0,6,0,0" />
+                                                    </Grid>
                                                     <StackPanel Grid.Column="1"
                                                                 MinWidth="150"
                                                                 HorizontalAlignment="Right"
@@ -2976,6 +3148,11 @@
                                                                    Foreground="{StaticResource RedBrush}"
                                                                    FontSize="19"
                                                                    FontWeight="SemiBold"
+                                                                   HorizontalAlignment="Right"
+                                                                   Margin="0,5,0,0" />
+                                                        <TextBlock Text="{Binding OccurredAt}"
+                                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                                   FontSize="12"
                                                                    HorizontalAlignment="Right"
                                                                    Margin="0,5,0,0" />
                                                     </StackPanel>
@@ -3079,6 +3256,47 @@
                                                FontSize="12"
                                                Margin="0,4,0,0"
                                                TextTrimming="CharacterEllipsis" />
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="0,6,0,0"
+                                                Visibility="{Binding SelectedAlarmActionItem.LimitComparisonVisibility}">
+                                        <Viewbox Width="18"
+                                                 Height="18"
+                                                 Margin="0,0,6,0">
+                                            <Grid>
+                                                <Path Data="M23 6 L13.5 15.5 L8.5 10.5 L1 18 M17 6 L23 6 L23 12"
+                                                      Stroke="{StaticResource RedBrush}">
+                                                    <Path.Style>
+                                                        <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SelectedAlarmActionItem.IsAboveLimit}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Path.Style>
+                                                </Path>
+                                                <Path Data="M23 18 L13.5 8.5 L8.5 13.5 L1 6 M17 18 L23 18 L23 12"
+                                                      Stroke="{StaticResource RedBrush}">
+                                                    <Path.Style>
+                                                        <Style TargetType="Path" BasedOn="{StaticResource SvgIconPathStyle}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SelectedAlarmActionItem.IsBelowLimit}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Path.Style>
+                                                </Path>
+                                            </Grid>
+                                        </Viewbox>
+                                        <TextBlock Text="{Binding SelectedAlarmActionItem.LimitComparisonText}"
+                                                   Foreground="{StaticResource RedBrush}"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </StackPanel>
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SelectedAlarmActionItem.Severity}"
