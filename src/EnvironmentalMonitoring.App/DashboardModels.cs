@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Media;
 
 namespace EnvironmentalMonitoring.App;
@@ -76,6 +77,34 @@ public sealed record DashboardMetricCard(
         DashboardSeverity.Notice => DashboardPalette.Notice,
         _ => DashboardPalette.Primary,
     };
+
+    public Brush BorderBrush => Severity switch
+    {
+        DashboardSeverity.Critical or DashboardSeverity.Warning => DashboardPalette.Critical,
+        DashboardSeverity.Notice => DashboardPalette.Warning,
+        _ => DashboardPalette.PanelBorder,
+    };
+
+    public Brush StatusBrush => Severity switch
+    {
+        DashboardSeverity.Critical or DashboardSeverity.Warning => DashboardPalette.Critical,
+        DashboardSeverity.Notice => DashboardPalette.Warning,
+        _ => DashboardPalette.Normal,
+    };
+
+    public string StatusText => Severity switch
+    {
+        DashboardSeverity.Critical => "범위 이탈",
+        DashboardSeverity.Warning => "임계치 이탈",
+        DashboardSeverity.Notice => "확인 필요",
+        _ => "정상 범위",
+    };
+
+    public Visibility CheckIconVisibility =>
+        Severity == DashboardSeverity.Normal ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility WarningIconVisibility =>
+        Severity == DashboardSeverity.Normal ? Visibility.Collapsed : Visibility.Visible;
 }
 
 public sealed record GraphSummaryCard(
@@ -743,6 +772,7 @@ internal static class DashboardPalette
     public static Brush Pressure { get; } = Create("#D1E4FF");
     public static Brush Primary { get; } = Create("#ABC9EF");
     public static Brush PrimaryMuted { get; } = Create("#405078");
+    public static Brush PanelBorder { get; } = Create("#3B516B");
     public static Brush SelectedMenu { get; } = Create("#262A31");
     public static Brush DarkPanel { get; } = Create("#10141A");
     public static Brush TextPrimary { get; } = Create("#DFE2EB");

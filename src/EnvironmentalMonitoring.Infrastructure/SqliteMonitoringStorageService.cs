@@ -354,14 +354,6 @@ public sealed class SqliteMonitoringStorageService(
                 await InsertAlarmEventAsync(connection, transaction, batchId, snapshot.SampledAt, activeAlarm, cancellationToken);
             }
         }
-
-        foreach (var openAlarm in openAlarms.Values)
-        {
-            if (!activeAlarms.ContainsKey(openAlarm.Key))
-            {
-                await ResolveAlarmEventAsync(connection, transaction, openAlarm.Id, snapshot.SampledAt, cancellationToken);
-            }
-        }
     }
 
     private static IReadOnlyList<AlarmState> EvaluateAlarms(AcquisitionSnapshot snapshot)
@@ -528,26 +520,6 @@ public sealed class SqliteMonitoringStorageService(
         command.Parameters.AddWithValue("@MeasuredValue", double.IsNaN(alarm.MeasuredValue) ? DBNull.Value : alarm.MeasuredValue);
         command.Parameters.AddWithValue("@Message", alarm.Message);
         command.Parameters.AddWithValue("@OccurredAt", occurredAt.ToString("O"));
-        await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static async Task ResolveAlarmEventAsync(
-        SqliteConnection connection,
-        SqliteTransaction transaction,
-        long alarmId,
-        DateTimeOffset resolvedAt,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = """
-            UPDATE alarm_events
-            SET resolved_at = @ResolvedAt
-            WHERE id = @AlarmId
-              AND resolved_at IS NULL;
-            """;
-        command.Parameters.AddWithValue("@ResolvedAt", resolvedAt.ToString("O"));
-        command.Parameters.AddWithValue("@AlarmId", alarmId);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 

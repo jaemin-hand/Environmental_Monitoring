@@ -96,6 +96,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private IReadOnlyList<LiveChannelItem> _liveChannelItems = [];
     private IReadOnlyList<SampleHistoryItem> _sampleHistoryItems = [];
     private IReadOnlyList<AlarmHistoryItem> _alarmHistoryItems = [];
+    private IReadOnlyList<AlarmHistoryItem> _activeAlarmSelectionItems = [];
     private IReadOnlyList<LookupOption> _historyChannelOptions = [];
     private IReadOnlyList<LookupOption> _historyLocationOptions = [];
     private IReadOnlyList<LookupOption> _historyStatusOptions =
@@ -120,6 +121,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         new("UNACKNOWLEDGED", "미확인"),
     ];
     private AlarmHistoryItem? _selectedAlarmHistoryItem;
+    private AlarmHistoryItem? _selectedAlarmActionItem;
     private SampleHistoryItem? _selectedSampleHistoryItem;
     private DateTime? _selectedReportDate = DateTime.Today;
     private DateTime? _selectedAlarmDate;
@@ -154,6 +156,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private ChannelKind _selectedSensorDetailKind = ChannelKind.Temperature;
     private bool _isHistoryModalOpen;
     private bool _isCalibrationModalOpen;
+    private bool _isAlarmSelectionModalOpen;
     private bool _isAlarmActionModalOpen;
     private string _alarmActionOperatorName = string.Empty;
     private string _alarmActionNote = string.Empty;
@@ -588,6 +591,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         private set => SetField(ref _alarmHistoryItems, value);
     }
 
+    public IReadOnlyList<AlarmHistoryItem> ActiveAlarmSelectionItems
+    {
+        get => _activeAlarmSelectionItems;
+        private set => SetField(ref _activeAlarmSelectionItems, value);
+    }
+
     public IReadOnlyList<LookupOption> AlarmChannelOptions
     {
         get => _alarmChannelOptions;
@@ -614,6 +623,29 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool CanAcknowledgeSelectedAlarm =>
         SelectedAlarmHistoryItem is { IsAcknowledged: false, IsResolved: false };
+
+    public AlarmHistoryItem? SelectedAlarmActionItem
+    {
+        get => _selectedAlarmActionItem;
+        private set
+        {
+            if (SetField(ref _selectedAlarmActionItem, value))
+            {
+                OnPropertyChanged(nameof(AlarmActionTargetTitle));
+                OnPropertyChanged(nameof(AlarmActionTargetDetail));
+            }
+        }
+    }
+
+    public string AlarmActionTargetTitle =>
+        SelectedAlarmActionItem is null
+            ? "선택된 알람 없음"
+            : $"{SelectedAlarmActionItem.ChannelCode} / {SelectedAlarmActionItem.AlarmType}";
+
+    public string AlarmActionTargetDetail =>
+        SelectedAlarmActionItem is null
+            ? "알람 목록에서 처리할 항목을 선택하세요."
+            : $"{SelectedAlarmActionItem.OccurredAt} · {SelectedAlarmActionItem.Message} · 측정값 {SelectedAlarmActionItem.MeasuredValue}";
 
     public DateTime? SelectedReportDate
     {
@@ -895,6 +927,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public Visibility CalibrationModalVisibility =>
         _isCalibrationModalOpen ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility AlarmSelectionModalVisibility =>
+        _isAlarmSelectionModalOpen ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility AlarmActionModalVisibility =>
         _isAlarmActionModalOpen ? Visibility.Visible : Visibility.Collapsed;
@@ -1743,27 +1778,69 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 FormatMetricNumber(averageTemperature),
                 "°C",
                 "기준치 대비 상태 확인",
-                ResolveMetricSeverity(temperatureSnapshots)),
+                ResolveMetricSeverityWithLimits(temperatureSnapshots)),
             new DashboardMetricCard(
                 "상대 습도",
                 FormatMetricNumber(humiditySnapshot?.Value),
                 "%",
                 humiditySnapshot is null ? "미수신" : ToCleanQualityLabel(humiditySnapshot.QualityStatus),
-                humiditySnapshot is null ? DashboardSeverity.Warning : MapQualitySeverity(humiditySnapshot.QualityStatus)),
+                ResolveMetricSeverityWithLimits(humiditySnapshot, ChannelKind.Humidity)),
             new DashboardMetricCard(
                 "평균 기압",
                 FormatMetricNumber(pressureSnapshot?.Value),
                 "kPa",
                 pressureSnapshot is null ? "미수신" : ToCleanQualityLabel(pressureSnapshot.QualityStatus),
-                pressureSnapshot is null ? DashboardSeverity.Warning : MapQualitySeverity(pressureSnapshot.QualityStatus)),
+                ResolveMetricSeverityWithLimits(pressureSnapshot, ChannelKind.Pressure)),
             new DashboardMetricCard(
                 "기준온도",
                 FormatMetricNumber(referenceTemperature?.Value),
                 "°C",
                 referenceTemperature is null ? "미수신" : ToCleanQualityLabel(referenceTemperature.QualityStatus),
-                referenceTemperature is null ? DashboardSeverity.Warning : MapQualitySeverity(referenceTemperature.QualityStatus)),
+                ResolveMetricSeverityWithLimits(referenceTemperature, ChannelKind.Temperature)),
         ];
     }
+
+    private DashboardSeverity ResolveMetricSeverityWithLimits(
+        IReadOnlyList<MonitoringChannelSnapshot> snapshots)
+    {
+        if (snapshots.Count == 0)
+        {
+            return DashboardSeverity.Warning;
+        }
+
+        return snapshots
+            .Select(snapshot => ResolveMetricSeverityWithLimits(snapshot, snapshot.Kind))
+            .Aggregate(DashboardSeverity.Normal, MaxSeverity);
+    }
+
+    private DashboardSeverity ResolveMetricSeverityWithLimits(
+        MonitoringChannelSnapshot? snapshot,
+        ChannelKind fallbackKind)
+    {
+        if (snapshot is null)
+        {
+            return DashboardSeverity.Warning;
+        }
+
+        var channel = _blueprint.Channels.FirstOrDefault(item =>
+                string.Equals(item.Name, snapshot.ChannelCode, StringComparison.OrdinalIgnoreCase))
+            ?? _blueprint.Channels.FirstOrDefault(item => item.Kind == fallbackKind && item.IsActive);
+
+        return channel is null
+            ? MapQualitySeverity(snapshot.QualityStatus)
+            : ResolveTileSeverity(channel, snapshot);
+    }
+
+    private static DashboardSeverity MaxSeverity(DashboardSeverity left, DashboardSeverity right) =>
+        SeverityRank(right) > SeverityRank(left) ? right : left;
+
+    private static int SeverityRank(DashboardSeverity severity) => severity switch
+    {
+        DashboardSeverity.Critical => 3,
+        DashboardSeverity.Warning => 2,
+        DashboardSeverity.Notice => 1,
+        _ => 0,
+    };
 
     private IReadOnlyList<GraphSummaryCard> CreateGraphSummaryCards(MonitoringDashboardSnapshot snapshot)
     {
@@ -2389,7 +2466,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _ = RefreshAllAsync();
     }
 
-    private void ActiveAlarmCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private async void ActiveAlarmCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (!HasActiveAlarm)
         {
@@ -2398,12 +2475,80 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        try
+        {
+            var activeAlarms = await LoadActiveAlarmSelectionItemsAsync();
+            if (activeAlarms.Count == 0)
+            {
+                FooterStatusMessage = "활성 알람이 없습니다.";
+                await RefreshAllAsync();
+                e.Handled = true;
+                return;
+            }
+
+            ActiveAlarmSelectionItems = activeAlarms;
+            if (activeAlarms.Count == 1)
+            {
+                OpenAlarmActionModal(activeAlarms[0]);
+            }
+            else
+            {
+                SetAlarmSelectionModalOpen(true);
+            }
+        }
+        catch (Exception ex)
+        {
+            FooterStatusMessage = $"활성 알람 조회 실패: {ex.Message}";
+        }
+
+        e.Handled = true;
+    }
+
+    private async Task<IReadOnlyList<AlarmHistoryItem>> LoadActiveAlarmSelectionItemsAsync()
+    {
+        var alarms = await _recordsQueryService.GetAlarmHistoryAsync(
+            50,
+            null,
+            null,
+            activeOnly: true,
+            unacknowledgedOnly: false,
+            CancellationToken.None);
+
+        return CreateAlarmHistoryItems(alarms);
+    }
+
+    private void OpenAlarmActionModal(AlarmHistoryItem alarm)
+    {
+        SelectedAlarmActionItem = alarm;
         AlarmActionOperatorName = string.IsNullOrWhiteSpace(AlarmActionOperatorName)
             ? Environment.UserName
             : AlarmActionOperatorName;
         AlarmActionNote = string.Empty;
+        SetAlarmSelectionModalOpen(false);
         SetAlarmActionModalOpen(true);
-        e.Handled = true;
+    }
+
+    private void SelectAlarmForActionButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: long alarmId })
+        {
+            FooterStatusMessage = "선택한 알람 정보를 확인할 수 없습니다.";
+            return;
+        }
+
+        var alarm = ActiveAlarmSelectionItems.FirstOrDefault(item => item.Id == alarmId);
+        if (alarm is null)
+        {
+            FooterStatusMessage = "선택한 알람이 이미 변경되었습니다.";
+            return;
+        }
+
+        OpenAlarmActionModal(alarm);
+    }
+
+    private void CloseAlarmSelectionModalButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetAlarmSelectionModalOpen(false);
     }
 
     private void CloseAlarmActionModalButton_Click(object sender, RoutedEventArgs e)
@@ -2413,9 +2558,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private async void CompleteAlarmActionButton_Click(object sender, RoutedEventArgs e)
     {
-        if (!HasActiveAlarm)
+        if (SelectedAlarmActionItem is null)
         {
-            FooterStatusMessage = "처리할 활성 알람이 없습니다.";
+            FooterStatusMessage = "처리할 알람을 선택해야 합니다.";
             SetAlarmActionModalOpen(false);
             return;
         }
@@ -2437,13 +2582,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         try
         {
             var handledAt = DateTimeOffset.Now;
-            var affected = await _alarmCommandService.ResolveActiveAlarmsWithActionAsync(
+            var affected = await _alarmCommandService.ResolveAlarmWithActionAsync(
+                SelectedAlarmActionItem.Id,
                 handledAt,
                 operatorName,
                 actionNote,
                 CancellationToken.None);
 
-            FooterStatusMessage = $"활성 알람 조치 완료: {affected}건 / 처리자 {operatorName} / {handledAt:HH:mm:ss}";
+            FooterStatusMessage = affected > 0
+                ? $"알람 조치 완료: {SelectedAlarmActionItem.ChannelCode} / 처리자 {operatorName} / {handledAt:HH:mm:ss}"
+                : "선택한 알람은 이미 해제되었습니다.";
+            SelectedAlarmActionItem = null;
             SetAlarmActionModalOpen(false);
             await RefreshAllAsync();
         }
@@ -2497,6 +2646,37 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         UpdateNavigation();
     }
 
+    private void SetAlarmSelectionModalOpen(bool isOpen)
+    {
+        if (_isAlarmSelectionModalOpen == isOpen)
+        {
+            return;
+        }
+
+        _isAlarmSelectionModalOpen = isOpen;
+        if (isOpen)
+        {
+            if (_isHistoryModalOpen)
+            {
+                _isHistoryModalOpen = false;
+                OnPropertyChanged(nameof(HistoryModalVisibility));
+            }
+
+            if (_isCalibrationModalOpen)
+            {
+                _isCalibrationModalOpen = false;
+                OnPropertyChanged(nameof(CalibrationModalVisibility));
+            }
+
+            CloseSensorDetailPopover();
+        }
+
+        FooterStatusMessage = isOpen
+            ? "조치할 활성 알람을 선택하세요."
+            : "실시간 대시보드 표시 중";
+        OnPropertyChanged(nameof(AlarmSelectionModalVisibility));
+    }
+
     private void SetAlarmActionModalOpen(bool isOpen)
     {
         if (_isAlarmActionModalOpen == isOpen)
@@ -2519,11 +2699,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 OnPropertyChanged(nameof(CalibrationModalVisibility));
             }
 
+            if (_isAlarmSelectionModalOpen)
+            {
+                _isAlarmSelectionModalOpen = false;
+                OnPropertyChanged(nameof(AlarmSelectionModalVisibility));
+            }
+
             CloseSensorDetailPopover();
         }
 
         FooterStatusMessage = isOpen
-            ? "활성 알람 조치 완료 정보를 입력 중입니다."
+            ? "선택 알람 조치 완료 정보를 입력 중입니다."
             : "실시간 대시보드 표시 중";
         OnPropertyChanged(nameof(AlarmActionModalVisibility));
     }

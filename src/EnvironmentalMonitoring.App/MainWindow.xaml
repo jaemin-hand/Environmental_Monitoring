@@ -619,7 +619,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="1"
-                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
                                 Orientation="Horizontal"
                                 VerticalAlignment="Bottom">
                         <TextBlock Text="{Binding Value}"
@@ -631,67 +631,6 @@
                                    FontSize="12"
                                    Margin="4,11,0,0" />
                     </StackPanel>
-
-                    <Grid Grid.Row="1"
-                          Grid.Column="1"
-                          HorizontalAlignment="Right"
-                          VerticalAlignment="Bottom"
-                          Margin="16,0,0,0">
-                        <Grid.Style>
-                            <Style TargetType="Grid">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding DataContext.IsSensorDetailLimitEditMode, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                 Value="True">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Grid.Style>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="14" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="하한"
-                                       Foreground="{StaticResource TextBrush}"
-                                       FontSize="13"
-                                       HorizontalAlignment="Center"
-                                       Margin="0,0,0,3" />
-                            <TextBox Text="{Binding EditableLowLimit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     Tag="LowLimit"
-                                     Width="72"
-                                     Height="27"
-                                     Padding="5,0"
-                                     Background="#D8DCE7"
-                                     Foreground="#111827"
-                                     BorderBrush="#8C95A8"
-                                     BorderThickness="1"
-                                     FontSize="14"
-                                     HorizontalContentAlignment="Center"
-                                     VerticalContentAlignment="Center" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="상한"
-                                       Foreground="{StaticResource TextBrush}"
-                                       FontSize="13"
-                                       HorizontalAlignment="Center"
-                                       Margin="0,0,0,3" />
-                            <TextBox Text="{Binding EditableHighLimit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     Tag="HighLimit"
-                                     Width="72"
-                                     Height="27"
-                                     Padding="5,0"
-                                     Background="#D8DCE7"
-                                     Foreground="#111827"
-                                     BorderBrush="#8C95A8"
-                                     BorderThickness="1"
-                                     FontSize="14"
-                                     HorizontalContentAlignment="Center"
-                                     VerticalContentAlignment="Center" />
-                        </StackPanel>
-                    </Grid>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -823,7 +762,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="1"
-                                Grid.ColumnSpan="2"
+                                Grid.Column="0"
                                 Orientation="Horizontal"
                                 VerticalAlignment="Bottom">
                         <TextBlock Text="{Binding Value}"
@@ -835,6 +774,67 @@
                                    FontSize="12"
                                    Margin="4,11,0,0" />
                     </StackPanel>
+
+                    <Grid Grid.Row="1"
+                          Grid.Column="1"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Bottom"
+                          Margin="16,0,0,0">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.IsSensorDetailLimitEditMode, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                 Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="하한"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="13"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,3" />
+                            <TextBox Text="{Binding EditableLowLimit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Tag="LowLimit"
+                                     Width="72"
+                                     Height="27"
+                                     Padding="5,0"
+                                     Background="#D8DCE7"
+                                     Foreground="#111827"
+                                     BorderBrush="#8C95A8"
+                                     BorderThickness="1"
+                                     FontSize="14"
+                                     HorizontalContentAlignment="Center"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="상한"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="13"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,3" />
+                            <TextBox Text="{Binding EditableHighLimit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Tag="HighLimit"
+                                     Width="72"
+                                     Height="27"
+                                     Padding="5,0"
+                                     Background="#D8DCE7"
+                                     Foreground="#111827"
+                                     BorderBrush="#8C95A8"
+                                     BorderThickness="1"
+                                     FontSize="14"
+                                     HorizontalContentAlignment="Center"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -1730,6 +1730,7 @@
                     <Border x:Name="AverageTemperatureCard"
                             Grid.Row="2"
                             Style="{StaticResource PanelStyle}"
+                            BorderBrush="{Binding DashboardMetricCards[0].BorderBrush}"
                             Padding="24,13"
                             Cursor="Hand"
                             ToolTip="클릭하여 온도 채널 상세 보기"
@@ -1757,13 +1758,20 @@
                             <StackPanel Grid.Column="1"
                                         Orientation="Horizontal"
                                         VerticalAlignment="Top">
-                                <TextBlock Text="정상 범위"
-                                           Foreground="{StaticResource TextBrush}"
+                                <TextBlock Text="{Binding DashboardMetricCards[0].StatusText}"
+                                           Foreground="{Binding DashboardMetricCards[0].StatusBrush}"
                                            FontSize="17"
                                            Margin="0,1,8,0" />
-                                <Viewbox Width="25" Height="25">
+                                <Viewbox Width="25" Height="25"
+                                         Visibility="{Binding DashboardMetricCards[0].CheckIconVisibility}">
                                     <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
-                                          Stroke="{StaticResource GreenBrush}"
+                                          Stroke="{Binding DashboardMetricCards[0].StatusBrush}"
+                                          Style="{StaticResource SvgIconPathStyle}" />
+                                </Viewbox>
+                                <Viewbox Width="25" Height="25"
+                                         Visibility="{Binding DashboardMetricCards[0].WarningIconVisibility}">
+                                    <Path Data="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z"
+                                          Stroke="{Binding DashboardMetricCards[0].StatusBrush}"
                                           Style="{StaticResource SvgIconPathStyle}" />
                                 </Viewbox>
                             </StackPanel>
@@ -1773,6 +1781,7 @@
                     <Border x:Name="HumidityCard"
                             Grid.Row="4"
                             Style="{StaticResource PanelStyle}"
+                            BorderBrush="{Binding DashboardMetricCards[1].BorderBrush}"
                             Padding="24,13"
                             Cursor="Hand"
                             ToolTip="클릭하여 습도 채널 상세 보기"
@@ -1800,13 +1809,20 @@
                             <StackPanel Grid.Column="1"
                                         Orientation="Horizontal"
                                         VerticalAlignment="Top">
-                                <TextBlock Text="정상 범위"
-                                           Foreground="{StaticResource TextBrush}"
+                                <TextBlock Text="{Binding DashboardMetricCards[1].StatusText}"
+                                           Foreground="{Binding DashboardMetricCards[1].StatusBrush}"
                                            FontSize="17"
                                            Margin="0,1,8,0" />
-                                <Viewbox Width="25" Height="25">
+                                <Viewbox Width="25" Height="25"
+                                         Visibility="{Binding DashboardMetricCards[1].CheckIconVisibility}">
                                     <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
-                                          Stroke="{StaticResource GreenBrush}"
+                                          Stroke="{Binding DashboardMetricCards[1].StatusBrush}"
+                                          Style="{StaticResource SvgIconPathStyle}" />
+                                </Viewbox>
+                                <Viewbox Width="25" Height="25"
+                                         Visibility="{Binding DashboardMetricCards[1].WarningIconVisibility}">
+                                    <Path Data="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z"
+                                          Stroke="{Binding DashboardMetricCards[1].StatusBrush}"
                                           Style="{StaticResource SvgIconPathStyle}" />
                                 </Viewbox>
                             </StackPanel>
@@ -1816,6 +1832,7 @@
                     <Border x:Name="PressureCard"
                             Grid.Row="6"
                             Style="{StaticResource PanelStyle}"
+                            BorderBrush="{Binding DashboardMetricCards[2].BorderBrush}"
                             Padding="24,13"
                             Cursor="Hand"
                             ToolTip="클릭하여 대기압 채널 상세 보기"
@@ -1843,13 +1860,20 @@
                             <StackPanel Grid.Column="1"
                                         Orientation="Horizontal"
                                         VerticalAlignment="Top">
-                                <TextBlock Text="정상 범위"
-                                           Foreground="{StaticResource TextBrush}"
+                                <TextBlock Text="{Binding DashboardMetricCards[2].StatusText}"
+                                           Foreground="{Binding DashboardMetricCards[2].StatusBrush}"
                                            FontSize="17"
                                            Margin="0,1,8,0" />
-                                <Viewbox Width="25" Height="25">
+                                <Viewbox Width="25" Height="25"
+                                         Visibility="{Binding DashboardMetricCards[2].CheckIconVisibility}">
                                     <Path Data="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
-                                          Stroke="{StaticResource GreenBrush}"
+                                          Stroke="{Binding DashboardMetricCards[2].StatusBrush}"
+                                          Style="{StaticResource SvgIconPathStyle}" />
+                                </Viewbox>
+                                <Viewbox Width="25" Height="25"
+                                         Visibility="{Binding DashboardMetricCards[2].WarningIconVisibility}">
+                                    <Path Data="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z"
+                                          Stroke="{Binding DashboardMetricCards[2].StatusBrush}"
                                           Style="{StaticResource SvgIconPathStyle}" />
                                 </Viewbox>
                             </StackPanel>
@@ -2856,7 +2880,129 @@
                 </Border>
             </Grid>
 
-            <!-- Blocking alarm action modal: records who handled the active alarm and what action was taken. -->
+            <!-- Active alarm selector: choose one active alarm before recording the action note. -->
+            <Grid Grid.Row="0"
+                  Grid.RowSpan="6"
+                  Panel.ZIndex="125"
+                  Background="#A8000000"
+                  Visibility="{Binding AlarmSelectionModalVisibility}">
+                <Border Width="720"
+                        Height="520"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#0A1422"
+                        BorderBrush="#FF4B3E"
+                        BorderThickness="1.2"
+                        CornerRadius="14"
+                        Padding="26"
+                        Effect="{StaticResource PanelShadow}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="62" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="52" />
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="조치할 알람 선택"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="28"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Text="활성 알람이 여러 건일 경우, 먼저 처리할 알람 1건을 선택합니다."
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="14"
+                                           Margin="0,5,0,0" />
+                            </StackPanel>
+                            <Button Content="×"
+                                    Click="CloseAlarmSelectionModalButton_Click"
+                                    Width="40"
+                                    Height="40"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Background="#121A26"
+                                    Foreground="{StaticResource TextBrush}"
+                                    BorderBrush="#526A88"
+                                    BorderThickness="1"
+                                    FontSize="24"
+                                    Cursor="Hand" />
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="1"
+                                      Margin="0,12,0,14"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding ActiveAlarmSelectionItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Tag="{Binding Id}"
+                                                Click="SelectAlarmForActionButton_Click"
+                                                HorizontalContentAlignment="Stretch"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="0"
+                                                Margin="0,0,0,10"
+                                                Cursor="Hand">
+                                            <Border Background="#10141A"
+                                                    BorderBrush="#FF4B3E"
+                                                    BorderThickness="1"
+                                                    CornerRadius="8"
+                                                    Padding="16,12">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Message}"
+                                                                   Foreground="#FFE3DF"
+                                                                   FontSize="17"
+                                                                   FontWeight="SemiBold"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding OccurredAt}"
+                                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                                   FontSize="13"
+                                                                   Margin="0,5,0,0" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1"
+                                                                MinWidth="150"
+                                                                HorizontalAlignment="Right"
+                                                                Margin="18,0,0,0">
+                                                        <TextBlock Text="{Binding ChannelCode}"
+                                                                   Foreground="{StaticResource TextBrush}"
+                                                                   FontSize="15"
+                                                                   HorizontalAlignment="Right" />
+                                                        <TextBlock Text="{Binding MeasuredValue}"
+                                                                   Foreground="{StaticResource RedBrush}"
+                                                                   FontSize="19"
+                                                                   FontWeight="SemiBold"
+                                                                   HorizontalAlignment="Right"
+                                                                   Margin="0,5,0,0" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <Button Grid.Row="2"
+                                Content="닫기"
+                                Click="CloseAlarmSelectionModalButton_Click"
+                                Width="112"
+                                Height="40"
+                                HorizontalAlignment="Right"
+                                Background="#111827"
+                                Foreground="{StaticResource TextBrush}"
+                                BorderBrush="#526A88"
+                                BorderThickness="1"
+                                Cursor="Hand" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Blocking alarm action modal: records who handled the selected alarm and what action was taken. -->
             <Grid Grid.Row="0"
                   Grid.RowSpan="6"
                   Panel.ZIndex="130"
@@ -2883,7 +3029,7 @@
 
                         <Grid>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="알람 조치 완료"
+                                <TextBlock Text="알람 조치"
                                            Foreground="{StaticResource TextBrush}"
                                            FontSize="28"
                                            FontWeight="SemiBold" />
@@ -2919,21 +3065,26 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
-                                    <TextBlock Text="현재 활성 알람"
+                                    <TextBlock Text="선택 알람"
                                                Foreground="{StaticResource MutedTextBrush}"
                                                FontSize="14" />
-                                    <TextBlock Text="{Binding ActiveAlarmDetailText}"
+                                    <TextBlock Text="{Binding AlarmActionTargetTitle}"
                                                Style="{StaticResource AlarmAccentTextStyle}"
                                                FontSize="18"
                                                FontWeight="SemiBold"
                                                Margin="0,5,0,0"
                                                TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding AlarmActionTargetDetail}"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="12"
+                                               Margin="0,4,0,0"
+                                               TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
                                 <TextBlock Grid.Column="1"
-                                           Text="{Binding ActiveAlarmCountText}"
+                                           Text="{Binding SelectedAlarmActionItem.Severity}"
                                            Style="{StaticResource AlarmAccentTextStyle}"
-                                           FontSize="36"
-                                           FontWeight="Light"
+                                           FontSize="22"
+                                           FontWeight="SemiBold"
                                            VerticalAlignment="Center"
                                            Margin="18,0,0,0" />
                             </Grid>

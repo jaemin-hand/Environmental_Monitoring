@@ -91,6 +91,40 @@ public sealed class MonitoringAlarmCommandService(MonitoringStorageLayout storag
         return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public async Task<int> ResolveAlarmWithActionAsync(
+        long alarmId,
+        DateTimeOffset handledAt,
+        string handledBy,
+        string actionNote,
+        CancellationToken cancellationToken)
+    {
+        if (!File.Exists(storageLayout.DatabaseFilePath))
+        {
+            return 0;
+        }
+
+        await using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await EnsureAlarmActionColumnsAsync(connection, cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE alarm_events
+            SET acknowledged_at = COALESCE(acknowledged_at, @HandledAt),
+                acknowledged_by = @HandledBy,
+                action_note = @ActionNote,
+                resolved_at = COALESCE(resolved_at, @HandledAt)
+            WHERE id = @AlarmId
+              AND resolved_at IS NULL;
+            """;
+        command.Parameters.AddWithValue("@AlarmId", alarmId);
+        command.Parameters.AddWithValue("@HandledAt", handledAt.ToString("O"));
+        command.Parameters.AddWithValue("@HandledBy", handledBy);
+        command.Parameters.AddWithValue("@ActionNote", actionNote);
+
+        return await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     private static async Task EnsureAlarmActionColumnsAsync(
         SqliteConnection connection,
         CancellationToken cancellationToken)
