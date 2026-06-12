@@ -39,6 +39,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         double HighY,
         double Height);
     private readonly DispatcherTimer _clockTimer;
+    private readonly DispatcherTimer _graphFrameTimer;
     private readonly DispatcherTimer _refreshTimer;
     private readonly MonitoringSettingsStore _settingsStore;
     private readonly MonitoringRuntimeOptions _bootstrapRuntimeOptions = new()
@@ -208,16 +209,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         CurrentTimeText = DateTime.Now.ToString("tt hh:mm:ss", CultureInfo.GetCultureInfo("ko-KR"));
         FooterStatusMessage = "공유 설정 파일을 불러왔습니다.";
 
-        _clockTimer = new DispatcherTimer
+        _clockTimer = new DispatcherTimer(DispatcherPriority.Send)
         {
             Interval = TimeSpan.FromSeconds(1),
         };
         _clockTimer.Tick += (_, _) =>
         {
             CurrentTimeText = DateTime.Now.ToString("tt hh:mm:ss", CultureInfo.GetCultureInfo("ko-KR"));
-            RefreshGraphFrameFromCache();
         };
         _clockTimer.Start();
+
+        _graphFrameTimer = new DispatcherTimer(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromSeconds(1),
+        };
+        _graphFrameTimer.Tick += (_, _) => RefreshGraphFrameFromCache();
+        _graphFrameTimer.Start();
 
         _refreshTimer = new DispatcherTimer
         {
@@ -232,6 +239,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Closed += (_, _) =>
         {
             _clockTimer.Stop();
+            _graphFrameTimer.Stop();
             _refreshTimer.Stop();
         };
     }
@@ -1428,7 +1436,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 CancellationToken.None);
 
             _graphSamples = graphSamples;
-            RefreshGraphSeriesFromCache();
         }
         catch (Exception ex)
         {
@@ -1440,7 +1447,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var activeChannelCount = Math.Max(1, _blueprint.Channels.Count(channel => channel.IsActive));
         var estimatedRows = GetGraphVisibleDuration().TotalSeconds * activeChannelCount * 1.15d;
-        return (int)Math.Clamp(Math.Ceiling(estimatedRows), 2000d, 650000d);
+        var minimumRows = Math.Max(120, activeChannelCount * 20);
+        return (int)Math.Clamp(Math.Ceiling(estimatedRows), minimumRows, 650000d);
     }
 
     private void ApplyRefreshState(
@@ -1991,7 +1999,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void RefreshGraphFrameFromCache()
     {
-        if (!ShouldRefreshGraphSamples() || _graphSamples.Count == 0)
+        if (_isRefreshing || !ShouldRefreshGraphSamples() || _graphSamples.Count == 0)
         {
             return;
         }
@@ -2812,10 +2820,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private (DateTimeOffset Start, DateTimeOffset End) GetGraphTimeWindow(DateTimeOffset latestTimestamp)
     {
         var duration = GetGraphVisibleDuration();
-        var visibleEnd = DateTimeOffset.Now;
+        var visibleEnd = TruncateToSecond(DateTimeOffset.Now);
 
         return (visibleEnd - duration, visibleEnd);
     }
+
+    private static DateTimeOffset TruncateToSecond(DateTimeOffset timestamp) =>
+        new(timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second, timestamp.Offset);
 
     private TimeSpan GetGraphVisibleDuration() =>
         SelectedGraphTimeScale switch
