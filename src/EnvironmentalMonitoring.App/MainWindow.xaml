@@ -1256,9 +1256,10 @@
                                 </ItemsControl>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Background="#070B12" VerticalAlignment="Center">
-                                <Button Content="1초" Style="{StaticResource ActivePeriodButtonStyle}" />
-                                <Button Content="1분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="1분" Style="{StaticResource ActivePeriodButtonStyle}" />
+                                <Button Content="5분" Style="{StaticResource PeriodButtonStyle}" />
                                 <Button Content="10분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="30분" Style="{StaticResource PeriodButtonStyle}" />
                                 <Button Content="1시간" Style="{StaticResource PeriodButtonStyle}" />
                                 <Button Content="1일" Style="{StaticResource PeriodButtonStyle}" />
                             </StackPanel>
@@ -1359,9 +1360,10 @@
                         <Grid>
                             <TextBlock Text="♢  습도 추이" Foreground="{StaticResource BlueBrush}" FontSize="19" FontWeight="SemiBold" />
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Background="#070B12">
-                                <Button Content="1초" Style="{StaticResource ActivePeriodButtonStyle}" />
-                                <Button Content="1분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="1분" Style="{StaticResource ActivePeriodButtonStyle}" />
+                                <Button Content="5분" Style="{StaticResource PeriodButtonStyle}" />
                                 <Button Content="10분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="30분" Style="{StaticResource PeriodButtonStyle}" />
                                 <Button Content="1시간" Style="{StaticResource PeriodButtonStyle}" />
                                 <Button Content="1일" Style="{StaticResource PeriodButtonStyle}" />
                             </StackPanel>
@@ -1395,9 +1397,10 @@
                         <Grid>
                             <TextBlock Text="◴  대기압 추이" Foreground="{StaticResource PurpleBrush}" FontSize="19" FontWeight="SemiBold" />
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Background="#070B12">
-                                <Button Content="1초" Style="{StaticResource ActivePeriodButtonStyle}" />
-                                <Button Content="1분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="1분" Style="{StaticResource ActivePeriodButtonStyle}" />
+                                <Button Content="5분" Style="{StaticResource PeriodButtonStyle}" />
                                 <Button Content="10분" Style="{StaticResource PeriodButtonStyle}" />
+                                <Button Content="30분" Style="{StaticResource PeriodButtonStyle}" />
                                 <Button Content="1시간" Style="{StaticResource PeriodButtonStyle}" />
                                 <Button Content="1일" Style="{StaticResource PeriodButtonStyle}" />
                             </StackPanel>

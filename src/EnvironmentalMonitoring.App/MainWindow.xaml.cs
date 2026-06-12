@@ -31,6 +31,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private const double SmallGraphPlotTop = 28d;
     private const double SmallGraphPlotBottom = 124d;
     private const double SmallGraphTimeLabelTop = 126d;
+    private const int MaxGraphRenderedPointsPerSeries = 720;
     private readonly record struct GraphAxisScale(
         double LowValue,
         double HighValue,
@@ -152,7 +153,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _graphTimeMiddleText = "-";
     private string _graphTimeThreeQuarterText = "-";
     private string _graphTimeEndText = "-";
-    private string _selectedGraphTimeScale = "1초";
+    private string _selectedGraphTimeScale = "1분";
     private bool _isSensorDetailPopoverOpen;
     private bool _isSensorDetailNameEditMode;
     private bool _isSensorDetailLimitEditMode;
@@ -214,6 +215,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _clockTimer.Tick += (_, _) =>
         {
             CurrentTimeText = DateTime.Now.ToString("tt hh:mm:ss", CultureInfo.GetCultureInfo("ko-KR"));
+            RefreshGraphFrameFromCache();
         };
         _clockTimer.Start();
 
@@ -250,9 +252,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public IReadOnlyList<string> GraphTimeScaleOptions { get; } =
     [
-        "1초",
         "1분",
+        "5분",
         "10분",
+        "30분",
         "1시간",
         "1일",
     ];
@@ -1418,7 +1421,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         try
         {
             var graphSamples = await _recordsQueryService.GetRecentSamplesAsync(
-                2000,
+                GetGraphSampleQueryLimit(),
                 null,
                 null,
                 null,
@@ -1431,6 +1434,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             FooterStatusMessage = $"그래프 데이터 갱신 실패: {ex.Message}";
         }
+    }
+
+    private int GetGraphSampleQueryLimit()
+    {
+        var activeChannelCount = Math.Max(1, _blueprint.Channels.Count(channel => channel.IsActive));
+        var estimatedRows = GetGraphVisibleDuration().TotalSeconds * activeChannelCount * 1.15d;
+        return (int)Math.Clamp(Math.Ceiling(estimatedRows), 2000d, 650000d);
     }
 
     private void ApplyRefreshState(
@@ -1977,6 +1987,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             .ToArray();
         UpdateSecondaryTrendSeries(visibleStart, visibleEnd);
         RenderGraphSeries(series);
+    }
+
+    private void RefreshGraphFrameFromCache()
+    {
+        if (!ShouldRefreshGraphSamples() || _graphSamples.Count == 0)
+        {
+            return;
+        }
+
+        RefreshGraphSeriesFromCache();
     }
 
     private void UpdateSecondaryTrendSeries(DateTimeOffset visibleStart, DateTimeOffset visibleEnd)
@@ -2792,15 +2812,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private (DateTimeOffset Start, DateTimeOffset End) GetGraphTimeWindow(DateTimeOffset latestTimestamp)
     {
         var duration = GetGraphVisibleDuration();
-        var now = DateTimeOffset.Now;
-        var visibleEnd = string.Equals(SelectedGraphTimeScale, "1초", StringComparison.Ordinal)
-            ? now
-            : latestTimestamp;
-
-        if (visibleEnd < latestTimestamp)
-        {
-            visibleEnd = latestTimestamp;
-        }
+        var visibleEnd = DateTimeOffset.Now;
 
         return (visibleEnd - duration, visibleEnd);
     }
@@ -2808,30 +2820,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private TimeSpan GetGraphVisibleDuration() =>
         SelectedGraphTimeScale switch
         {
-            "1초" => TimeSpan.FromSeconds(60),
-            "1분" => TimeSpan.FromMinutes(20),
-            "10분" => TimeSpan.FromMinutes(200),
-            "1시간" => TimeSpan.FromHours(20),
-            "1일" => TimeSpan.FromDays(20),
-            _ => TimeSpan.FromSeconds(60),
+            "1분" => TimeSpan.FromMinutes(1),
+            "5분" => TimeSpan.FromMinutes(5),
+            "10분" => TimeSpan.FromMinutes(10),
+            "30분" => TimeSpan.FromMinutes(30),
+            "1시간" => TimeSpan.FromHours(1),
+            "1일" => TimeSpan.FromDays(1),
+            _ => TimeSpan.FromMinutes(1),
         };
 
-    private TimeSpan GetGraphGridInterval() =>
-        SelectedGraphTimeScale switch
-        {
-            "1초" => TimeSpan.FromSeconds(10),
-            "1분" => TimeSpan.FromMinutes(5),
-            "10분" => TimeSpan.FromMinutes(50),
-            "1시간" => TimeSpan.FromHours(5),
-            "1일" => TimeSpan.FromDays(5),
-            _ => TimeSpan.FromSeconds(10),
-        };
+    private TimeSpan GetGraphGridInterval()
+    {
+        var intervalTicks = Math.Max(1L, GetGraphVisibleDuration().Ticks / 6);
+        return TimeSpan.FromTicks(intervalTicks);
+    }
 
     private string GetGraphTimeLabelFormat() =>
         SelectedGraphTimeScale switch
         {
-            "1초" => "HH:mm:ss",
-            "1분" or "10분" => "HH:mm",
+            "1분" or "5분" or "10분" or "30분" => "HH:mm:ss",
             "1시간" => "MM-dd HH:mm",
             "1일" => "MM-dd",
             _ => "HH:mm:ss",
@@ -2968,14 +2975,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void UpdateGraphTimeAxisLabels(DateTimeOffset visibleStart, DateTimeOffset visibleEnd)
     {
-        var format = SelectedGraphTimeScale switch
-        {
-            "1초" => "HH:mm:ss",
-            "1분" or "10분" => "HH:mm",
-            "1시간" => "MM-dd HH:mm",
-            "1일" => "MM-dd",
-            _ => "HH:mm:ss",
-        };
+        var format = GetGraphTimeLabelFormat();
 
         string FormatTimestamp(DateTimeOffset timestamp) =>
             timestamp.ToLocalTime().ToString(format, CultureInfo.InvariantCulture);
@@ -3053,11 +3053,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var kind = channel?.Kind ?? channelSamples[^1].Kind;
             var latestValue = values[^1];
             var unit = channel?.Unit ?? channelSamples[^1].Unit;
+            var renderSamples = DownsampleSamples(channelSamples, MaxGraphRenderedPointsPerSeries);
 
             series.Add(new GraphSeriesItem(
                 filter.Code,
                 filter.Label,
-                BuildTimeBasedPolylinePointCollection(channelSamples, kind, visibleStart, visibleEnd),
+                BuildTimeBasedPolylinePointCollection(renderSamples, kind, visibleStart, visibleEnd),
                 FormatMetricNumber(latestValue),
                 NormalizeGraphUnit(unit),
                 filter.Accent));
@@ -4181,7 +4182,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (temperatureValues.Length == 0)
         {
             HistoryTemperatureTrendPoints = string.Empty;
-            UpdateHistoryAlarmTriggerLines(ChannelKind.Temperature, samples);
+            HideHistoryAlarmTriggerLines();
             return;
         }
 
@@ -4190,7 +4191,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ChannelKind.Temperature,
             dayStart,
             dayEnd);
-        UpdateHistoryAlarmTriggerLines(ChannelKind.Temperature, samples);
+        HideHistoryAlarmTriggerLines();
     }
 
     private static DateTimeOffset CreateLocalDayStart(DateTime date)
@@ -4635,6 +4636,35 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return points;
     }
 
+    private static IReadOnlyList<MonitoringSampleRecord> DownsampleSamples(
+        IReadOnlyList<MonitoringSampleRecord> samples,
+        int maxPoints)
+    {
+        if (samples.Count <= maxPoints || maxPoints < 2)
+        {
+            return samples;
+        }
+
+        var result = new List<MonitoringSampleRecord>(maxPoints);
+        var step = (samples.Count - 1d) / (maxPoints - 1d);
+        var lastIndex = -1;
+
+        for (var i = 0; i < maxPoints; i++)
+        {
+            var index = (int)Math.Round(i * step, MidpointRounding.AwayFromZero);
+            index = Math.Clamp(index, 0, samples.Count - 1);
+            if (index == lastIndex)
+            {
+                continue;
+            }
+
+            result.Add(samples[index]);
+            lastIndex = index;
+        }
+
+        return result;
+    }
+
     private static string BuildTimeBasedPolylinePoints(
         IReadOnlyList<MonitoringSampleRecord> samples,
         ChannelKind kind,
@@ -4651,8 +4681,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             .OrderBy(item => item.SampledAt)
             .ToArray();
 
+        var renderSamples = DownsampleSamples(filteredSamples, MaxGraphRenderedPointsPerSeries);
         var points = BuildTimeBasedPolylinePointCollection(
-            filteredSamples,
+            renderSamples,
             kind,
             visibleStart,
             visibleEnd,
