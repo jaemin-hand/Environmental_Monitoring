@@ -2285,13 +2285,10 @@
                                                 Width="760"
                                                 Height="140" />
 
-                                        <Polyline Canvas.Left="48"
-                                                  Points="{Binding HumidityTrendPoints}"
-                                                  Stroke="#69A0FF"
-                                                  StrokeThickness="1.0"
-                                                  StrokeLineJoin="Round"
-                                                  StrokeStartLineCap="Round"
-                                                  StrokeEndLineCap="Round" />
+                                        <Canvas x:Name="HumidityLineCanvas"
+                                                Canvas.Left="48"
+                                                Width="760"
+                                                Height="140" />
                                         <Line X1="48"
                                               Y1="41"
                                               X2="808"
@@ -2371,13 +2368,10 @@
                                                 Width="760"
                                                 Height="140" />
 
-                                        <Polyline Canvas.Left="48"
-                                                  Points="{Binding PressureTrendPoints}"
-                                                  Stroke="#B482FF"
-                                                  StrokeThickness="1.0"
-                                                  StrokeLineJoin="Round"
-                                                  StrokeStartLineCap="Round"
-                                                  StrokeEndLineCap="Round" />
+                                        <Canvas x:Name="PressureLineCanvas"
+                                                Canvas.Left="48"
+                                                Width="760"
+                                                Height="140" />
                                         <Line X1="48"
                                               Y1="41"
                                               X2="808"

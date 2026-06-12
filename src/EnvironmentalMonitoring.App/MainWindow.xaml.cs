@@ -1715,29 +1715,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (points.Count == 0)
         {
             TemperatureTrendPoints = string.Empty;
-            HumidityTrendPoints = string.Empty;
-            PressureTrendPoints = string.Empty;
             return;
         }
 
         var temperatureValues = points.Select(item => item.AverageTemperature).ToArray();
-        var humidityValues = points
-            .Where(item => item.Humidity.HasValue)
-            .Select(item => item.Humidity!.Value)
-            .ToArray();
 
         TemperatureTrendPoints = BuildFixedAxisPolylinePoints(
             temperatureValues,
             ChannelKind.Temperature,
             MainGraphCanvasHeight);
-
-        HumidityTrendPoints = BuildFixedAxisPolylinePoints(
-            points
-                .Where(item => item.Humidity.HasValue)
-                .Select(item => item.Humidity!.Value)
-                .ToArray(),
-            ChannelKind.Humidity,
-            SmallGraphCanvasHeight);
     }
 
     private IReadOnlyList<DashboardStatusCard> CreateTopStatusCards(MonitoringDashboardSnapshot snapshot)
@@ -1999,7 +1985,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void RefreshGraphFrameFromCache()
     {
-        if (_isRefreshing || !ShouldRefreshGraphSamples() || _graphSamples.Count == 0)
+        if (!ShouldRefreshGraphSamples() || _graphSamples.Count == 0)
         {
             return;
         }
@@ -2009,31 +1995,58 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void UpdateSecondaryTrendSeries(DateTimeOffset visibleStart, DateTimeOffset visibleEnd)
     {
-        HumidityTrendPoints = BuildTimeBasedPolylinePoints(
-            _graphSamples,
+        RenderSecondaryTrendSeries(
+            HumidityLineCanvas,
             ChannelKind.Humidity,
+            CreateFrozenBrush("#69A0FF"),
             visibleStart,
-            visibleEnd,
-            SmallGraphCanvasHeight);
+            visibleEnd);
 
-        PressureTrendPoints = BuildTimeBasedPolylinePoints(
-            _graphSamples,
+        RenderSecondaryTrendSeries(
+            PressureLineCanvas,
             ChannelKind.Pressure,
+            CreateFrozenBrush("#B482FF"),
             visibleStart,
-            visibleEnd,
-            SmallGraphCanvasHeight);
+            visibleEnd);
     }
 
-    private void RenderGraphSeries(IReadOnlyList<GraphSeriesItem> series)
+    private void RenderSecondaryTrendSeries(
+        Canvas canvas,
+        ChannelKind kind,
+        Brush stroke,
+        DateTimeOffset visibleStart,
+        DateTimeOffset visibleEnd)
     {
-        GraphLineCanvas.Children.Clear();
+        canvas.Children.Clear();
 
-        foreach (var item in series)
+        var samples = _graphSamples
+            .Where(item => item.Kind == kind
+                && item.SampledAt >= visibleStart
+                && item.SampledAt <= visibleEnd
+                && item.CorrectedValue.HasValue
+                && double.IsFinite(item.CorrectedValue.Value))
+            .OrderBy(item => item.SampledAt)
+            .ToArray();
+
+        var segments = BuildTimeBasedPolylineSegments(
+            samples,
+            kind,
+            visibleStart,
+            visibleEnd,
+            GetGraphSampleGapThreshold(),
+            SmallGraphCanvasHeight);
+
+        foreach (var segment in segments)
         {
+            if (segment.Count < 2)
+            {
+                continue;
+            }
+
             var polyline = new System.Windows.Shapes.Polyline
             {
-                Points = item.Points,
-                Stroke = item.Accent,
+                Points = segment,
+                Stroke = stroke,
                 StrokeThickness = 1.0,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round,
@@ -2042,7 +2055,37 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 SnapsToDevicePixels = true,
             };
             Panel.SetZIndex(polyline, 10);
-            GraphLineCanvas.Children.Add(polyline);
+            canvas.Children.Add(polyline);
+        }
+    }
+
+    private void RenderGraphSeries(IReadOnlyList<GraphSeriesItem> series)
+    {
+        GraphLineCanvas.Children.Clear();
+
+        foreach (var item in series)
+        {
+            foreach (var segment in item.Segments)
+            {
+                if (segment.Count < 2)
+                {
+                    continue;
+                }
+
+                var polyline = new System.Windows.Shapes.Polyline
+                {
+                    Points = segment,
+                    Stroke = item.Accent,
+                    StrokeThickness = 1.0,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
+                    StrokeLineJoin = PenLineJoin.Round,
+                    Opacity = 0.9,
+                    SnapsToDevicePixels = true,
+                };
+                Panel.SetZIndex(polyline, 10);
+                GraphLineCanvas.Children.Add(polyline);
+            }
         }
     }
 
@@ -2846,6 +2889,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return TimeSpan.FromTicks(intervalTicks);
     }
 
+    private TimeSpan GetGraphSampleGapThreshold()
+    {
+        var expectedInterval = TimeSpan.FromSeconds(Math.Max(1, (int)_runtimeOptions.DefaultSamplingMode));
+        return TimeSpan.FromTicks(expectedInterval.Ticks * 3);
+    }
+
     private string GetGraphTimeLabelFormat() =>
         SelectedGraphTimeScale switch
         {
@@ -3064,12 +3113,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var kind = channel?.Kind ?? channelSamples[^1].Kind;
             var latestValue = values[^1];
             var unit = channel?.Unit ?? channelSamples[^1].Unit;
-            var renderSamples = DownsampleSamples(channelSamples, MaxGraphRenderedPointsPerSeries);
 
             series.Add(new GraphSeriesItem(
                 filter.Code,
                 filter.Label,
-                BuildTimeBasedPolylinePointCollection(renderSamples, kind, visibleStart, visibleEnd),
+                BuildTimeBasedPolylineSegments(
+                    channelSamples,
+                    kind,
+                    visibleStart,
+                    visibleEnd,
+                    GetGraphSampleGapThreshold()),
                 FormatMetricNumber(latestValue),
                 NormalizeGraphUnit(unit),
                 filter.Accent));
@@ -4645,6 +4698,66 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         return points;
+    }
+
+    private static IReadOnlyList<PointCollection> BuildTimeBasedPolylineSegments(
+        IReadOnlyList<MonitoringSampleRecord> samples,
+        ChannelKind kind,
+        DateTimeOffset visibleStart,
+        DateTimeOffset visibleEnd,
+        TimeSpan gapThreshold,
+        double height = MainGraphCanvasHeight)
+    {
+        var segments = new List<PointCollection>();
+        var axis = GetGraphAxisScale(kind, height);
+        var currentSamples = new List<MonitoringSampleRecord>();
+        DateTimeOffset? previousSampledAt = null;
+
+        void AddCurrentSegment()
+        {
+            if (currentSamples.Count == 0)
+            {
+                return;
+            }
+
+            var renderSamples = DownsampleSamples(currentSamples, MaxGraphRenderedPointsPerSeries);
+            var points = new PointCollection();
+
+            foreach (var segmentSample in renderSamples)
+            {
+                var x = CalculateGraphX(segmentSample.SampledAt, visibleStart, visibleEnd);
+                var y = CalculateGraphY(segmentSample.CorrectedValue!.Value, axis);
+                points.Add(new Point(x, y));
+            }
+
+            segments.Add(points);
+            currentSamples.Clear();
+        }
+
+        foreach (var sample in samples.OrderBy(item => item.SampledAt))
+        {
+            if (sample.SampledAt < visibleStart
+                || sample.SampledAt > visibleEnd
+                || !sample.CorrectedValue.HasValue
+                || double.IsNaN(sample.CorrectedValue.Value)
+                || double.IsInfinity(sample.CorrectedValue.Value))
+            {
+                continue;
+            }
+
+            if (previousSampledAt.HasValue
+                && sample.SampledAt - previousSampledAt.Value > gapThreshold)
+            {
+                AddCurrentSegment();
+            }
+
+            currentSamples.Add(sample);
+            previousSampledAt = sample.SampledAt;
+        }
+
+        AddCurrentSegment();
+
+        return segments;
     }
 
     private static IReadOnlyList<MonitoringSampleRecord> DownsampleSamples(
